@@ -56,6 +56,22 @@ PYTHONPATH=. .venv/bin/python scripts/run_pipeline_cli.py "List departments" --s
 
 Package layout: `pipeline/` (registry, L1–L5, validators, `Pipeline` orchestrator).
 
+## Phase B — Agent Engine (deployed)
+
+| Item | Value |
+|------|--------|
+| Engine ID | `8991351443894042624` |
+| Resource | `projects/115724636423/locations/us-central1/reasoningEngines/8991351443894042624` |
+| Console | [Agent playground](https://console.cloud.google.com/vertex-ai/agents/agent-engines/locations/us-central1/agent-engines/8991351443894042624/playground?project=115724636423) |
+
+```bash
+./scripts/deploy-sales-agent-engine.sh --agent-engine-id 8991351443894042624  # update
+export AGENT_ENGINE_RESOURCE=projects/115724636423/locations/us-central1/reasoningEngines/8991351443894042624
+PYTHONPATH=. .venv/bin/python scripts/query_agent_engine.py --question "Top 5 customers by sales"
+```
+
+See `docs/PHASE_B_DEPLOY.md`.
+
 ## Next step
 
-**Phase B** — wrap `pipeline` in Vertex AI Agent Engine tools and deploy to `jaybel-dev`.
+**Phase C** — Next.js localhost UI + Firebase Google Sign-In + Agent Engine `stream_query`.

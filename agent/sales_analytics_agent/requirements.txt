@@ -1,0 +1,5 @@
+# Bundled with pipeline deps for Agent Engine deploy (see scripts/deploy-sales-agent-engine.sh)
+google-cloud-aiplatform[adk,agent_engines]>=1.60.0
+google-cloud-bigquery>=3.25.0
+pyyaml>=6.0.1
+sqlglot>=25.0.0

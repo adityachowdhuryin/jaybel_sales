@@ -1,0 +1,5 @@
+{
+  "display_name": "Jaybel Sales Analytics Agent",
+  "description": "Natural-language sales and analytics for Jaybel star-schema BigQuery (jaybel_sales_analytics). Routes to the correct table, generates validated read-only SQL, executes on BigQuery, and summarizes results.",
+  "service_account": "115724636423-compute@developer.gserviceaccount.com"
+}

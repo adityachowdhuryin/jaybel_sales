@@ -1,6 +1,6 @@
 # Pre-implementation checklist — Jaybel Sales Analytics Agent
 
-Status: **Phase A complete** — pipeline library in `pipeline/`; **Phase B next** (Agent Engine). See `docs/DECISIONS.md` and `docs/FINAL_READINESS_REVIEW.md`.
+Status: **Phase B complete** — Agent Engine deployed; **Phase C next** (localhost UI). See `docs/DECISIONS.md` and `docs/FINAL_READINESS_REVIEW.md`.
 
 ## Completed (in repo)
 
@@ -19,6 +19,7 @@ Status: **Phase A complete** — pipeline library in `pipeline/`; **Phase B next
 - [x] **Auth:** Firebase Google Sign-In on `jaybel-dev`
 - [x] **UI v1:** localhost (`http://localhost:3000`)
 - [x] **Phase A:** `pipeline/` package + unit tests (12 pass) + BQ dry-run integration
+- [x] **Phase B:** ADK agent deployed — ID `8991351443894042624` (`agent/AGENT_ENGINE_RESOURCE.env`)
 
 ## Verify in GCP (during implementation — not blocking prep)
 
@@ -27,11 +28,11 @@ Status: **Phase A complete** — pipeline library in `pipeline/`; **Phase B next
 - [ ] **Agent Engine** enabled in `us-central1`
 - [ ] **Firebase Console:** Google provider on; `localhost` in authorized domains; Web app config in `frontend/.env.local`
 
-## After first Agent Engine deploy (implementation milestone)
+## After first Agent Engine deploy (done)
 
-| Item | Why |
-|------|-----|
-| **Agent Engine resource ID** | `NEXT_PUBLIC_AGENT_ENGINE_ID` in `frontend/.env.local` |
+| Item | Value |
+|------|--------|
+| **Agent Engine resource ID** | `8991351443894042624` → `frontend/.env.local` |
 
 ## Optional (non-blocking)
 

@@ -11,3 +11,5 @@ node_modules/
 .next/
 dist/
 .pytest_cache/
+agent/_deploy_staging/
+agent/_deploy_staging_tmp*/
