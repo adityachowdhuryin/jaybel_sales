@@ -1,0 +1,185 @@
+table_id: jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer_frazer
+display_name: New Business (Fact)
+layer: fact
+agent_default: true
+routing_priority: primary
+description: Frazer new-business transactions kept separate from main sales. Shares
+  dimension keys with fact_sales_report. Use for new business / Frazer pipeline metrics.
+business_tags:
+- new business
+- Frazer
+- new accounts
+- pipeline
+- territory
+- frazer link
+grain: One row represents one new-business transaction line for Frazer.
+columns:
+- name: new_business_key
+  type: INT64
+  description: Surrogate primary key
+  nullable: true
+- name: date_key
+  type: INT64
+  description: FK to dim_date
+  nullable: true
+- name: customer_key
+  type: INT64
+  description: FK to dim_sales_customer
+  nullable: true
+- name: rep_key
+  type: INT64
+  description: FK to dim_sales_rep
+  nullable: true
+- name: product_key
+  type: INT64
+  description: FK to dim_product
+  nullable: true
+- name: department_key
+  type: INT64
+  description: FK to dim_department
+  nullable: true
+- name: territory
+  type: STRING
+  description: Territory name
+  nullable: true
+- name: frazer_link
+  type: STRING
+  description: Frazer system link identifier
+  nullable: true
+- name: line_sales_ex_gst
+  type: FLOAT64
+  description: Line sales ex GST
+  nullable: true
+- name: line_gp_dollar
+  type: FLOAT64
+  description: Line gross profit dollars
+  nullable: true
+relationships:
+- column: date_key
+  references: jaybel-dev.jaybel_sales_analytics.dim_date.date_key
+- column: customer_key
+  references: jaybel-dev.jaybel_sales_analytics.dim_sales_customer.customer_key
+- column: rep_key
+  references: jaybel-dev.jaybel_sales_analytics.dim_sales_rep.rep_key
+- column: product_key
+  references: jaybel-dev.jaybel_sales_analytics.dim_product.product_key
+- column: department_key
+  references: jaybel-dev.jaybel_sales_analytics.dim_department.department_key
+common_filters:
+- date_key
+- territory
+- department_key
+- rep_key
+common_aggregations:
+- - line_sales_ex_gst
+  - SUM
+- - line_gp_dollar
+  - SUM
+- - new_business_key
+  - COUNT
+time_columns:
+- date_key
+few_shot_examples:
+- question: Total new business sales for Frazer in fiscal 2025-2026
+  sql: 'SELECT SUM(f.line_sales_ex_gst) AS total_new_business_sales
+
+    FROM `jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer` AS f
+
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_date` AS d ON f.date_key = d.date_key
+
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_department` AS dept ON f.department_key
+    = dept.department_key
+
+    WHERE d.fy = ''2025-2026'' AND dept.department_name = ''Frazer''
+
+    LIMIT 1000'
+- question: New business GP by territory this fiscal year
+  sql: 'SELECT f.territory, SUM(f.line_gp_dollar) AS total_gp
+
+    FROM `jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer` AS f
+
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_date` AS d ON f.date_key = d.date_key
+
+    WHERE d.fy = ''2025-2026''
+
+    GROUP BY f.territory
+
+    ORDER BY total_gp DESC
+
+    LIMIT 1000'
+- question: Count of new business rows in Q3 fiscal 2024-2025
+  sql: 'SELECT COUNT(*) AS row_count
+
+    FROM `jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer` AS f
+
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_date` AS d ON f.date_key = d.date_key
+
+    WHERE d.fy = ''2024-2025'' AND d.fiscal_quarter = ''Q3''
+
+    LIMIT 1000'
+- question: New business by sales rep for fiscal 2025-2026
+  sql: 'SELECT r.description AS rep_name, SUM(f.line_sales_ex_gst) AS sales
+
+    FROM `jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer` AS f
+
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_date` AS d ON f.date_key = d.date_key
+
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_sales_rep` AS r ON f.rep_key = r.rep_key
+
+    WHERE d.fy = ''2025-2026''
+
+    GROUP BY r.description
+
+    ORDER BY sales DESC
+
+    LIMIT 1000'
+- question: Monthly new business revenue trend FY 2025-2026
+  sql: 'SELECT d.fiscal_month_no, d.fiscal_month_name, SUM(f.line_sales_ex_gst) AS
+    sales
+
+    FROM `jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer` AS f
+
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_date` AS d ON f.date_key = d.date_key
+
+    WHERE d.fy = ''2025-2026''
+
+    GROUP BY d.fiscal_month_no, d.fiscal_month_name
+
+    ORDER BY d.fiscal_month_no
+
+    LIMIT 1000'
+- question: Top 5 customers by new business GP
+  sql: 'SELECT c.account_name, SUM(f.line_gp_dollar) AS gp
+
+    FROM `jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer` AS f
+
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_sales_customer` AS c ON f.customer_key
+    = c.customer_key
+
+    GROUP BY c.account_name
+
+    ORDER BY gp DESC
+
+    LIMIT 5'
+- question: New business sales by product group fiscal Q4 2025-2026
+  sql: 'SELECT p.main_group_name, SUM(f.line_sales_ex_gst) AS sales
+
+    FROM `jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer` AS f
+
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_date` AS d ON f.date_key = d.date_key
+
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_product` AS p ON f.product_key = p.product_key
+
+    WHERE d.fy = ''2025-2026'' AND d.fiscal_quarter = ''Q4''
+
+    GROUP BY p.main_group_name
+
+    LIMIT 1000'
+- question: Average line GP for new business in territory NSW
+  sql: 'SELECT AVG(f.line_gp_dollar) AS avg_line_gp
+
+    FROM `jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer` AS f
+
+    WHERE f.territory = ''NSW''
+
+    LIMIT 1000'

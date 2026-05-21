@@ -1,0 +1,109 @@
+# Jaybel Sales Analytics — GCP & agent configuration (implementation source of truth)
+
+gcp:
+  project_id: jaybel-dev
+  region: us-central1
+  location: us-central1  # Vertex AI / Agent Engine
+
+bigquery:
+  dataset: jaybel_sales_analytics
+  table_prefix: ""  # tables live directly in dataset
+  fully_qualified_dataset: jaybel-dev.jaybel_sales_analytics
+  default_bytes_scanned_limit_gb: 10  # policy TBD; soft gate for dry run warnings
+  default_query_limit: 1000
+  fiscal_year:
+    start_month: July  # fiscal month 1
+    end_month: June    # fiscal month 12
+    label_format: "YYYY-YYYY"  # e.g. 2025-2026 (not FY2026)
+    dim_date_range:
+      start: "2018-07-01"
+      end: "2030-06-30"
+  timezone: Australia/Sydney  # confirmed — calendar-relative phrases (last month, yesterday, etc.)
+  relative_dates:
+    timezone: Australia/Sydney
+    default_calendar: calendar  # calendar month/week/day unless user says "fiscal"
+    fiscal_keywords: ["fiscal", "fy", "fiscal year", "fiscal month", "fiscal quarter"]
+
+auth:
+  provider: firebase
+  gcp_project_id: jaybel-dev
+  sign_in_methods:
+    - google
+  firebase_console: https://console.firebase.google.com/
+
+ui:
+  hosting_v1: localhost
+  dev_url: http://localhost:3000
+  framework: nextjs-14
+
+iam:
+  # Default Compute Engine service account (verify roles before prod)
+  runtime_service_account: "115724636423-compute@developer.gserviceaccount.com"
+  owner_contact: aditya.chowdhury@giantleapsystems.com
+  required_roles:
+    - roles/bigquery.jobUser
+    - roles/bigquery.dataViewer  # scope to dataset jaybel_sales_analytics
+    - roles/aiplatform.user
+    - roles/datastore.user       # if Firestore sessions used
+    - roles/storage.objectAdmin  # report bucket only (when enabled)
+
+vertex:
+  llm_model: gemini-2.5-flash
+  embedding_model: text-embedding-004
+  agent_engine:
+    display_name: Jaybel Sales Analytics Agent
+    description: >
+      Natural-language sales and analytics agent for Jaybel star-schema BigQuery data.
+      Routes questions to the correct table, generates validated read-only SQL, and summarizes results.
+    entrypoint: agent_engine_only  # UI must call Agent Engine API only (telemetry requirement)
+
+agent_routing:
+  # L1 should prefer these for analytics (staging is raw STRING — avoid unless explicit)
+  primary_fact_tables:
+    - jaybel-dev.jaybel_sales_analytics.fact_sales_report
+    - jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer
+  dimension_tables:
+    - jaybel-dev.jaybel_sales_analytics.dim_date
+    - jaybel-dev.jaybel_sales_analytics.dim_department
+    - jaybel-dev.jaybel_sales_analytics.dim_sales_customer
+    - jaybel-dev.jaybel_sales_analytics.dim_sales_rep
+    - jaybel-dev.jaybel_sales_analytics.dim_product
+  staging_tables:
+    - jaybel-dev.jaybel_sales_analytics.stg_sales_report
+    - jaybel-dev.jaybel_sales_analytics.stg_sales_cust
+    - jaybel-dev.jaybel_sales_analytics.stg_sales_rep
+    - jaybel-dev.jaybel_sales_analytics.stg_main_product
+    - jaybel-dev.jaybel_sales_analytics.stg_new_busin_frazer
+    - jaybel-dev.jaybel_sales_analytics.stg_total_working_days
+  join_strategy: approved_join_graph  # see schema_registry/join_allowlist.yaml
+
+v1_scope:
+  in:
+    - agent_engine_with_in_process_tools
+    - firebase_google_auth_localhost
+    - pipeline_l1_through_l5
+    - ui_event_stream_via_agent_engine
+  deferred:
+    - redis_cache
+    - fastapi_query_sse_hot_path
+    - pdf_reports_gcs
+    - vertex_memory_bank
+    - pipeline_logs_table
+    - cloud_run_backend
+
+client_questions:
+  source_pdf: Office_Supplies_BI_Analytics_Questions.pdf
+  catalog: docs/office_supplies_client_questions.md
+  qa_case_ids: Q061-Q097
+  product_categories_examples:
+    - Office Supplies
+    - Furniture
+    - Ink & Toner
+    - Kitchen & Janitorial
+    - Apparel
+  targets_not_in_bq_v1:
+    - Overall Business Target
+    - Furniture GP Target
+    - BTS Target
+    - Projected Monthly Sales
+    - Projected GP

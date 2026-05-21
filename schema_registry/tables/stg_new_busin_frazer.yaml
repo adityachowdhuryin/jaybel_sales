@@ -1,0 +1,87 @@
+table_id: jaybel-dev.jaybel_sales_analytics.stg_new_busin_frazer
+display_name: New Business Frazer (Staging Raw)
+layer: staging
+agent_default: false
+routing_priority: avoid_unless_raw
+description: Raw Frazer new business lines. Prefer fact_new_business_frazer for metrics.
+business_tags:
+- raw new business
+- Frazer staging
+grain: One raw new business row (STRING).
+columns:
+- name: account
+  type: STRING
+  description: Account
+  nullable: true
+- name: account_name
+  type: STRING
+  description: account_name (STRING)
+  nullable: true
+- name: trans_date
+  type: STRING
+  description: Transaction date
+  nullable: true
+- name: rep
+  type: STRING
+  description: rep (STRING)
+  nullable: true
+- name: group_no
+  type: STRING
+  description: group_no (STRING)
+  nullable: true
+- name: main_group_name
+  type: STRING
+  description: main_group_name (STRING)
+  nullable: true
+- name: line_sales_ex_gst
+  type: STRING
+  description: Sales string
+  nullable: true
+- name: line_gp_dollar
+  type: STRING
+  description: line_gp_dollar (STRING)
+  nullable: true
+- name: company
+  type: STRING
+  description: Usually Frazer
+  nullable: true
+- name: territory
+  type: STRING
+  description: Territory
+  nullable: true
+- name: frazer_link
+  type: STRING
+  description: frazer_link (STRING)
+  nullable: true
+relationships: []
+common_filters:
+- territory
+- company
+common_aggregations: []
+time_columns:
+- trans_date
+few_shot_examples:
+- question: Count raw new business rows
+  sql: SELECT COUNT(*) FROM `jaybel-dev.jaybel_sales_analytics.stg_new_busin_frazer`
+    LIMIT 1000
+- question: Distinct territories raw new business
+  sql: SELECT DISTINCT territory FROM `jaybel-dev.jaybel_sales_analytics.stg_new_busin_frazer`
+    LIMIT 1000
+- question: Sample raw new business
+  sql: SELECT account, line_sales_ex_gst, territory FROM `jaybel-dev.jaybel_sales_analytics.stg_new_busin_frazer`
+    LIMIT 5
+- question: Raw new business by company
+  sql: SELECT company, COUNT(*) FROM `jaybel-dev.jaybel_sales_analytics.stg_new_busin_frazer`
+    GROUP BY company LIMIT 1000
+- question: Raw trans dates in 2025
+  sql: SELECT trans_date FROM `jaybel-dev.jaybel_sales_analytics.stg_new_busin_frazer`
+    WHERE trans_date LIKE '2025%' LIMIT 1000
+- question: Accounts in raw new business
+  sql: SELECT DISTINCT account FROM `jaybel-dev.jaybel_sales_analytics.stg_new_busin_frazer`
+    LIMIT 1000
+- question: Raw frazer_link values
+  sql: SELECT DISTINCT frazer_link FROM `jaybel-dev.jaybel_sales_analytics.stg_new_busin_frazer`
+    LIMIT 1000
+- question: Territory NSW raw rows
+  sql: SELECT COUNT(*) FROM `jaybel-dev.jaybel_sales_analytics.stg_new_busin_frazer`
+    WHERE territory = 'NSW' LIMIT 1000

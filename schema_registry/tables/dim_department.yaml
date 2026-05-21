@@ -1,0 +1,59 @@
+table_id: jaybel-dev.jaybel_sales_analytics.dim_department
+display_name: Department (Dimension)
+layer: dimension
+agent_default: true
+routing_priority: secondary
+description: 'Two departments only: Jaybel (key=1) and Frazer (key=2).'
+business_tags:
+- department
+- company
+- Jaybel
+- Frazer
+- division
+grain: One row per department (2 rows total).
+columns:
+- name: department_key
+  type: INT64
+  description: 'PK: 1=Jaybel, 2=Frazer'
+  nullable: true
+  sample_values:
+  - 1
+  - 2
+- name: department_name
+  type: STRING
+  description: Department name
+  nullable: true
+  sample_values:
+  - Jaybel
+  - Frazer
+relationships: []
+common_filters:
+- department_name
+- department_key
+common_aggregations: []
+time_columns: []
+few_shot_examples:
+- question: List all departments
+  sql: SELECT department_key, department_name FROM `jaybel-dev.jaybel_sales_analytics.dim_department`
+    LIMIT 1000
+- question: What is the department key for Frazer?
+  sql: SELECT department_key FROM `jaybel-dev.jaybel_sales_analytics.dim_department`
+    WHERE department_name = 'Frazer' LIMIT 1000
+- question: Department key for Jaybel
+  sql: SELECT department_key FROM `jaybel-dev.jaybel_sales_analytics.dim_department`
+    WHERE department_name = 'Jaybel' LIMIT 1000
+- question: Count departments
+  sql: SELECT COUNT(*) AS dept_count FROM `jaybel-dev.jaybel_sales_analytics.dim_department`
+    LIMIT 1000
+- question: Is Frazer a valid department?
+  sql: SELECT department_name FROM `jaybel-dev.jaybel_sales_analytics.dim_department`
+    WHERE LOWER(department_name) = 'frazer' LIMIT 1000
+- question: Department names alphabetically
+  sql: SELECT department_name FROM `jaybel-dev.jaybel_sales_analytics.dim_department`
+    ORDER BY department_name LIMIT 1000
+- question: Map department keys to names
+  sql: SELECT department_key, department_name FROM `jaybel-dev.jaybel_sales_analytics.dim_department`
+    ORDER BY department_key LIMIT 1000
+- question: Which department has key 1?
+  sql: SELECT department_name FROM `jaybel-dev.jaybel_sales_analytics.dim_department`
+    WHERE department_key = 1 LIMIT 1000

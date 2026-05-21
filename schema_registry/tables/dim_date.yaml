@@ -1,0 +1,122 @@
+table_id: jaybel-dev.jaybel_sales_analytics.dim_date
+display_name: Date (Dimension)
+layer: dimension
+agent_default: true
+routing_priority: secondary
+description: Calendar and fiscal date dimension. July=fiscal month 1, June=12. FY
+  label format 2025-2026.
+business_tags:
+- date
+- fiscal
+- calendar
+- month
+- quarter
+- FY
+- weekday
+grain: One row per calendar date from 2018-07-01 through 2030-06-30.
+columns:
+- name: date
+  type: DATE
+  description: Calendar date
+  nullable: true
+- name: date_key
+  type: INT64
+  description: Surrogate PK YYYYMMDD
+  nullable: true
+- name: day_name
+  type: STRING
+  description: Full weekday name
+  nullable: true
+- name: day_name_short
+  type: STRING
+  description: Short weekday name
+  nullable: true
+- name: day_of_month
+  type: INT64
+  description: Day of month 1-31
+  nullable: true
+- name: calendar_month_no
+  type: INT64
+  description: Calendar month 1-12
+  nullable: true
+- name: calendar_month_name
+  type: STRING
+  description: Calendar month name
+  nullable: true
+- name: calendar_year
+  type: INT64
+  description: Calendar year
+  nullable: true
+- name: calendar_quarter
+  type: INT64
+  description: Calendar quarter 1-4
+  nullable: true
+- name: fiscal_month_no
+  type: INT64
+  description: Fiscal month (July=1)
+  nullable: true
+- name: fiscal_month_name
+  type: STRING
+  description: Fiscal month name
+  nullable: true
+- name: fiscal_year
+  type: INT64
+  description: Fiscal year integer
+  nullable: true
+- name: fy
+  type: STRING
+  description: Fiscal year label e.g. 2025-2026
+  nullable: true
+  sample_values:
+  - 2024-2025
+  - 2025-2026
+- name: fiscal_quarter
+  type: STRING
+  description: Q1=Jul-Sep, Q2=Oct-Dec, Q3=Jan-Mar, Q4=Apr-Jun
+  nullable: true
+  sample_values:
+  - Q1
+  - Q2
+  - Q3
+  - Q4
+- name: is_weekday
+  type: BOOL
+  description: True Mon-Fri
+  nullable: true
+relationships: []
+common_filters:
+- fy
+- fiscal_quarter
+- fiscal_month_no
+- calendar_year
+- date
+- is_weekday
+common_aggregations: []
+time_columns:
+- date
+few_shot_examples:
+- question: How many fiscal months are in FY 2025-2026?
+  sql: SELECT COUNT(DISTINCT fiscal_month_no) AS months FROM `jaybel-dev.jaybel_sales_analytics.dim_date`
+    WHERE fy = '2025-2026' LIMIT 1000
+- question: List fiscal quarters and their month ranges for 2025-2026
+  sql: SELECT DISTINCT fiscal_quarter, MIN(fiscal_month_name) AS start_month, MAX(fiscal_month_name)
+    AS end_month FROM `jaybel-dev.jaybel_sales_analytics.dim_date` WHERE fy = '2025-2026'
+    GROUP BY fiscal_quarter LIMIT 1000
+- question: Count weekdays in July 2025
+  sql: SELECT COUNT(*) AS weekdays FROM `jaybel-dev.jaybel_sales_analytics.dim_date`
+    WHERE date BETWEEN '2025-07-01' AND '2025-07-31' AND is_weekday = TRUE LIMIT 1000
+- question: What is fiscal month number for December 2025?
+  sql: SELECT fiscal_month_no, fiscal_month_name FROM `jaybel-dev.jaybel_sales_analytics.dim_date`
+    WHERE date = '2025-12-01' LIMIT 1000
+- question: Distinct fiscal years in the date dimension
+  sql: SELECT DISTINCT fy FROM `jaybel-dev.jaybel_sales_analytics.dim_date` ORDER
+    BY fy LIMIT 1000
+- question: Calendar Q2 2025 date range
+  sql: SELECT MIN(date) AS start_date, MAX(date) AS end_date FROM `jaybel-dev.jaybel_sales_analytics.dim_date`
+    WHERE calendar_year = 2025 AND calendar_quarter = 2 LIMIT 1000
+- question: Fiscal Q1 2024-2025 start and end dates
+  sql: SELECT MIN(date) AS start_date, MAX(date) AS end_date FROM `jaybel-dev.jaybel_sales_analytics.dim_date`
+    WHERE fy = '2024-2025' AND fiscal_quarter = 'Q1' LIMIT 1000
+- question: How many days in fiscal year 2025-2026?
+  sql: SELECT COUNT(*) AS days FROM `jaybel-dev.jaybel_sales_analytics.dim_date` WHERE
+    fy = '2025-2026' LIMIT 1000

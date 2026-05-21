@@ -1,0 +1,49 @@
+table_id: jaybel-dev.jaybel_sales_analytics.stg_main_product
+display_name: Main Product (Staging Raw)
+layer: staging
+agent_default: false
+routing_priority: avoid_unless_raw
+description: Raw product group reference. Prefer dim_product.
+business_tags:
+- raw product
+- staging
+grain: One raw product group row.
+columns:
+- name: id
+  type: STRING
+  description: Product group id
+  nullable: true
+- name: main_group_name
+  type: STRING
+  description: Group name
+  nullable: true
+relationships: []
+common_filters:
+- main_group_name
+common_aggregations: []
+time_columns: []
+few_shot_examples:
+- question: Count raw product groups
+  sql: SELECT COUNT(*) FROM `jaybel-dev.jaybel_sales_analytics.stg_main_product` LIMIT
+    1000
+- question: List raw main group names
+  sql: SELECT main_group_name FROM `jaybel-dev.jaybel_sales_analytics.stg_main_product`
+    ORDER BY main_group_name LIMIT 1000
+- question: Raw product id for Electrical
+  sql: SELECT id FROM `jaybel-dev.jaybel_sales_analytics.stg_main_product` WHERE main_group_name
+    = 'Electrical' LIMIT 1000
+- question: Sample 5 product groups raw
+  sql: SELECT id, main_group_name FROM `jaybel-dev.jaybel_sales_analytics.stg_main_product`
+    LIMIT 5
+- question: Distinct raw product names
+  sql: SELECT DISTINCT main_group_name FROM `jaybel-dev.jaybel_sales_analytics.stg_main_product`
+    LIMIT 1000
+- question: Product groups starting with C raw
+  sql: SELECT main_group_name FROM `jaybel-dev.jaybel_sales_analytics.stg_main_product`
+    WHERE main_group_name LIKE 'C%' LIMIT 1000
+- question: How many distinct ids raw product
+  sql: SELECT COUNT(DISTINCT id) FROM `jaybel-dev.jaybel_sales_analytics.stg_main_product`
+    LIMIT 1000
+- question: Check if Plumbing exists raw
+  sql: SELECT id FROM `jaybel-dev.jaybel_sales_analytics.stg_main_product` WHERE main_group_name
+    = 'Plumbing' LIMIT 1000

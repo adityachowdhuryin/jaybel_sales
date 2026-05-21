@@ -1,0 +1,21 @@
+{
+  "display_name": "Jaybel Sales Analytics Agent",
+  "description": "Natural-language sales and analytics for Jaybel star-schema BigQuery (jaybel_sales_analytics). Routes to the correct table, generates validated read-only SQL, executes on BigQuery, and streams summaries with optional charts.",
+  "project_id": "jaybel-dev",
+  "location": "us-central1",
+  "service_account": "115724636423-compute@developer.gserviceaccount.com",
+  "model": "gemini-2.5-flash",
+  "entrypoint_mode": "agent_engine_only",
+  "tools": [
+    "route_and_plan",
+    "generate_and_validate_sql",
+    "execute_bigquery_sql",
+    "summarize_results"
+  ],
+  "config_paths": {
+    "jaybel": "config/jaybel.yaml",
+    "schema_registry": "schema_registry/tables",
+    "join_allowlist": "schema_registry/join_allowlist.yaml",
+    "glossary": "docs/business_glossary.md"
+  }
+}

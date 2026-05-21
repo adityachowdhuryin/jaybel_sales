@@ -1,0 +1,94 @@
+table_id: jaybel-dev.jaybel_sales_analytics.dim_sales_customer
+display_name: Sales Customer (Dimension)
+layer: dimension
+agent_default: true
+routing_priority: secondary
+description: Customer accounts with account codes, industry, and new-account flags.
+business_tags:
+- customer
+- account
+- industry
+- new account
+- business code
+grain: One row per unique customer account.
+columns:
+- name: customer_key
+  type: INT64
+  description: Surrogate PK
+  nullable: true
+- name: account
+  type: STRING
+  description: Customer account code (natural key)
+  nullable: true
+- name: account_name
+  type: STRING
+  description: Customer account name
+  nullable: true
+- name: created_date
+  type: DATE
+  description: Account created date
+  nullable: true
+- name: first_created_date
+  type: DATE
+  description: First transaction date
+  nullable: true
+- name: rep
+  type: STRING
+  description: Assigned sales rep code
+  nullable: true
+- name: is_new_account
+  type: BOOL
+  description: New account in current period
+  nullable: true
+- name: is_new_created_date_cycle
+  type: BOOL
+  description: New in current fiscal cycle
+  nullable: true
+- name: industry_sub
+  type: STRING
+  description: Industry sub-classification
+  nullable: true
+- name: business_code
+  type: STRING
+  description: Business type code
+  nullable: true
+relationships:
+- column: rep
+  references: jaybel-dev.jaybel_sales_analytics.dim_sales_rep.sales_rep_code
+common_filters:
+- account
+- account_name
+- industry_sub
+- business_code
+- is_new_account
+common_aggregations:
+- - customer_key
+  - COUNT
+time_columns:
+- created_date
+- first_created_date
+few_shot_examples:
+- question: How many customer accounts are flagged as new?
+  sql: SELECT COUNT(*) AS new_customers FROM `jaybel-dev.jaybel_sales_analytics.dim_sales_customer`
+    WHERE is_new_account = TRUE LIMIT 1000
+- question: List customers in industry sub Retail
+  sql: SELECT account, account_name FROM `jaybel-dev.jaybel_sales_analytics.dim_sales_customer`
+    WHERE industry_sub = 'Retail' LIMIT 1000
+- question: Customers created in 2025
+  sql: SELECT account_name, created_date FROM `jaybel-dev.jaybel_sales_analytics.dim_sales_customer`
+    WHERE created_date >= '2025-01-01' ORDER BY created_date LIMIT 1000
+- question: Count distinct business codes
+  sql: SELECT COUNT(DISTINCT business_code) AS codes FROM `jaybel-dev.jaybel_sales_analytics.dim_sales_customer`
+    LIMIT 1000
+- question: New accounts in current fiscal cycle
+  sql: SELECT account_name FROM `jaybel-dev.jaybel_sales_analytics.dim_sales_customer`
+    WHERE is_new_created_date_cycle = TRUE LIMIT 1000
+- question: Top 20 customers by account name
+  sql: SELECT account, account_name FROM `jaybel-dev.jaybel_sales_analytics.dim_sales_customer`
+    ORDER BY account_name LIMIT 20
+- question: Customers assigned to rep code X01
+  sql: SELECT account_name FROM `jaybel-dev.jaybel_sales_analytics.dim_sales_customer`
+    WHERE rep = 'X01' LIMIT 1000
+- question: Accounts with missing industry sub
+  sql: SELECT account_name FROM `jaybel-dev.jaybel_sales_analytics.dim_sales_customer`
+    WHERE industry_sub IS NULL LIMIT 1000

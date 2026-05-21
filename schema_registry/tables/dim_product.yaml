@@ -1,0 +1,53 @@
+table_id: jaybel-dev.jaybel_sales_analytics.dim_product
+display_name: Product Group (Dimension)
+layer: dimension
+agent_default: true
+routing_priority: secondary
+description: Main product group dimension keyed by main_group_name.
+business_tags:
+- product
+- product group
+- main group
+- category
+grain: One row per main product group.
+columns:
+- name: product_key
+  type: INT64
+  description: Surrogate PK
+  nullable: true
+- name: main_group_name
+  type: STRING
+  description: Main product group name (natural key)
+  nullable: true
+relationships: []
+common_filters:
+- main_group_name
+common_aggregations:
+- - product_key
+  - COUNT
+time_columns: []
+few_shot_examples:
+- question: List all product groups
+  sql: SELECT product_key, main_group_name FROM `jaybel-dev.jaybel_sales_analytics.dim_product`
+    ORDER BY main_group_name LIMIT 1000
+- question: How many product groups exist?
+  sql: SELECT COUNT(*) AS group_count FROM `jaybel-dev.jaybel_sales_analytics.dim_product`
+    LIMIT 1000
+- question: Find product key for group Electrical
+  sql: SELECT product_key FROM `jaybel-dev.jaybel_sales_analytics.dim_product` WHERE
+    main_group_name = 'Electrical' LIMIT 1000
+- question: Product groups starting with A
+  sql: SELECT main_group_name FROM `jaybel-dev.jaybel_sales_analytics.dim_product`
+    WHERE main_group_name LIKE 'A%' ORDER BY main_group_name LIMIT 1000
+- question: Distinct main group names
+  sql: SELECT DISTINCT main_group_name FROM `jaybel-dev.jaybel_sales_analytics.dim_product`
+    LIMIT 1000
+- question: Top 10 product groups by name
+  sql: SELECT main_group_name FROM `jaybel-dev.jaybel_sales_analytics.dim_product`
+    ORDER BY main_group_name LIMIT 10
+- question: Product groups count by first letter
+  sql: SELECT SUBSTR(main_group_name, 1, 1) AS letter, COUNT(*) AS cnt FROM `jaybel-dev.jaybel_sales_analytics.dim_product`
+    GROUP BY letter LIMIT 1000
+- question: Is there a product group called Plumbing?
+  sql: SELECT product_key FROM `jaybel-dev.jaybel_sales_analytics.dim_product` WHERE
+    main_group_name = 'Plumbing' LIMIT 1000

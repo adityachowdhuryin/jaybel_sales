@@ -1,0 +1,259 @@
+table_id: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+display_name: Sales Report (Fact)
+layer: fact
+agent_default: true
+routing_priority: primary
+description: Primary transactional fact table. One row per invoice line item with
+  typed revenue, cost, and GP measures. Join to dim_* tables for calendar, customer,
+  rep, product, and department.
+business_tags:
+- sales
+- revenue
+- invoice
+- orders
+- gp
+- gross profit
+- margin
+- quantity
+- line items
+- transactions
+- Jaybel
+- Frazer
+- warehouse
+- territory
+grain: One row represents one invoice line item (product line on an invoice).
+columns:
+- name: sales_key
+  type: INT64
+  description: Surrogate primary key
+  nullable: true
+- name: date_key
+  type: INT64
+  description: FK to dim_date (YYYYMMDD surrogate)
+  nullable: true
+- name: customer_key
+  type: INT64
+  description: FK to dim_sales_customer
+  nullable: true
+- name: rep_key
+  type: INT64
+  description: FK to dim_sales_rep
+  nullable: true
+- name: product_key
+  type: INT64
+  description: FK to dim_product
+  nullable: true
+- name: department_key
+  type: INT64
+  description: FK to dim_department (1=Jaybel, 2=Frazer)
+  nullable: true
+- name: invoice
+  type: STRING
+  description: Invoice number
+  nullable: true
+- name: order_no
+  type: STRING
+  description: Order number
+  nullable: true
+- name: item_code
+  type: STRING
+  description: Product item code
+  nullable: true
+- name: whse
+  type: STRING
+  description: Warehouse code
+  nullable: true
+- name: territory_code
+  type: STRING
+  description: Territory code
+  nullable: true
+- name: orgn_rep
+  type: STRING
+  description: Original rep code at time of sale
+  nullable: true
+- name: mkt
+  type: STRING
+  description: Market segment code
+  nullable: true
+- name: file_id
+  type: STRING
+  description: Source file ID for traceability
+  nullable: true
+- name: qty
+  type: FLOAT64
+  description: Quantity sold
+  nullable: true
+- name: line_sales_ex_gst
+  type: FLOAT64
+  description: Line revenue excluding GST
+  nullable: true
+- name: line_cost
+  type: FLOAT64
+  description: Line total cost
+  nullable: true
+- name: line_gp_dollar
+  type: FLOAT64
+  description: Line gross profit dollars
+  nullable: true
+- name: gp_percent
+  type: FLOAT64
+  description: Gross profit percent
+  nullable: true
+- name: unit_sale_ex_gst
+  type: FLOAT64
+  description: Unit selling price ex GST
+  nullable: true
+- name: unit_cost
+  type: FLOAT64
+  description: Unit cost
+  nullable: true
+- name: unit_gp_dollar
+  type: FLOAT64
+  description: Unit GP dollars
+  nullable: true
+relationships:
+- column: date_key
+  references: jaybel-dev.jaybel_sales_analytics.dim_date.date_key
+- column: customer_key
+  references: jaybel-dev.jaybel_sales_analytics.dim_sales_customer.customer_key
+- column: rep_key
+  references: jaybel-dev.jaybel_sales_analytics.dim_sales_rep.rep_key
+- column: product_key
+  references: jaybel-dev.jaybel_sales_analytics.dim_product.product_key
+- column: department_key
+  references: jaybel-dev.jaybel_sales_analytics.dim_department.department_key
+common_filters:
+- date_key
+- department_key
+- rep_key
+- customer_key
+- product_key
+- territory_code
+- whse
+common_aggregations:
+- - line_sales_ex_gst
+  - SUM
+- - line_gp_dollar
+  - SUM
+- - line_cost
+  - SUM
+- - qty
+  - SUM
+- - gp_percent
+  - AVG
+- - sales_key
+  - COUNT
+time_columns:
+- date_key
+few_shot_examples:
+- question: What was total sales excluding GST in fiscal year 2025-2026 for Jaybel?
+  sql: 'SELECT SUM(f.line_sales_ex_gst) AS total_sales_ex_gst
+
+    FROM `jaybel-dev.jaybel_sales_analytics.fact_sales_report` AS f
+
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_date` AS d ON f.date_key = d.date_key
+
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_department` AS dept ON f.department_key
+    = dept.department_key
+
+    WHERE d.fy = ''2025-2026'' AND dept.department_name = ''Jaybel''
+
+    LIMIT 1000'
+- question: Show monthly sales trend for fiscal year 2024-2025
+  sql: 'SELECT d.fiscal_month_name, d.fiscal_month_no, SUM(f.line_sales_ex_gst) AS
+    total_sales
+
+    FROM `jaybel-dev.jaybel_sales_analytics.fact_sales_report` AS f
+
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_date` AS d ON f.date_key = d.date_key
+
+    WHERE d.fy = ''2024-2025''
+
+    GROUP BY d.fiscal_month_name, d.fiscal_month_no
+
+    ORDER BY d.fiscal_month_no
+
+    LIMIT 1000'
+- question: Top 10 customers by gross profit last fiscal quarter
+  sql: 'SELECT c.account_name, SUM(f.line_gp_dollar) AS total_gp
+
+    FROM `jaybel-dev.jaybel_sales_analytics.fact_sales_report` AS f
+
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_date` AS d ON f.date_key = d.date_key
+
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_sales_customer` AS c ON f.customer_key
+    = c.customer_key
+
+    WHERE d.fy = ''2025-2026'' AND d.fiscal_quarter = ''Q2''
+
+    GROUP BY c.account_name
+
+    ORDER BY total_gp DESC
+
+    LIMIT 10'
+- question: Compare Jaybel vs Frazer total revenue this fiscal year
+  sql: 'SELECT dept.department_name, SUM(f.line_sales_ex_gst) AS total_sales
+
+    FROM `jaybel-dev.jaybel_sales_analytics.fact_sales_report` AS f
+
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_date` AS d ON f.date_key = d.date_key
+
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_department` AS dept ON f.department_key
+    = dept.department_key
+
+    WHERE d.fy = ''2025-2026''
+
+    GROUP BY dept.department_name
+
+    LIMIT 1000'
+- question: Sales by product main group for rep code ABC
+  sql: 'SELECT p.main_group_name, SUM(f.line_sales_ex_gst) AS sales
+
+    FROM `jaybel-dev.jaybel_sales_analytics.fact_sales_report` AS f
+
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_sales_rep` AS r ON f.rep_key = r.rep_key
+
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_product` AS p ON f.product_key = p.product_key
+
+    WHERE r.sales_rep_code = ''ABC''
+
+    GROUP BY p.main_group_name
+
+    ORDER BY sales DESC
+
+    LIMIT 1000'
+- question: Average GP percent by territory code in calendar year 2025
+  sql: 'SELECT f.territory_code, AVG(f.gp_percent) AS avg_gp_pct
+
+    FROM `jaybel-dev.jaybel_sales_analytics.fact_sales_report` AS f
+
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_date` AS d ON f.date_key = d.date_key
+
+    WHERE d.calendar_year = 2025
+
+    GROUP BY f.territory_code
+
+    LIMIT 1000'
+- question: How many invoice line items were sold in July 2025?
+  sql: 'SELECT COUNT(*) AS line_count
+
+    FROM `jaybel-dev.jaybel_sales_analytics.fact_sales_report` AS f
+
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_date` AS d ON f.date_key = d.date_key
+
+    WHERE d.date BETWEEN ''2025-07-01'' AND ''2025-07-31''
+
+    LIMIT 1000'
+- question: List invoices with line sales over 10000 ex GST in Q1 fiscal 2025-2026
+  sql: 'SELECT f.invoice, f.order_no, f.line_sales_ex_gst, d.date
+
+    FROM `jaybel-dev.jaybel_sales_analytics.fact_sales_report` AS f
+
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_date` AS d ON f.date_key = d.date_key
+
+    WHERE d.fy = ''2025-2026'' AND d.fiscal_quarter = ''Q1'' AND f.line_sales_ex_gst
+    > 10000
+
+    ORDER BY f.line_sales_ex_gst DESC
+
+    LIMIT 1000'

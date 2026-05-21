@@ -1,0 +1,62 @@
+table_id: jaybel-dev.jaybel_sales_analytics.stg_sales_rep
+display_name: Sales Rep (Staging Raw)
+layer: staging
+agent_default: false
+routing_priority: avoid_unless_raw
+description: Raw sales rep reference. Prefer dim_sales_rep.
+business_tags:
+- raw rep
+- staging
+grain: One raw rep row.
+columns:
+- name: sales_rep_id
+  type: STRING
+  description: Rep id
+  nullable: true
+- name: sales_rep_code
+  type: STRING
+  description: Rep code
+  nullable: true
+- name: description
+  type: STRING
+  description: Rep name
+  nullable: true
+- name: frazer_link
+  type: STRING
+  description: frazer_link (STRING)
+  nullable: true
+- name: company
+  type: STRING
+  description: Jaybel or Frazer
+  nullable: true
+relationships: []
+common_filters:
+- sales_rep_code
+- company
+common_aggregations: []
+time_columns: []
+few_shot_examples:
+- question: Count raw reps
+  sql: SELECT COUNT(*) FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_rep` LIMIT
+    1000
+- question: Raw rep codes for Jaybel
+  sql: SELECT sales_rep_code, description FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_rep`
+    WHERE company = 'Jaybel' LIMIT 1000
+- question: Distinct companies raw reps
+  sql: SELECT DISTINCT company FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_rep`
+    LIMIT 1000
+- question: Find raw rep by code
+  sql: SELECT description FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_rep` WHERE
+    sales_rep_code = 'R01' LIMIT 1000
+- question: Reps with frazer_link
+  sql: SELECT sales_rep_code, frazer_link FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_rep`
+    WHERE frazer_link IS NOT NULL LIMIT 1000
+- question: Sample 10 raw reps
+  sql: SELECT sales_rep_code, description FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_rep`
+    LIMIT 10
+- question: Raw rep id count
+  sql: SELECT COUNT(DISTINCT sales_rep_id) FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_rep`
+    LIMIT 1000
+- question: List raw rep descriptions A-M
+  sql: SELECT description FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_rep` WHERE
+    description < 'N' ORDER BY description LIMIT 1000

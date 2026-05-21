@@ -1,0 +1,188 @@
+table_id: jaybel-dev.jaybel_sales_analytics.stg_sales_report
+display_name: Sales Report (Staging Raw)
+layer: staging
+agent_default: false
+routing_priority: avoid_unless_raw
+description: Raw RDS import of invoice line items. All columns STRING — prefer fact_sales_report
+  for analytics.
+business_tags:
+- raw
+- staging
+- source
+- sales file
+- untyped
+grain: One raw invoice line item row (STRING types).
+columns:
+- name: id
+  type: STRING
+  description: Record id
+  nullable: true
+- name: account
+  type: STRING
+  description: Customer account
+  nullable: true
+- name: trans_date
+  type: STRING
+  description: Transaction datetime string
+  nullable: true
+- name: invoice
+  type: STRING
+  description: Invoice
+  nullable: true
+- name: order_no
+  type: STRING
+  description: order_no (STRING)
+  nullable: true
+- name: group_no
+  type: STRING
+  description: group_no (STRING)
+  nullable: true
+- name: item_code
+  type: STRING
+  description: item_code (STRING)
+  nullable: true
+- name: brand_manuf
+  type: STRING
+  description: brand_manuf (STRING)
+  nullable: true
+- name: manuf_apn_no
+  type: STRING
+  description: manuf_apn_no (STRING)
+  nullable: true
+- name: description
+  type: STRING
+  description: description (STRING)
+  nullable: true
+- name: qty
+  type: STRING
+  description: qty (STRING)
+  nullable: true
+- name: line_sales_ex_gst
+  type: STRING
+  description: Line sales ex GST as string
+  nullable: true
+- name: line_cost
+  type: STRING
+  description: line_cost (STRING)
+  nullable: true
+- name: unit_sale_ex_gst
+  type: STRING
+  description: unit_sale_ex_gst (STRING)
+  nullable: true
+- name: unit_cost
+  type: STRING
+  description: unit_cost (STRING)
+  nullable: true
+- name: unit_gp_dollar
+  type: STRING
+  description: unit_gp_dollar (STRING)
+  nullable: true
+- name: line_gp_dollar
+  type: STRING
+  description: Line GP string
+  nullable: true
+- name: gp_percent
+  type: STRING
+  description: gp_percent (STRING)
+  nullable: true
+- name: rep
+  type: STRING
+  description: Rep code
+  nullable: true
+- name: mkt
+  type: STRING
+  description: mkt (STRING)
+  nullable: true
+- name: account_name
+  type: STRING
+  description: account_name (STRING)
+  nullable: true
+- name: whse
+  type: STRING
+  description: whse (STRING)
+  nullable: true
+- name: ter
+  type: STRING
+  description: ter (STRING)
+  nullable: true
+- name: orgn_rep
+  type: STRING
+  description: orgn_rep (STRING)
+  nullable: true
+- name: group_name
+  type: STRING
+  description: group_name (STRING)
+  nullable: true
+- name: main_group_name
+  type: STRING
+  description: Product group
+  nullable: true
+- name: rep_name
+  type: STRING
+  description: rep_name (STRING)
+  nullable: true
+- name: company
+  type: STRING
+  description: Jaybel or Frazer
+  nullable: true
+- name: fiscal_year
+  type: STRING
+  description: FY label
+  nullable: true
+- name: territory
+  type: STRING
+  description: territory (STRING)
+  nullable: true
+- name: frazer_link
+  type: STRING
+  description: frazer_link (STRING)
+  nullable: true
+- name: file_id
+  type: STRING
+  description: file_id (STRING)
+  nullable: true
+- name: industry
+  type: STRING
+  description: industry (STRING)
+  nullable: true
+- name: industry_sub
+  type: STRING
+  description: industry_sub (STRING)
+  nullable: true
+- name: business_code
+  type: STRING
+  description: business_code (STRING)
+  nullable: true
+relationships: []
+common_filters:
+- fiscal_year
+- company
+- account
+common_aggregations: []
+time_columns:
+- trans_date
+few_shot_examples:
+- question: Raw row count in staging sales
+  sql: SELECT COUNT(*) AS rows FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_report`
+    LIMIT 1000
+- question: Sample 5 raw sales rows
+  sql: SELECT id, account, trans_date, line_sales_ex_gst FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_report`
+    LIMIT 5
+- question: Distinct fiscal_year values in raw sales
+  sql: SELECT DISTINCT fiscal_year FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_report`
+    LIMIT 1000
+- question: Raw sales for company Jaybel
+  sql: SELECT COUNT(*) AS cnt FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_report`
+    WHERE company = 'Jaybel' LIMIT 1000
+- question: Invoices in raw staging for account ACC001
+  sql: SELECT invoice, trans_date FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_report`
+    WHERE account = 'ACC001' LIMIT 1000
+- question: Raw file_id traceability list
+  sql: SELECT DISTINCT file_id FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_report`
+    LIMIT 1000
+- question: Raw rep codes distinct
+  sql: SELECT DISTINCT rep FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_report`
+    LIMIT 1000
+- question: Raw territory codes
+  sql: SELECT DISTINCT ter FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_report`
+    LIMIT 1000

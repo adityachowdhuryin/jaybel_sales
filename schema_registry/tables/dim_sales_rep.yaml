@@ -1,0 +1,81 @@
+table_id: jaybel-dev.jaybel_sales_analytics.dim_sales_rep
+display_name: Sales Rep (Dimension)
+layer: dimension
+agent_default: true
+routing_priority: secondary
+description: Sales representatives with codes, names, company, and department FK.
+business_tags:
+- sales rep
+- rep
+- representative
+- salesperson
+- frazer link
+grain: One row per sales representative.
+columns:
+- name: rep_key
+  type: INT64
+  description: Surrogate PK
+  nullable: true
+- name: sales_rep_id
+  type: STRING
+  description: Source system rep ID
+  nullable: true
+- name: sales_rep_code
+  type: STRING
+  description: Short rep code used in facts
+  nullable: true
+- name: description
+  type: STRING
+  description: Rep full name
+  nullable: true
+- name: frazer_link
+  type: STRING
+  description: Frazer link identifier
+  nullable: true
+- name: company
+  type: STRING
+  description: Company rep belongs to
+  nullable: true
+  sample_values:
+  - Jaybel
+  - Frazer
+- name: department_key
+  type: INT64
+  description: FK to dim_department
+  nullable: true
+relationships:
+- column: department_key
+  references: jaybel-dev.jaybel_sales_analytics.dim_department.department_key
+common_filters:
+- sales_rep_code
+- company
+- department_key
+common_aggregations:
+- - rep_key
+  - COUNT
+time_columns: []
+few_shot_examples:
+- question: List all Jaybel sales reps
+  sql: SELECT sales_rep_code, description FROM `jaybel-dev.jaybel_sales_analytics.dim_sales_rep`
+    WHERE company = 'Jaybel' LIMIT 1000
+- question: How many reps per department?
+  sql: SELECT department_key, COUNT(*) AS rep_count FROM `jaybel-dev.jaybel_sales_analytics.dim_sales_rep`
+    GROUP BY department_key LIMIT 1000
+- question: Find rep by code SM01
+  sql: SELECT description, company FROM `jaybel-dev.jaybel_sales_analytics.dim_sales_rep`
+    WHERE sales_rep_code = 'SM01' LIMIT 1000
+- question: Reps with Frazer link populated
+  sql: SELECT sales_rep_code, frazer_link FROM `jaybel-dev.jaybel_sales_analytics.dim_sales_rep`
+    WHERE frazer_link IS NOT NULL LIMIT 1000
+- question: Count sales reps
+  sql: SELECT COUNT(*) AS total_reps FROM `jaybel-dev.jaybel_sales_analytics.dim_sales_rep`
+    LIMIT 1000
+- question: Rep names for Frazer company
+  sql: SELECT description FROM `jaybel-dev.jaybel_sales_analytics.dim_sales_rep` WHERE
+    company = 'Frazer' ORDER BY description LIMIT 1000
+- question: Distinct companies in rep dimension
+  sql: SELECT DISTINCT company FROM `jaybel-dev.jaybel_sales_analytics.dim_sales_rep`
+    LIMIT 1000
+- question: Reps in department key 1
+  sql: SELECT sales_rep_code, description FROM `jaybel-dev.jaybel_sales_analytics.dim_sales_rep`
+    WHERE department_key = 1 LIMIT 1000

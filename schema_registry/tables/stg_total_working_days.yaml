@@ -1,0 +1,70 @@
+table_id: jaybel-dev.jaybel_sales_analytics.stg_total_working_days
+display_name: Total Working Days (Reference)
+layer: staging
+agent_default: true
+routing_priority: special_reference
+description: Standalone reference for working days per fiscal month/year. Not part
+  of star schema joins — query this table alone for working-day KPIs.
+business_tags:
+- working days
+- business days
+- fiscal month capacity
+- sales days
+grain: One row per fiscal year + month (plus yearly totals).
+columns:
+- name: id
+  type: STRING
+  description: Record id
+  nullable: true
+- name: fiscal_year
+  type: STRING
+  description: FY label e.g. 2025-2026
+  nullable: true
+- name: month
+  type: STRING
+  description: Month name or number
+  nullable: true
+- name: total_working_days
+  type: STRING
+  description: Working days in month
+  nullable: true
+- name: YearlyTotalWorkingDays
+  type: STRING
+  description: Working days in fiscal year
+  nullable: true
+- name: Completed_days
+  type: STRING
+  description: Completed working days so far
+  nullable: true
+relationships: []
+common_filters:
+- fiscal_year
+- month
+common_aggregations: []
+time_columns: []
+few_shot_examples:
+- question: Working days in July for fiscal 2025-2026
+  sql: SELECT total_working_days FROM `jaybel-dev.jaybel_sales_analytics.stg_total_working_days`
+    WHERE fiscal_year = '2025-2026' AND month = 'July' LIMIT 1000
+- question: Yearly total working days FY 2025-2026
+  sql: SELECT YearlyTotalWorkingDays FROM `jaybel-dev.jaybel_sales_analytics.stg_total_working_days`
+    WHERE fiscal_year = '2025-2026' LIMIT 1
+- question: Completed working days so far FY 2025-2026
+  sql: SELECT Completed_days FROM `jaybel-dev.jaybel_sales_analytics.stg_total_working_days`
+    WHERE fiscal_year = '2025-2026' AND month = 'Current' LIMIT 1
+- question: List working days by month for 2024-2025
+  sql: SELECT month, total_working_days FROM `jaybel-dev.jaybel_sales_analytics.stg_total_working_days`
+    WHERE fiscal_year = '2024-2025' ORDER BY month LIMIT 1000
+- question: How many months have working day data
+  sql: SELECT COUNT(DISTINCT month) FROM `jaybel-dev.jaybel_sales_analytics.stg_total_working_days`
+    WHERE fiscal_year = '2025-2026' LIMIT 1000
+- question: Distinct fiscal years in working days table
+  sql: SELECT DISTINCT fiscal_year FROM `jaybel-dev.jaybel_sales_analytics.stg_total_working_days`
+    LIMIT 1000
+- question: Working days for fiscal Q1 months
+  sql: SELECT month, total_working_days FROM `jaybel-dev.jaybel_sales_analytics.stg_total_working_days`
+    WHERE fiscal_year = '2025-2026' AND month IN ('July','August','September') LIMIT
+    1000
+- question: Compare completed vs total days
+  sql: SELECT month, Completed_days, total_working_days FROM `jaybel-dev.jaybel_sales_analytics.stg_total_working_days`
+    WHERE fiscal_year = '2025-2026' LIMIT 1000

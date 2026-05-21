@@ -1,0 +1,86 @@
+table_id: jaybel-dev.jaybel_sales_analytics.stg_sales_cust
+display_name: Sales Customer (Staging Raw)
+layer: staging
+agent_default: false
+routing_priority: avoid_unless_raw
+description: Raw customer import. Prefer dim_sales_customer for typed customer analytics.
+business_tags:
+- raw customer
+- staging
+- source
+grain: One raw customer row (STRING).
+columns:
+- name: id
+  type: STRING
+  description: Customer id
+  nullable: true
+- name: account
+  type: STRING
+  description: Account code
+  nullable: true
+- name: account_name
+  type: STRING
+  description: Account name
+  nullable: true
+- name: created_date
+  type: STRING
+  description: created_date (STRING)
+  nullable: true
+- name: first_created_date
+  type: STRING
+  description: first_created_date (STRING)
+  nullable: true
+- name: rep
+  type: STRING
+  description: rep (STRING)
+  nullable: true
+- name: is_new_account
+  type: STRING
+  description: 1=new, 0=existing
+  nullable: true
+  sample_values:
+  - '0'
+  - '1'
+- name: is_new_created_date_cycle
+  type: STRING
+  description: is_new_created_date_cycle (STRING)
+  nullable: true
+- name: industry_sub
+  type: STRING
+  description: industry_sub (STRING)
+  nullable: true
+- name: business_code
+  type: STRING
+  description: business_code (STRING)
+  nullable: true
+relationships: []
+common_filters:
+- account
+common_aggregations: []
+time_columns:
+- created_date
+few_shot_examples:
+- question: Count raw staging customers
+  sql: SELECT COUNT(*) FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_cust` LIMIT
+    1000
+- question: Raw new account flag distribution
+  sql: SELECT is_new_account, COUNT(*) AS cnt FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_cust`
+    GROUP BY is_new_account LIMIT 1000
+- question: Sample raw customer names
+  sql: SELECT account, account_name FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_cust`
+    LIMIT 10
+- question: Raw customers by industry sub
+  sql: SELECT industry_sub, COUNT(*) AS cnt FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_cust`
+    GROUP BY industry_sub LIMIT 1000
+- question: Find raw account ACC99
+  sql: SELECT * FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_cust` WHERE account
+    = 'ACC99' LIMIT 1000
+- question: Distinct business codes raw
+  sql: SELECT DISTINCT business_code FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_cust`
+    LIMIT 1000
+- question: Raw customers with rep assigned
+  sql: SELECT account_name, rep FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_cust`
+    WHERE rep IS NOT NULL LIMIT 1000
+- question: Raw customer id list limit 20
+  sql: SELECT id, account FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_cust`
+    LIMIT 20

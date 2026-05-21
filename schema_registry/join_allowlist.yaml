@@ -1,0 +1,58 @@
+# Approved joins for NL-to-SQL (Jaybel star schema)
+# Validator C must reject any FROM/JOIN not listed here or in single-table queries on dims/staging.
+
+version: 1
+dataset: jaybel-dev.jaybel_sales_analytics
+
+# Standard star-schema pattern: fact alias f + dimension aliases
+query_patterns:
+  - id: fact_sales_with_dims
+    primary_table: fact_sales_report
+    description: Primary sales analytics — invoice line items with optional dimension attributes
+    from: "`jaybel-dev.jaybel_sales_analytics.fact_sales_report` AS f"
+    allowed_joins:
+      - alias: d
+        table: dim_date
+        on: "f.date_key = d.date_key"
+      - alias: c
+        table: dim_sales_customer
+        on: "f.customer_key = c.customer_key"
+      - alias: r
+        table: dim_sales_rep
+        on: "f.rep_key = r.rep_key"
+      - alias: p
+        table: dim_product
+        on: "f.product_key = p.product_key"
+      - alias: dept
+        table: dim_department
+        on: "f.department_key = dept.department_key"
+
+  - id: fact_new_business_frazer_with_dims
+    primary_table: fact_new_business_frazer
+    description: Frazer new-business transactions with optional dimension attributes
+    from: "`jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer` AS f"
+    allowed_joins:
+      - alias: d
+        table: dim_date
+        on: "f.date_key = d.date_key"
+      - alias: c
+        table: dim_sales_customer
+        on: "f.customer_key = c.customer_key"
+      - alias: r
+        table: dim_sales_rep
+        on: "f.rep_key = r.rep_key"
+      - alias: p
+        table: dim_product
+        on: "f.product_key = p.product_key"
+      - alias: dept
+        table: dim_department
+        on: "f.department_key = dept.department_key"
+
+# Single-table queries (no joins) allowed on any registered table_id
+single_table_queries: true
+
+# Staging tables: STRING columns only — agent should route here only for raw/source requests
+staging_policy:
+  prefer_facts: true
+  message_when_misrouted: >
+    Use fact_sales_report or fact_new_business_frazer for sales metrics; staging tables are untyped raw imports.
