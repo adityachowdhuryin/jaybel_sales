@@ -1,4 +1,4 @@
-table_id: jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer_frazer
+table_id: jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer
 display_name: New Business (Fact)
 layer: fact
 agent_default: true

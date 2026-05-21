@@ -1,6 +1,6 @@
 # Pre-implementation checklist — Jaybel Sales Analytics Agent
 
-Status: **ready to start implementation (Phase A, Step 1)** — see `docs/DECISIONS.md` and `docs/FINAL_READINESS_REVIEW.md`.
+Status: **Phase A complete** — pipeline library in `pipeline/`; **Phase B next** (Agent Engine). See `docs/DECISIONS.md` and `docs/FINAL_READINESS_REVIEW.md`.
 
 ## Completed (in repo)
 
@@ -18,6 +18,7 @@ Status: **ready to start implementation (Phase A, Step 1)** — see `docs/DECISI
 - [x] **Timezone:** `Australia/Sydney` (calendar-relative dates)
 - [x] **Auth:** Firebase Google Sign-In on `jaybel-dev`
 - [x] **UI v1:** localhost (`http://localhost:3000`)
+- [x] **Phase A:** `pipeline/` package + unit tests (12 pass) + BQ dry-run integration
 
 ## Verify in GCP (during implementation — not blocking prep)
 

@@ -42,6 +42,20 @@ Natural-language agent for Jaybel sales data on BigQuery, deployed on **Vertex A
 - **Auth:** Firebase Google Sign-In on `jaybel-dev`
 - **UI:** `http://localhost:3000` (local dev)
 
+## Phase A pipeline (implemented)
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+PYTHONPATH=. .venv/bin/pytest tests/ -m "not integration"   # unit tests
+PYTHONPATH=. .venv/bin/pytest tests/ -m integration         # live BigQuery dry-run
+
+# Run one question (requires Vertex AI + BigQuery credentials)
+PYTHONPATH=. .venv/bin/python scripts/run_pipeline_cli.py "Top 5 customers by sales FY 2025-2026"
+PYTHONPATH=. .venv/bin/python scripts/run_pipeline_cli.py "List departments" --skip-execute
+```
+
+Package layout: `pipeline/` (registry, L1–L5, validators, `Pipeline` orchestrator).
+
 ## Next step
 
-**Ready** — start implementation plan **Step 1** (registry loader), then agent tools + Agent Engine deploy, then local Next.js UI.
+**Phase B** — wrap `pipeline` in Vertex AI Agent Engine tools and deploy to `jaybel-dev`.

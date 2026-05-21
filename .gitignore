@@ -10,3 +10,4 @@ _office_supplies_questions_extract.txt
 node_modules/
 .next/
 dist/
+.pytest_cache/
