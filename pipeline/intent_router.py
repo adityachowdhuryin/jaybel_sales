@@ -10,6 +10,7 @@ from pipeline.registry.join_allowlist import JoinAllowlist
 from pipeline.registry.keyword_index import KeywordIndex
 from pipeline.registry.loader import Registry
 from pipeline.time_range import resolve_time_range
+from pipeline.user_context import UserContext
 from pipeline.vertex_llm import generate_text, parse_json_response
 
 L1_SYSTEM = """You are a BigQuery analytics router for Jaybel sales data.
@@ -45,12 +46,15 @@ class IntentRouter:
         self,
         question: str,
         history: list[dict[str, Any]] | None = None,
+        user_context: UserContext | None = None,
     ) -> L1Result:
         keyword_hits = self.keyword_index.top_table_ids(question, top_k=2)
         catalog = self.registry.compact_catalog()
         hist = ""
         if history:
-            hist = "Prior turns:\n" + json.dumps(history[-5:], indent=2)
+            hist = "Prior turns (use for follow-up filters and table context):\n" + json.dumps(
+                history[-5:], indent=2
+            )
 
         user = f"""Question: {question}
 
@@ -60,7 +64,7 @@ Table catalog:
 {catalog}
 
 Allowed join patterns: {self.allowlist.pattern_ids()}
-{hist}
+{hist}{(user_context or UserContext()).prompt_block()}
 """
         raw = generate_text(L1_SYSTEM, user, json_mode=True)
         data = parse_json_response(raw)

@@ -8,7 +8,7 @@ These are **additional** questions the client may ask the agent, on top of the g
 - **Routing:** Most questions map to `fact_sales_report` + dimension joins; working-day / projection math may also use `stg_total_working_days`.
 - **Product categories** (examples from the BI report): map to `dim_product.main_group_name` — e.g. `Office Supplies`, `Furniture`, `Ink & Toner`, `Kitchen & Janitorial`, `Apparel`. Confirm exact strings in live data.
 - **Customer names** (examples): filter `dim_sales_customer.account_name` (e.g. `Brisbane City Council`, `Lizard Island Resort`, `Best Doors Rockhampton`, `99 BIKES`).
-- **Rep-scoped questions** (“my sales”, “my GP”): require authenticated **rep context** from Firebase session → filter `dim_sales_rep` / facts by `rep_key` or `sales_rep_code`.
+- **Rep-scoped questions** (“my sales”, “my GP”): require **rep context** from local `users.sales_rep_code` (Postgres) passed into Agent Engine session → filter `dim_sales_rep` / facts by `rep_key` or `sales_rep_code`.
 - **Targets & projections** ($6M business target, Furniture $387K, BTS $613K, projected monthly sales/GP): originated in the **Power BI Office Supplies report**. They are **not** in the current 13-table BigQuery star schema unless you add target/budget tables or views. v1 behavior: answer what is computable from facts; clearly state when a target/projection metric is **not available** in BigQuery.
 
 ## Categories and questions (verbatim intent, normalized spelling)

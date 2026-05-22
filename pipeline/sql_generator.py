@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pipeline.few_shot import select_few_shots
 from pipeline.models import L1Result
+from pipeline.user_context import UserContext
 from pipeline.registry.join_allowlist import JoinAllowlist
 from pipeline.registry.loader import Registry
 from pipeline.sql_utils import strip_markdown_sql
@@ -32,6 +33,7 @@ class SQLGenerator:
         question: str,
         l1: L1Result,
         repair_hint: str | None = None,
+        user_context: UserContext | None = None,
     ) -> str:
         table = self.registry.get(l1.table_id)
         few_shots = select_few_shots(table, question, k=2)
@@ -56,6 +58,7 @@ Schema:
 
 Examples:
 {fs_block}
+{(user_context or UserContext()).prompt_block()}
 """
         if repair_hint:
             user += f"\n\nPrevious SQL failed validation:\n{repair_hint}\nFix only the reported issue."

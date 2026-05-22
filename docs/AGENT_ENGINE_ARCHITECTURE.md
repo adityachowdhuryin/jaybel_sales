@@ -1,72 +1,90 @@
-# Agent Engine–only architecture (Jaybel)
+# Agent Engine architecture (Jaybel)
 
-**Requirement:** Every UI interaction is an **Agent Engine invocation** so telemetry appears in the Vertex AI Agent Engine dashboard.
+**Requirement:** Every analytics question is an **Agent Engine invocation** (Vertex AI dashboard telemetry).
+
+**Local app (v1):** Next.js → **FastAPI** → Agent Engine. Sessions and turns in **PostgreSQL**.
 
 ## Request flow
 
 ```mermaid
 sequenceDiagram
-    participant UI as Next.js UI
-    participant AE as Vertex AI Agent Engine
-    participant Tools as Agent tools (Python)
+    participant UI as Next.js
+    participant API as FastAPI
+    participant PG as PostgreSQL
+    participant AE as Agent Engine
+    participant Tool as query_sales_analytics
     participant BQ as BigQuery
 
-    UI->>AE: stream_query(session_id, user_message)
-    Note over AE: Invocation recorded in Agent Engine telemetry
-    AE->>Tools: route_and_plan(question, session_context)
-    Tools->>Tools: keyword index + registry (in-process)
-    AE->>Tools: generate_and_validate_sql(plan, table_id)
-    Tools->>Tools: sqlglot + dry run
-    AE->>Tools: execute_sql(validated_sql)
-    Tools->>BQ: query job (read-only)
-    BQ-->>Tools: rows
-    AE->>Tools: summarize_results(rows, question)
-    Tools-->>AE: answer + chart_spec + sql metadata
-    AE-->>UI: streamed tokens + structured artifacts
+    UI->>API: POST /api/chat/stream
+    API->>PG: load last 5 turns, ui_context
+    API->>AE: stream_query(message with SALES_CONTEXT)
+    AE->>Tool: question, history_json, sales_rep_code
+    Tool->>BQ: validated SQL
+    BQ-->>Tool: rows
+    AE-->>API: streamed events
+    API-->>UI: SSE (status, sql, results, token, done+turn_id)
+    API->>PG: insert turn, update ui_context
 ```
+
+## Tool: `query_sales_analytics`
+
+| Input | Source |
+|-------|--------|
+| `question` | Full user message (may include `[SALES_CONTEXT]...[/SALES_CONTEXT]` prefix) |
+| `history_json` | JSON array of prior turns (also inside envelope) |
+| `sales_rep_code` | Postgres user profile |
+| `user_id` | Default dev user |
+
+Agent parses `[SALES_CONTEXT]`, strips it from the question, and calls `Pipeline.run(history=...)`.
 
 ## Component responsibilities
 
 | Component | Role |
 |-----------|------|
-| **Next.js UI** | Firebase **Google Sign-In** (`jaybel-dev`); runs at **`http://localhost:3000`** in v1; session sidebar; **only** calls Agent Engine APIs for chat |
-| **Agent Engine agent** | Orchestrator LLM + tool routing; owns user-visible conversation |
-| **Agent tools package** | Implements L1–L5: registry load, routing, SQL gen, validation, BQ execute, answer — bundled with agent deployment |
-| **FastAPI (optional)** | **Not** on query hot path. May host: health, admin reload registry, PDF export, session APIs if not in Firestore client |
-| **Schema registry** | `schema_registry/tables/*.yaml` + `join_allowlist.yaml` baked into agent container |
-| **BigQuery** | `jaybel-dev.jaybel_sales_analytics.*` |
+| **Next.js** | Chat UI, explore drawer, follow-ups, feedback — **no Firebase** |
+| **FastAPI** | Sessions, catalog API, SSE proxy, persist turns |
+| **PostgreSQL** | App state only |
+| **Agent Engine** | Orchestrator + pipeline tool |
+| **BigQuery** | Warehouse |
 
-## Why tools live in the agent package
+## Display name
 
-Agent Engine–only entry means the **orchestrator and tools deploy together** to the reasoning engine. Cloud Run tool callbacks are optional for v2; v1 keeps all pipeline steps inside the deployed agent artifact so every step is still one Agent Engine invocation tree.
+**Sales and analytics agent**
 
-## Service account
+## Engine resource
 
-Runtime identity: `115724636423-compute@developer.gserviceaccount.com` (confirm Agent Engine deployment uses this SA or a dedicated one with same roles).
+- ID: `8991351443894042624`
+- File: `agent/AGENT_ENGINE_RESOURCE.env`
+
+## Deploy / redeploy
+
+```bash
+./scripts/deploy-sales-agent-engine.sh --agent-engine-id 8991351443894042624
+```
+
+Redeploy after changes to `agent/sales_analytics_agent/agent.py` or bundled `pipeline/`.
 
 ## Streaming contract (UI)
 
-The UI does **not** call FastAPI for queries in v1. Map Agent Engine streaming payloads to these UI event types (same shapes as the plan’s SSE contract):
+| Event | UI use |
+|-------|--------|
+| `status` | Pipeline status line |
+| `table_name` | Table label |
+| `sql` | SQL accordion |
+| `results` | Data table |
+| `token` | Streaming answer |
+| `chart_spec` | Recharts panel |
+| `cost_warning` | Bytes scanned banner |
+| `done` | Finish; includes `turn_id`, `query_id` |
+| `error` | Error message |
 
-| UI state | Source |
-|----------|--------|
-| Status text | Tool progress / agent thinking |
-| Table name | `route_and_plan` result |
-| SQL accordion | Post-validation SQL |
-| Data table | Query rows JSON |
-| Answer tokens | Final summarization stream |
-| Chart | Parsed `chart_spec` |
-| Done / error | Terminal events |
-
-## Display name (console)
-
-`Jaybel Sales Analytics Agent` — see `agent/.agent_engine_config.json`.
-
-## Local development (v1)
+## Local development
 
 | Item | Value |
 |------|--------|
-| UI URL | `http://localhost:3000` |
-| Auth | Firebase Google; add `localhost` to authorized domains |
-| Config | `frontend/.env.local` (created in implementation) |
-| Decisions | `docs/DECISIONS.md` |
+| UI | http://localhost:3000/chat |
+| API | http://localhost:8000 |
+| Postgres | `./scripts/start-phase-c.sh` (port **15433**) |
+| Auth | `gcloud auth application-default login` |
+
+See `docs/ARCHITECTURE_LOCAL.md`, `docs/PHASE_C_LOCAL.md`.

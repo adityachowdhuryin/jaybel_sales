@@ -1,5 +1,5 @@
 {
-  "display_name": "Jaybel Sales Analytics Agent",
+  "display_name": "Sales and analytics agent",
   "description": "Natural-language sales and analytics for Jaybel star-schema BigQuery (jaybel_sales_analytics). Routes to the correct table, generates validated read-only SQL, executes on BigQuery, and streams summaries with optional charts.",
   "project_id": "jaybel-dev",
   "location": "us-central1",

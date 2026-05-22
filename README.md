@@ -1,77 +1,115 @@
 # Jaybel Sales Analytics — NL-to-SQL Agent
 
-Natural-language agent for Jaybel sales data on BigQuery, deployed on **Vertex AI Agent Engine** (`jaybel-dev`, `us-central1`).
+Natural-language agent for Jaybel sales data on **BigQuery**, deployed on **Vertex AI Agent Engine** (`jaybel-dev`, `us-central1`).  
+**v1 local app:** Next.js + FastAPI + **PostgreSQL on your machine** (no Firebase).
 
 ## Documentation
 
 | Doc | Purpose |
 |-----|---------|
 | [nl_to_sql_agent_full_plan.md](nl_to_sql_agent_full_plan.md) | End-to-end implementation plan |
+| [docs/ARCHITECTURE_LOCAL.md](docs/ARCHITECTURE_LOCAL.md) | **Local stack** — Postgres app data, Agent Engine + BQ analytics |
+| [docs/PHASE_C_LOCAL.md](docs/PHASE_C_LOCAL.md) | Phase C + question discovery — run locally |
+| [docs/UI_QUESTION_DISCOVERY_PLAN.md](docs/UI_QUESTION_DISCOVERY_PLAN.md) | Categories, starters, follow-ups (UI-1–3 complete) |
 | [docs/PRE_IMPLEMENTATION_CHECKLIST.md](docs/PRE_IMPLEMENTATION_CHECKLIST.md) | What is done vs what to verify in GCP |
-| [docs/DECISIONS.md](docs/DECISIONS.md) | Locked timezone, auth, UI hosting |
-| [docs/FINAL_READINESS_REVIEW.md](docs/FINAL_READINESS_REVIEW.md) | Pre-build sign-off (plan correctness + buildability) |
-| [docs/AGENT_ENGINE_ARCHITECTURE.md](docs/AGENT_ENGINE_ARCHITECTURE.md) | Agent Engine–only request flow |
-| [docs/business_glossary.md](docs/business_glossary.md) | Business terms → tables/columns (incl. Office Supplies BI) |
-| `Office_Supplies_BI_Analytics_Questions.pdf` | Client-provided example questions |
-| [docs/qa_evaluation_set.yaml](docs/qa_evaluation_set.yaml) | 97 routing/regression questions (60 generic + 37 client) |
-| [docs/office_supplies_client_questions.md](docs/office_supplies_client_questions.md) | Client BI question catalog (PDF) |
+| [docs/DECISIONS.md](docs/DECISIONS.md) | Locked timezone, auth, storage, UI |
+| [docs/FINAL_READINESS_REVIEW.md](docs/FINAL_READINESS_REVIEW.md) | Pre-build sign-off |
+| [docs/AGENT_ENGINE_ARCHITECTURE.md](docs/AGENT_ENGINE_ARCHITECTURE.md) | Agent Engine request flow + history |
+| [docs/PHASE_A_B_SCOPE.md](docs/PHASE_A_B_SCOPE.md) | Why A/B unchanged for Postgres; what was aligned |
+| [docs/PHASE_B_DEPLOY.md](docs/PHASE_B_DEPLOY.md) | Deploy / redeploy Agent Engine |
+| [docs/business_glossary.md](docs/business_glossary.md) | Business terms → tables/columns |
+| [docs/qa_evaluation_set.yaml](docs/qa_evaluation_set.yaml) | 97 routing/regression questions (with `category`) |
+| [content/question_catalog.yaml](content/question_catalog.yaml) | UI starters, follow-ups, rules |
 | [schema_registry/README.md](schema_registry/README.md) | Table registry layout |
 
 ## Configuration
 
-- **GCP:** [config/jaybel.yaml](config/jaybel.yaml)
+- **GCP:** [config/jaybel.yaml](config/jaybel.yaml) — includes `ui.question_catalog_path`
 - **Schemas:** [schema_registry/tables/](schema_registry/tables/) (13 YAML files)
-- **Joins:** [schema_registry/join_allowlist.yaml](schema_registry/join_allowlist.yaml)
+- **Postgres:** [sql/migrations/](sql/migrations/) (`001`–`004`)
+- **Docker Postgres:** [docker-compose.yml](docker-compose.yml) — host port **15433**
 
-## Validate / sync schemas with live BigQuery
+## Locked for v1 (local)
+
+| Topic | Choice |
+|-------|--------|
+| Timezone | `Australia/Sydney` (calendar “last month”; fiscal when user says fiscal) |
+| App data | **PostgreSQL** on localhost (`jaybel_sales_app`) |
+| Auth | Default dev user in Postgres — **no Firebase** |
+| UI | `http://localhost:3000` (Next.js) |
+| API | `http://localhost:8000` (FastAPI) |
+| Analytics | BigQuery in GCP (not in Postgres) |
+| Queries | Vertex AI Agent Engine only |
+
+## Quick start (full stack)
 
 ```bash
-.venv/bin/python scripts/validate_bq_schema.py      # writes docs/bq_schema_validation_report.md
-.venv/bin/python scripts/sync_registry_columns_from_bq.py  # refresh column lists from BQ
+./scripts/start-phase-c.sh   # Postgres + migrations 001–004
+
+# Terminal 1 — API
+cp backend/.env.example backend/.env
+gcloud auth application-default login   # Agent Engine + BQ
+PYTHONPATH=. .venv/bin/uvicorn backend.main:app --reload --port 8000
+
+# Terminal 2 — UI
+cp frontend/.env.local.example frontend/.env.local
+cd frontend && npm install && npm run dev
 ```
 
-## Regenerate table YAMLs (from PDF bootstrap script)
+Open **http://localhost:3000/chat**
 
-```bash
-.venv/bin/python scripts/generate_schema_registry.py
-```
-
-## Locked for v1
-
-- **Timezone:** `Australia/Sydney` (calendar “last month”; fiscal only when user says fiscal)
-- **Auth:** Firebase Google Sign-In on `jaybel-dev`
-- **UI:** `http://localhost:3000` (local dev)
+| Service | URL |
+|---------|-----|
+| Next.js UI | http://localhost:3000/chat |
+| FastAPI | http://localhost:8000 |
+| Postgres | localhost:**15433** |
 
 ## Phase A pipeline (implemented)
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-PYTHONPATH=. .venv/bin/pytest tests/ -m "not integration"   # unit tests
-PYTHONPATH=. .venv/bin/pytest tests/ -m integration         # live BigQuery dry-run
+PYTHONPATH=. .venv/bin/pytest tests/ -m "not integration"
 
-# Run one question (requires Vertex AI + BigQuery credentials)
 PYTHONPATH=. .venv/bin/python scripts/run_pipeline_cli.py "Top 5 customers by sales FY 2025-2026"
-PYTHONPATH=. .venv/bin/python scripts/run_pipeline_cli.py "List departments" --skip-execute
 ```
 
-Package layout: `pipeline/` (registry, L1–L5, validators, `Pipeline` orchestrator).
+Package: `pipeline/` (registry, L1–L5, validators).
 
 ## Phase B — Agent Engine (deployed)
 
 | Item | Value |
 |------|--------|
 | Engine ID | `8991351443894042624` |
-| Resource | `projects/115724636423/locations/us-central1/reasoningEngines/8991351443894042624` |
-| Console | [Agent playground](https://console.cloud.google.com/vertex-ai/agents/agent-engines/locations/us-central1/agent-engines/8991351443894042624/playground?project=115724636423) |
+| Display name | Sales and analytics agent |
 
 ```bash
-./scripts/deploy-sales-agent-engine.sh --agent-engine-id 8991351443894042624  # update
-export AGENT_ENGINE_RESOURCE=projects/115724636423/locations/us-central1/reasoningEngines/8991351443894042624
-PYTHONPATH=. .venv/bin/python scripts/query_agent_engine.py --question "Top 5 customers by sales"
+./scripts/deploy-sales-agent-engine.sh --agent-engine-id 8991351443894042624
 ```
 
-See `docs/PHASE_B_DEPLOY.md`.
+Redeploy after changes to `agent/sales_analytics_agent/agent.py` (e.g. conversation history).
 
-## Next step
+## Phase C + question discovery (implemented)
 
-**Phase C** — Next.js localhost UI + Firebase Google Sign-In + Agent Engine `stream_query`.
+- Session sidebar, streaming chat, charts, CSV/report/chart export, rep profile
+- **Browse questions** drawer, 11 categories, 97 starters, follow-up chips
+- Multi-turn history via `[SALES_CONTEXT]` → pipeline L1
+- Turn feedback (thumbs + comment), session search
+
+Regenerate catalog from QA set:
+
+```bash
+.venv/bin/python scripts/build_question_catalog.py
+```
+
+Tests (with Postgres):
+
+```bash
+export DATABASE_URL=postgresql://jaybel:jaybel_local_dev@localhost:15433/jaybel_sales_app
+PYTHONPATH=. .venv/bin/pytest tests/test_phase_c_api.py tests/test_question_catalog.py tests/test_chat_history.py tests/test_catalog_integrity.py tests/test_q031_q032_history.py -q
+```
+
+See [docs/PHASE_C_LOCAL.md](docs/PHASE_C_LOCAL.md).
+
+## Phase D (next)
+
+Automated QA runner on Q001–Q097 — not started yet.

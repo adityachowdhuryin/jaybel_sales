@@ -18,10 +18,22 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("question", nargs="?", default="How many rows in dim_department?")
     parser.add_argument("--skip-execute", action="store_true")
+    parser.add_argument("--sales-rep-code", default="", help="Rep code for my-sales questions")
+    parser.add_argument("--user-id", default="", help="Local app user id (optional)")
     args = parser.parse_args()
 
+    ctx = {}
+    if args.sales_rep_code:
+        ctx["sales_rep_code"] = args.sales_rep_code
+    if args.user_id:
+        ctx["user_id"] = args.user_id
+
     p = Pipeline()
-    result = p.run(args.question, skip_execute=args.skip_execute)
+    result = p.run(
+        args.question,
+        skip_execute=args.skip_execute,
+        user_context=ctx or None,
+    )
     for ev in result.events:
         print(json.dumps(ev.to_dict(), default=str))
     if result.sql:

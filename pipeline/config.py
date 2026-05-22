@@ -42,3 +42,35 @@ def bytes_scanned_limit_gb() -> float:
 
 def query_row_limit() -> int:
     return int(load_config()["bigquery"]["default_query_limit"])
+
+
+def auth_provider() -> str:
+    return load_config()["auth"]["provider"]
+
+
+def default_user_id() -> str:
+    return str(load_config()["auth"]["default_user_id"])
+
+
+def default_user_email() -> str:
+    return str(load_config()["auth"]["default_user_email"])
+
+
+def local_database_url() -> str:
+    return str(load_config()["local_app"]["postgres"]["default_url"])
+
+
+def api_base_url() -> str:
+    return str(load_config()["local_app"]["api"]["base_url"])
+
+
+def agent_engine_resource_env() -> str:
+    """Path hint for deploy output (not loaded from env here)."""
+    return str(PROJECT_ROOT / "agent" / "AGENT_ENGINE_RESOURCE.env")
+
+
+def question_catalog_path() -> Path:
+    rel = load_config().get("ui", {}).get(
+        "question_catalog_path", "content/question_catalog.yaml"
+    )
+    return PROJECT_ROOT / rel

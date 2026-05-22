@@ -30,8 +30,16 @@ def test_query_sales_analytics_tool_mocked():
 
     with patch.object(agent_mod, "_get_pipeline") as gp:
         gp.return_value.run.return_value = mock_result
-        out = agent_mod.query_sales_analytics("test question")
+        out = agent_mod.query_sales_analytics(
+            "test question",
+            sales_rep_code="REP99",
+            user_id="u1",
+        )
 
     assert out.startswith(agent_mod.SALES_PAYLOAD_PREFIX)
+    gp.return_value.run.assert_called_once()
+    call_kw = gp.return_value.run.call_args[1]
+    assert call_kw["user_context"].sales_rep_code == "REP99"
+    assert call_kw["user_context"].user_id == "u1"
     payload = json.loads(out[len(agent_mod.SALES_PAYLOAD_PREFIX) :])
     assert payload["sql"] == "SELECT 1"

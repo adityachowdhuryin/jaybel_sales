@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -18,12 +19,30 @@ from google.adk.agents import LlmAgent
 from google.adk.tools import FunctionTool, ToolContext
 
 from pipeline.pipeline import Pipeline
+from pipeline.user_context import UserContext
 
 logger = logging.getLogger(__name__)
 
 SALES_PAYLOAD_PREFIX = "SALES_ANALYTICS_JSON:"
+_SALES_CONTEXT_RE = re.compile(
+    r"^\[SALES_CONTEXT\]\s*(\{.*?\})\s*\[/SALES_CONTEXT\]\s*\n\n",
+    re.DOTALL,
+)
 
 _pipeline: Pipeline | None = None
+
+
+def _parse_sales_context(question: str) -> tuple[str, dict[str, Any]]:
+    m = _SALES_CONTEXT_RE.match(question)
+    if not m:
+        return question, {}
+    try:
+        ctx = json.loads(m.group(1))
+        if not isinstance(ctx, dict):
+            ctx = {}
+    except json.JSONDecodeError:
+        ctx = {}
+    return question[m.end() :], ctx
 
 
 def _get_pipeline() -> Pipeline:
@@ -37,19 +56,65 @@ def _to_json(data: dict[str, Any]) -> str:
     return json.dumps(data, ensure_ascii=False, default=str)
 
 
-def query_sales_analytics(question: str, tool_context: ToolContext | None = None) -> str:
+def _context_from_tool(
+    tool_context: ToolContext | None,
+    sales_rep_code: str | None = None,
+    user_id: str | None = None,
+) -> UserContext:
+    state: dict[str, Any] = {}
+    if tool_context is not None:
+        raw = getattr(tool_context, "state", None)
+        if isinstance(raw, dict):
+            state = raw
+    merged = {
+        "user_id": user_id or state.get("user_id"),
+        "sales_rep_code": sales_rep_code or state.get("sales_rep_code"),
+    }
+    return UserContext.from_mapping(merged)
+
+
+def query_sales_analytics(
+    question: str,
+    sales_rep_code: str = "",
+    user_id: str = "",
+    history_json: str = "",
+    tool_context: ToolContext | None = None,
+) -> str:
     """
     Run the full NL-to-SQL pipeline: route, generate SQL, validate, execute BigQuery, summarize.
 
     Args:
         question: Natural language sales / analytics question.
+        sales_rep_code: Optional rep code for "my sales" style questions (from local Postgres user).
+        user_id: Optional local app user id (Phase C passes from Postgres).
+        history_json: Optional JSON array of prior turns (from [SALES_CONTEXT] or explicit).
 
     Returns:
         JSON string prefixed with SALES_ANALYTICS_JSON: containing sql, rows, answer, and events.
     """
-    _ = tool_context
+    clean_question, envelope = _parse_sales_context(question)
+    history = envelope.get("history")
+    if not isinstance(history, list):
+        history = None
+    if history_json and not history:
+        try:
+            parsed = json.loads(history_json)
+            if isinstance(parsed, list):
+                history = parsed
+        except json.JSONDecodeError:
+            logger.warning("Invalid history_json on tool call")
+
+    ctx = _context_from_tool(
+        tool_context,
+        sales_rep_code=sales_rep_code or envelope.get("sales_rep_code") or None,
+        user_id=user_id or None,
+    )
     try:
-        result = _get_pipeline().run(question)
+        result = _get_pipeline().run(
+            clean_question,
+            history=history,
+            user_context=ctx,
+        )
         payload: dict[str, Any] = {
             "query_id": result.query_id,
             "success": not any(e.type == "error" for e in result.events),
@@ -105,8 +170,11 @@ root_agent = LlmAgent(
         "If the user asks about Power BI targets/projections ($6M target, projected GP) and "
         "the data is not in the payload, say those metrics are not in BigQuery yet and report "
         "what you can compute from facts.\n\n"
-        "For follow-up questions, pass the full user message; the tool retains routing context "
-        "via the question text.\n\n"
+        "Messages may include a [SALES_CONTEXT]{...}[/SALES_CONTEXT] block with history and "
+        "sales_rep_code. Pass the full message string into query_sales_analytics unchanged. "
+        "Also pass history_json as a JSON string copy of the history array when present.\n\n"
+        "When the client provides sales_rep_code or user_id, pass them into query_sales_analytics "
+        "for rep-scoped questions (my sales, my GP).\n\n"
         "Do not expose chain-of-thought. Do not run SQL yourself."
     ),
     tools=[FunctionTool(query_sales_analytics)],

@@ -14,8 +14,10 @@
 | Policy | None for v1 (10GB dry-run soft warning in `config/jaybel.yaml`) |
 | Fiscal year | July=FM1 … June=FM12; label `2025-2026` |
 | Relative dates | **`Australia/Sydney`**; default = **calendar** month/quarter (use **fiscal** only when user says so) |
-| Auth | **Firebase Google Sign-In** on project `jaybel-dev` |
-| UI hosting (v1) | **localhost** — `http://localhost:3000` (Next.js dev server on this device) |
+| Auth (v1) | **Local Postgres user** — no Firebase (`dev@localhost` default) |
+| App data storage | **PostgreSQL on local device** — sessions & chat turns (not Firestore) |
+| UI hosting (v1) | **localhost** — Next.js `:3000` + FastAPI `:8000` on this machine |
+| Analytics data | **BigQuery** in GCP (unchanged — not copied to Postgres) |
 
 **Prepared artifacts (do not re-derive at implementation time):**
 
@@ -25,12 +27,17 @@
 | Table schemas + few-shot SQL | `schema_registry/tables/*.yaml` (13 files) |
 | Join allowlist | `schema_registry/join_allowlist.yaml` |
 | Business glossary | `docs/business_glossary.md` |
-| QA set (97 cases: Q001–Q060 + client Q061–Q097) | `docs/qa_evaluation_set.yaml` |
-| Client question catalog | `docs/office_supplies_client_questions.md` |
+| QA set (97 cases: Q001–Q060 + client Q061–Q097) | `docs/qa_evaluation_set.yaml` (all cases have `category`) |
+| UI question catalog (starters + follow-ups) | `content/question_catalog.yaml` — build: `scripts/build_question_catalog.py` |
+| Question discovery UI spec | `docs/UI_QUESTION_DISCOVERY_PLAN.md` |
+| Client question catalog (source PDF) | `docs/office_supplies_client_questions.md` |
 | Client questions PDF | `Office_Supplies_BI_Analytics_Questions.pdf` |
 | Agent Engine architecture | `docs/AGENT_ENGINE_ARCHITECTURE.md` |
 | Pre-flight checklist | `docs/PRE_IMPLEMENTATION_CHECKLIST.md` |
 | Locked decisions | `docs/DECISIONS.md` |
+| **Local stack (corrected)** | `docs/ARCHITECTURE_LOCAL.md` |
+| Phase C guide | `docs/PHASE_C_LOCAL.md` |
+| Postgres migrations | `sql/migrations/001`–`004` (sessions, AE session id, `ui_context`, turn feedback) |
 | Agent deploy template | `agent/.agent_engine_config.json` |
 | BQ validation report | `docs/bq_schema_validation_report.md` |
 | Source PDF | `Jaybel_Sales_Analytics_Detailed_Schema.pdf` |
@@ -44,10 +51,11 @@
 | In v1 | Deferred (v1.1+) |
 |-------|---------------------|
 | Agent Engine + in-process tools (L1–L5) | Redis / Memorystore cache |
-| Next.js localhost + Firebase Google auth | PDF reports, GCS |
-| Registry, validators, BQ read-only | Vertex Memory Bank |
-| UI event stream (status, sql, results, tokens, chart) | FastAPI `/api/query/stream` on hot path |
-| Firestore sessions (via agent or thin API) | Cloud Run min-instances for full backend |
+| Next.js localhost + **FastAPI localhost** | PDF reports, GCS |
+| **PostgreSQL** sessions & turns on local device | Firebase / Firestore |
+| Registry, validators, BQ read-only (cloud) | Vertex Memory Bank |
+| UI SSE via **local API** → Agent Engine stream | Cloud Run / cloud hosting |
+| Question discovery UI (categories, starters, follow-ups) | LLM follow-ups, ⌘K palette, mobile sheet (UI-4) |
 | Honest handling of missing target/projection metrics | `pipeline_logs` table |
 
 ---
@@ -65,7 +73,7 @@ streams a natural language answer back, and optionally renders charts or downloa
 - All LLM inference: Vertex AI (gemini-2.5-flash or successor; pin a stable model ID per environment)
 - All data: Google BigQuery
 - Frontend: Next.js 14 — **queries only Agent Engine API** (no direct pipeline on Cloud Run)
-- Backend: Agent tools (Python, deployed with Agent Engine) + optional FastAPI for sessions/PDF only
+- Backend: **FastAPI on localhost:8000** (Postgres sessions + chat SSE proxy) + Agent Engine tools on GCP for analytics queries
 - Memory: Vertex AI Agent Builder memory / Memory Bank (product name and API surface vary by release; confirm in target GCP region)
 - Communication protocol: **Structured streaming events** to the UI (same event types as SSE below), delivered via **Vertex AI Agent Engine** streaming in v1 — not a separate FastAPI SSE hot path
 
@@ -73,10 +81,10 @@ streams a natural language answer back, and optionally renders charts or downloa
 
 **Decision:** Agent Engine–only entry. See `docs/AGENT_ENGINE_ARCHITECTURE.md`.
 
-1. **Next.js UI** calls Agent Engine `stream_query` (or equivalent SDK) for every user message.
+1. **Next.js UI** calls **local FastAPI** `POST /api/chat/stream`, which calls Agent Engine `stream_query` for every user message.
 2. **Agent Engine** records each interaction in the Agent Engine dashboard (invocation telemetry).
 3. **Agent tools** (deployed with the agent) implement L1–L5 in-process: registry, routing, SQL generation, sqlglot + dry run, BigQuery execute, summarization.
-4. **Optional FastAPI** is **off the query hot path** — sessions, PDF export, admin only.
+4. **FastAPI (localhost:8000)** is **on the hot path for the UI** — persists sessions/turns to **local PostgreSQL** and proxies Agent Engine streaming to the browser. It does **not** replace Agent Engine for analytics queries.
 
 Cloud Run tool callbacks are **not** used in v1 (avoids split telemetry). Revisit only if tool isolation is required later.
 
@@ -113,32 +121,21 @@ project-root/
 │   └── PRE_IMPLEMENTATION_CHECKLIST.md
 ├── scripts/
 │   └── generate_schema_registry.py
-├── backend/                             # Optional: sessions, PDF — not query hot path
+├── content/
+│   └── question_catalog.yaml            # UI categories, 97 starters, follow-ups, rules
+├── backend/                             # FastAPI localhost:8000
 │   ├── main.py
-│   ├── config.py
-│   ├── schema_registry/               # Loader reads ../schema_registry at runtime
-│   │   ├── tables/
-│   │   ├── registry_loader.py           # Loads YAMLs into memory at startup
-│   │   ├── embedding_index.py           # Pre-computes and stores table embeddings
-│   │   └── few_shot_index.py            # Pre-computes few-shot example embeddings
-│   ├── pipeline/
-│   │   ├── intent_router.py             # L1: Combined intent + table + plan LLM call
-│   │   ├── sql_generator.py             # L2: SQL generation LLM call
-│   │   ├── validator.py                 # L3: Parallel validation orchestrator
-│   │   ├── bq_executor.py               # L4: BigQuery execution + result handling
-│   │   ├── answer_generator.py          # L5: Streaming answer LLM call
-│   │   └── session_manager.py           # L6: Session memory read/write
-│   ├── routers/
-│   │   ├── query.py                     # POST /api/query/stream (SSE endpoint)
-│   │   ├── session.py                   # CRUD for chat sessions
-│   │   └── report.py                    # POST /api/report/generate
-│   └── services/
-│       ├── vertex_llm.py                # Vertex AI LLM client wrapper
-│       ├── vertex_embeddings.py         # Vertex AI embedding client wrapper
-│       ├── bigquery_client.py           # BQ client (persistent, connection-pooled)
-│       ├── firestore_client.py          # Firestore client for session storage
-│       ├── gcs_client.py                # GCS client for report storage
-│       └── memory_bank.py               # Vertex AI Memory Bank / agent memory wrapper
+│   ├── routers/                         # sessions, chat, question_catalog
+│   ├── services/                        # agent_engine, question_catalog
+│   └── db/postgres.py
+├── pipeline/                            # L1–L5 (also bundled in Agent Engine deploy)
+├── sql/migrations/                      # 001–004 local Postgres
+├── docker-compose.yml                   # Postgres host port 15433
+├── scripts/
+│   ├── build_question_catalog.py
+│   ├── deploy-sales-agent-engine.sh
+│   └── start-phase-c.sh
+├── agent/sales_analytics_agent/         # Agent Engine entry (agent.py)
 ├── frontend/
 │   ├── app/
 │   │   ├── page.tsx                     # Root: redirects to /chat
@@ -147,33 +144,21 @@ project-root/
 │   │   └── api/
 │   │       └── proxy/route.ts           # Optional: proxy SSE to avoid CORS
 │   ├── components/
-│   │   ├── chat/
-│   │   │   ├── ChatShell.tsx            # Top-level layout
-│   │   │   ├── SessionSidebar.tsx       # Past sessions list
-│   │   │   ├── ChatWindow.tsx           # Message list + input bar
-│   │   │   ├── MessageList.tsx          # Renders all messages
-│   │   │   ├── UserMessage.tsx          # User bubble
-│   │   │   ├── AgentMessage.tsx         # Agent bubble (composes below)
-│   │   │   ├── StreamingText.tsx        # Token-by-token text renderer
-│   │   │   ├── SQLAccordion.tsx         # Collapsible "View SQL" block
-│   │   │   ├── DataTable.tsx            # Results table with pagination
-│   │   │   ├── ChartPanel.tsx           # Recharts renderer
-│   │   │   ├── DownloadBar.tsx          # CSV / PDF / PNG buttons
-│   │   │   └── StatusIndicator.tsx      # "Querying table_name..." live status
-│   │   └── ui/                          # Shared UI primitives (buttons, inputs)
+│   │   ├── chat/                        # ChatShell, SessionSidebar, ChatWindow, …
+│   │   └── explore/                     # ExploreDrawer, CategoryGrid, StarterList, badges
 │   ├── hooks/
-│   │   ├── useSSEStream.ts              # SSE connection + event routing hook
-│   │   ├── useSession.ts                # Session CRUD hook
-│   │   └── useChartExport.ts            # Chart PNG export hook
+│   │   ├── useChatStream.ts
+│   │   ├── useQuestionCatalog.ts
+│   │   └── useFollowUps.ts
 │   ├── lib/
-│   │   ├── api.ts                       # All backend API call functions
-│   │   ├── sse.ts                       # SSE typed event parser
+│   │   ├── api.ts
+│   │   ├── questionCatalog.ts
+│   │   └── sse.ts
 │   │   └── reportExport.ts             # CSV + PDF download utilities
 │   └── types/
 │       └── index.ts                     # All shared TypeScript types
 ├── infra/
-│   ├── firestore.rules                  # Firestore security rules
-│   ├── gcs_lifecycle.json               # Report bucket lifecycle (auto-delete after 7d)
+│   ├── gcs_lifecycle.json               # Report bucket lifecycle (auto-delete after 7d) — deferred
 │   └── iam_bindings.sh                  # Service account IAM setup script
 └── schema_registry_docs/
     └── how_to_add_a_table.md            # Runbook for adding new BQ tables
@@ -577,7 +562,7 @@ to correctly reference prior query context without the user having to repeat the
 
 ### Per-Session State (in-session, in-memory during request)
 
-Stored in FastAPI request state and persisted to Firestore after each turn:
+Stored in FastAPI request state and persisted to **local PostgreSQL** after each turn:
 - `session_id` — UUID generated at session creation
 - `user_id` — from authentication context
 - `turns` — ordered list of turn objects, each containing:
@@ -593,7 +578,7 @@ Stored in FastAPI request state and persisted to Firestore after each turn:
   - `timestamp` — UTC timestamp
 
 Only the last 5 turns are injected into L1's context window. Older turns are
-stored in Firestore but not sent to the LLM (to keep prompt size bounded).
+stored in Postgres but not sent to the LLM (to keep prompt size bounded).
 
 ### Cross-Session Memory (Vertex AI agent memory / Memory Bank)
 
@@ -614,16 +599,19 @@ Memory bank entries are injected into the L1 system prompt as a "user context" b
 They are soft hints, not hard constraints — the LLM can override them when the
 current question clearly differs from the user's usual patterns.
 
-### Firestore Document Structure
+### PostgreSQL schema (local app data)
 
-Collection: `chat_sessions`
-Document ID: `{user_id}_{session_id}`
-Fields: all session state listed above, stored as a Firestore map.
+Migrations `001`–`004`:
 
-Collection: `session_index`
-Document ID: `{user_id}`
-Fields: list of `{session_id, first_question, last_timestamp}` for sidebar rendering.
-This avoids a full collection scan when loading the session list.
+- **`users`** — local user identity; optional `sales_rep_code` for rep-scoped questions
+- **`chat_sessions`** — `id`, `user_id`, `title`, `agent_engine_session_id`, `ui_context` (JSONB: `last_starter_id`, `last_category_id`)
+- **`chat_turns`** — question, intent, `table_id`, sql, answer, `results_sample`, `events`, optional `starter_id` / `category_id`, `feedback_rating` / `feedback_comment`
+
+**History into pipeline:** FastAPI builds last 5 turns from `chat_turns` and sends `[SALES_CONTEXT]{history, history_json, sales_rep_code}[/SALES_CONTEXT]` in the Agent Engine message; `agent.py` parses and calls `Pipeline.run(history=...)`.
+
+Default dev user UUID: `00000000-0000-4000-8000-000000000001` (`dev@localhost`).
+
+**Not used in v1:** Firestore / Firebase.
 
 ---
 
@@ -637,29 +625,30 @@ is the most complex — it progressively renders status indicators, streaming te
 a collapsible SQL block, a paginated data table, an optional chart, and a download bar,
 all driven by the SSE event stream.
 
-### Authentication
+### Authentication (local v1)
 
-Use Firebase Authentication (Google Sign-In) on the frontend (`jaybel-dev`). Before calling
-Agent Engine, the UI ensures the user is signed in. Pass `user_id` (and rep mapping when
-available) into the agent session context. If a thin FastAPI layer is used for Firestore
-sessions only, validate the Firebase ID token there via Firebase Admin SDK.
-No unauthenticated users reach the agent query path.
+No Firebase. The local FastAPI uses a **default dev user** from Postgres (`users` table) or
+a simple email field on login later. Pass `user_id` and optional `sales_rep_code` into Agent
+Engine session context for rep-scoped questions.
+
+All session and chat history APIs require the local API; there is no Firestore.
 
 ### Layout and Components
 
 **ChatShell**
 Top-level layout component. Renders `SessionSidebar` on the left and `ChatWindow`
-on the right. Manages global state: current session ID, authentication state.
+on the right. Manages global state: current session ID (local dev user is implicit).
 
 **SessionSidebar**
-Displays a list of past sessions loaded from `GET /api/session/list`.
-Each item shows the first question of the session and its timestamp.
-Clicking a session loads its full history via `GET /api/session/{id}/history`.
+Displays a list of past sessions loaded from `GET /api/sessions`.
+Each item shows session title and `updated_at`.
+Clicking a session loads turns via `GET /api/sessions/{session_id}/turns`.
+New session: `POST /api/sessions`.
 Includes a "New Chat" button that clears the chat window and creates a new session.
 Sessions are grouped by date (Today, Yesterday, Last 7 days, Older).
 
 **ChatWindow**
-Renders `MessageList` and `InputBar`. Manages the SSE connection via `useSSEStream` hook.
+Renders `MessageList` and `InputBar`. Manages the SSE connection via `useChatStream` hook (local API).
 On user message submit: adds the user message to `MessageList`, creates an empty
 agent message placeholder, opens the SSE stream, and progressively fills the
 agent message as SSE events arrive.
@@ -701,20 +690,32 @@ It renders the following sub-components in sequence as events arrive:
     Download CSV, Download PDF Report, Download Chart PNG.
     Buttons only appear after the full pipeline completes.
 
-**InputBar**
-Text input field and submit button. Submit is disabled while an SSE stream is open
-(only one query at a time per session). Supports Enter key to submit.
-Multiline input (Shift+Enter for newlines). Shows character count if over 200 chars.
+**Chat input** (in `ChatWindow`)
+Text area + Send. Disabled while streaming. Starters **fill the input** (user edits, then sends).
 
-### useSSEStream Hook
+### Question discovery (Phase C+ — implemented)
+
+See `docs/UI_QUESTION_DISCOVERY_PLAN.md`.
+
+| Feature | Implementation |
+|---------|----------------|
+| Categories | 11 cards in **ExploreDrawer** (`GET /api/question-catalog/categories`) |
+| Starters | 97 from `content/question_catalog.yaml`; badges: full / partial / target not in BQ |
+| Browse UX | **Browse questions** → slide-over drawer; breadcrumb `Explore / {category}` |
+| Search | Text + filters: `category_id`, `intent`, `table_id` |
+| Follow-ups | `FollowUpChips` after last answer; curated + rules; **Show more** if &gt;5 |
+| Rep category | **My Performance** disabled until `sales_rep_code` in sidebar |
+| Feedback | Thumbs + optional comment → `POST /api/sessions/{id}/turns/{turn_id}/feedback` |
+| Session search | Sidebar `?q=` on `GET /api/sessions` |
+| Chart + table | Sticky side-by-side when both present |
+
+### useChatStream Hook
 
 Manages the full SSE lifecycle. On activation:
-1. Opens an SSE connection to `GET /api/query/stream` with the query as a query parameter
-   (or POST body if query is long)
-2. Attaches typed event handlers for each SSE event type
-3. Distributes parsed events to the appropriate AgentMessage state setters
-4. Handles connection errors (network loss, server timeout) with user-facing error display
-5. Closes the connection on `done` or `error` events
+1. `POST /api/chat/stream` with `{ session_id, question, starter_id?, category_id? }`
+2. Forwards SSE events (`status`, `sql`, `results`, `token`, `chart_spec`, `cost_warning`)
+3. Final `done` from API includes `turn_id` (Postgres row) for follow-ups and feedback
+4. Closes on `done` or `error`
 
 ### Chart Export (PNG)
 
@@ -752,26 +753,23 @@ When the user clicks "Download PDF Report":
    e. Returns the signed URL to the frontend
 3. Frontend triggers a browser download from the signed URL
 
-### Session API Endpoints (Backend)
+### Session API Endpoints (Local FastAPI — Postgres)
 
-`POST /api/session/new`
-Creates a new Firestore session document. Returns the new session_id.
+`POST /api/sessions`
+Creates a row in `chat_sessions` for the current user. Returns `session_id`.
 
-`GET /api/session/list`
-Returns the session index document for the authenticated user.
-Returns: list of `{session_id, first_question, last_timestamp}`.
+`GET /api/sessions`
+Returns sidebar list: `{session_id, title, updated_at}` ordered by `updated_at` desc.
 
-`GET /api/session/{session_id}/history`
-Returns the full turn history for a session.
-Used when the user clicks a past session in the sidebar.
+`GET /api/sessions/{session_id}/turns`
+Returns turn history from `chat_turns` for the session.
 
-`DELETE /api/session/{session_id}`
-Deletes the session document and removes it from the session index.
+`DELETE /api/sessions/{session_id}`
+Deletes session and cascaded turns.
 
-`GET /api/query/stream`
-The main SSE endpoint. Accepts the user question and session ID.
-Runs the full pipeline (L1–L6) and streams SSE events.
-Requires valid Firebase auth token in Authorization header.
+`POST /api/chat/stream`
+Main SSE endpoint. Body: `{session_id, question}`. Proxies Agent Engine `stream_query`,
+forwards pipeline events to the browser, persists turn on `done`. No Firebase token.
 
 `POST /api/report/generate`
 Accepts turn data, generates and uploads a PDF, returns a signed GCS URL.
@@ -796,11 +794,11 @@ Accepts turn data, generates and uploads a PDF, returns a signed GCS URL.
 - Optionally: a `query_logs` table to store all executed queries and their results
   for the evaluation framework
 
-**Cloud Firestore**
-- Session storage: full turn history per session
-- Session index: fast sidebar loading per user
+**PostgreSQL (local, v1)**
+- Session and turn storage on developer machine (`docker compose` or native Postgres)
+- Schema: `sql/migrations/001_initial.sql`
 
-**Cloud Memorystore (Redis)**
+**Cloud Memorystore (Redis)** — deferred
 - Query result cache keyed by (table_id + normalized_sql)
 - TTL: 5 minutes
 
@@ -809,25 +807,19 @@ Accepts turn data, generates and uploads a PDF, returns a signed GCS URL.
 - Schema bucket (optional): YAML files for the schema registry, if external storage is preferred
   over repo-bundled files. Lifecycle policy: delete reports after 7 days.
 
-**Cloud Run**
-- Hosts the FastAPI backend. Min instances: 1 (to avoid cold starts).
-  Max instances: configured based on expected concurrent users.
-- Startup probe must wait for registry loading and embedding pre-computation to complete
-  before the instance is marked healthy.
-
-**Firebase Authentication**
-- User identity and session authentication.
+**Cloud Run** — deferred (v1 uses local FastAPI on port 8000)
 
 **Frontend hosting (v1)**
-- Local dev only: `npm run dev` → `http://localhost:3000` on the developer machine.
-- Production hosting (Firebase Hosting / Vercel) deferred until after v1 works locally.
+- Next.js: `npm run dev` → `http://localhost:3000`
+- FastAPI: `uvicorn` → `http://localhost:8000`
+- Production hosting deferred until after local v1 works
 
 ### Service Account IAM Roles
 
 The backend runs under a dedicated service account with only these roles:
 - `roles/bigquery.jobUser` — submit BQ jobs
 - `roles/bigquery.dataViewer` — read from specific datasets (grant at dataset level, not project level)
-- `roles/datastore.user` — read/write Firestore
+- ~~`roles/datastore.user`~~ — not used (Postgres is local, not GCP Firestore)
 - `roles/storage.objectAdmin` — read/write report bucket only (scoped to the specific bucket)
 - `roles/aiplatform.user` — call Vertex AI APIs
 - `roles/redis.editor` — read/write Memorystore
@@ -914,7 +906,9 @@ Cache hit case                       ~1.5s (skips L4)
 
 Build in this order. Steps marked **(defer)** are documented but not required for first working agent + localhost UI.
 
-### Phase A — Core pipeline library (`agent/tools/` or shared `pipeline/` package)
+### Phase A — Core pipeline library (`pipeline/`) — **complete**
+
+**Scope:** BigQuery + Vertex only. No Firebase, no Postgres. Optional `user_context` (`sales_rep_code`, `user_id`) for rep-scoped SQL when Phase C passes local user from Postgres.
 
 1. Schema registry loader + keyword index + join allowlist loader  
    (Test: load 13 YAMLs; keyword hits for “sales”, “working days”, “new business”)
@@ -938,35 +932,48 @@ Build in this order. Steps marked **(defer)** are documented but not required fo
 9. End-to-end pipeline function emitting UI event sequence  
    (Test: 5 sample questions without UI)
 
-### Phase B — Agent Engine
+### Phase B — Agent Engine — **complete** (redeploy after `agent.py` changes: history, `history_json`)
 
-10. Agent definition + tools wrapping Phase A  
-11. Deploy to `jaybel-dev` / `us-central1`; record **Agent Engine resource ID**  
-12. IAM: runtime SA → BigQuery + Vertex AI  
+10. Agent definition + tools wrapping Phase A — **done** (`agent/sales_analytics_agent/agent.py`, ID `8991351443894042624`)  
+11. Deploy to `jaybel-dev` / `us-central1` — **done**  
+12. IAM: runtime SA → BigQuery + Vertex AI — verify in GCP  
 
-### Phase C — Local UI
+App sessions are **not** stored in Agent Engine; Phase C Postgres owns chat history. Agent Engine sessions are transport/telemetry only.
 
-13. Next.js app: Firebase Google Sign-In, `localhost:3000`  
-14. Agent Engine stream client → map to UI events (`useAgentStream` / same shapes as planned SSE)  
-15. ChatShell, messages, SQL accordion, DataTable, ChartPanel  
-16. Firestore session list (agent session API or thin API) **(defer partial if needed)**
+### Question discovery UI (Phase C+) — **complete**
 
-### Phase D — Quality
+See `docs/UI_QUESTION_DISCOVERY_PLAN.md`.
 
-17. QA runner: routing accuracy + dry-run pass rate on Q001–Q097  
-18. Handle `requires_target_table` / `requires_rep_context` cases per glossary  
+- `content/question_catalog.yaml` — 97 starters, categories, follow-ups, rules (`scripts/build_question_catalog.py`)
+- `GET/POST /api/question-catalog/*` — categories, starters, search (category/intent/table filters), follow-ups
+- `POST /api/chat/stream` — optional `starter_id` / `category_id`; last 5 turns as `[SALES_CONTEXT]` + `history_json`; SSE `done` includes `turn_id`
+- `chat_sessions.ui_context` — persists last starter/category; used for follow-up resolution
+- Next.js: explore drawer, category breadcrumb, follow-up chips (show more), thumbs + comment, session search, sticky chart/table split
+- Tests: `tests/test_catalog_integrity.py`, `tests/test_q031_q032_history.py`, `tests/test_question_catalog.py`, `tests/test_chat_history.py`
+
+### Phase C — Local UI + PostgreSQL — **complete**
+
+13. Postgres: `docker-compose up -d` (host port **15433**), migrations `001`–`004`  
+14. FastAPI: `backend/` — sessions, turns, `PATCH /api/sessions/me`, chat SSE proxy, question catalog  
+15. Next.js: charts, downloads, cost warning, rep profile, grouped sidebar, table UX  
+16. Tests: `tests/test_phase_c_api.py` (with `DATABASE_URL`)  
+17. Run: `./scripts/start-phase-c.sh` then uvicorn + `npm run dev` (see README)
+
+### Phase D — Quality — **next**
+
+18. QA runner: routing accuracy + dry-run pass rate on Q001–Q097  
+19. Handle `requires_target_table` / `requires_rep_context` cases per glossary  
 
 ### Deferred (v1.1+)
 
-- Redis cache **(defer)**  
-- FastAPI `/api/query/stream` debug-only **(defer)**  
-- PDF + GCS **(defer)**  
-- Memory Bank **(defer)**  
-- `pipeline_logs` BQ table **(defer)**  
-- Cloud Run production backend **(defer)**  
-- Load testing / p99 SLO tuning **(defer)**  
-- CSV/PNG download bar **(defer)** — optional late v1 if time permits
-```
+- Redis cache  
+- FastAPI `/api/query/stream` debug-only  
+- PDF + GCS (server-side; client CSV/PNG/print work today)  
+- Memory Bank  
+- `pipeline_logs` BQ table  
+- Cloud Run production backend  
+- Load testing / p99 SLO tuning  
+- UI-4: LLM follow-ups, command palette, mobile sheet
 
 ---
 
@@ -991,12 +998,19 @@ Build in this order. Steps marked **(defer)** are documented but not required fo
 - [x] Agent Engine–only entry
 - [x] No policy v1
 - [x] Timezone `Australia/Sydney` (calendar-relative dates)
-- [x] Firebase **Google Sign-In** on `jaybel-dev`
-- [x] UI v1: **localhost** (`http://localhost:3000`)
+- [x] UI v1: **localhost** (Next.js + FastAPI)
+- [x] App storage: **local PostgreSQL** (not Firebase) — see `docs/ARCHITECTURE_LOCAL.md`
+- [x] Agent Engine deployed — ID in `agent/AGENT_ENGINE_RESOURCE.env`
 
-### Still needed during implementation (not blocking Step 1)
-- [ ] Agent Engine resource ID after first deploy → `NEXT_PUBLIC_AGENT_ENGINE_ID`
-- [ ] Firebase Console: enable Google provider + `localhost` authorized domain + Web app keys in `frontend/.env.local`
+### Phase C + question discovery (done in repo)
+- [x] `backend/` FastAPI + Postgres + catalog API + history envelope
+- [x] `frontend/` Next.js (explore drawer, follow-ups, feedback, session search)
+- [x] `content/question_catalog.yaml` + `scripts/build_question_catalog.py`
+- [x] QA YAML: `category` on all 97 cases
+- [x] Tests: `test_phase_c_api`, `test_question_catalog`, `test_chat_history`, `test_catalog_integrity`, `test_q031_q032_history`
+- [x] Agent Engine redeployed with `SALES_CONTEXT` / `history_json` parsing
+- [ ] On your Mac: run stack for manual testing (`./scripts/start-phase-c.sh`, uvicorn, `npm run dev`)
+- [ ] Phase D QA runner automation
 - [ ] Optional: dedicated non-default compute SA for production
 
 ---

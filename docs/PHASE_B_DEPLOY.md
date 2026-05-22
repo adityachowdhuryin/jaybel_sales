@@ -33,9 +33,21 @@ cd "/Users/adityachowdhury/Desktop/sales and analytics project"
 Copy the **Reasoning Engine ID** from the command output into:
 
 ```bash
-# agent/AGENT_ENGINE_RESOURCE.env (create after deploy)
+# agent/AGENT_ENGINE_RESOURCE.env
 AGENT_ENGINE_RESOURCE=projects/jaybel-dev/locations/us-central1/reasoningEngines/<ID>
-NEXT_PUBLIC_AGENT_ENGINE_ID=<ID>
+
+# backend/.env (Phase C local API)
+AGENT_ENGINE_RESOURCE=projects/jaybel-dev/locations/us-central1/reasoningEngines/<ID>
+DATABASE_URL=postgresql://jaybel:jaybel_local_dev@localhost:15433/jaybel_sales_app
+```
+
+## Redeploy when
+
+- Changes to `agent/sales_analytics_agent/agent.py` (e.g. `history_json`, `[SALES_CONTEXT]` parsing)
+- Changes to `pipeline/` bundled in the deploy staging folder
+
+```bash
+./scripts/deploy-sales-agent-engine.sh --agent-engine-id 8991351443894042624
 ```
 
 ## Smoke test
@@ -48,6 +60,6 @@ PYTHONPATH=. .venv/bin/python scripts/query_agent_engine.py \
 
 Every `stream_query` call appears in **Vertex AI → Agent Engine** dashboard telemetry.
 
-## UI (Phase C)
+## UI (Phase C + question discovery)
 
-Frontend will call the same `stream_query` API with Firebase auth; see `frontend/.env.local.example`.
+Next.js → **FastAPI** (`http://localhost:8000`) → Agent Engine; Postgres for sessions; catalog from `content/question_catalog.yaml`. See `docs/PHASE_C_LOCAL.md`, `docs/UI_QUESTION_DISCOVERY_PLAN.md`.

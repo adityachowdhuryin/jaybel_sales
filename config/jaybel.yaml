@@ -25,16 +25,25 @@ bigquery:
     fiscal_keywords: ["fiscal", "fy", "fiscal year", "fiscal month", "fiscal quarter"]
 
 auth:
-  provider: firebase
-  gcp_project_id: jaybel-dev
-  sign_in_methods:
-    - google
-  firebase_console: https://console.firebase.google.com/
+  provider: local_postgres  # no Firebase for v1
+  default_user_id: "00000000-0000-4000-8000-000000000001"
+  default_user_email: dev@localhost
+
+local_app:
+  postgres:
+    # Override in backend/.env (DATABASE_URL)
+    default_url: postgresql://jaybel:jaybel_local_dev@localhost:15433/jaybel_sales_app
+    database: jaybel_sales_app
+  api:
+    base_url: http://localhost:8000
+    cors_origins:
+      - http://localhost:3000
 
 ui:
   hosting_v1: localhost
   dev_url: http://localhost:3000
   framework: nextjs-14
+  question_catalog_path: content/question_catalog.yaml
 
 iam:
   # Default Compute Engine service account (verify roles before prod)
@@ -44,14 +53,14 @@ iam:
     - roles/bigquery.jobUser
     - roles/bigquery.dataViewer  # scope to dataset jaybel_sales_analytics
     - roles/aiplatform.user
-    - roles/datastore.user       # if Firestore sessions used
+    # No Firestore for v1 — sessions use local PostgreSQL
     - roles/storage.objectAdmin  # report bucket only (when enabled)
 
 vertex:
   llm_model: gemini-2.5-flash
   embedding_model: text-embedding-004
   agent_engine:
-    display_name: Jaybel Sales Analytics Agent
+    display_name: Sales and analytics agent
     description: >
       Natural-language sales and analytics agent for Jaybel star-schema BigQuery data.
       Routes questions to the correct table, generates validated read-only SQL, and summarizes results.
@@ -80,12 +89,16 @@ agent_routing:
 v1_scope:
   in:
     - agent_engine_with_in_process_tools
-    - firebase_google_auth_localhost
+    - local_postgres_sessions
+    - fastapi_localhost_8000
+    - nextjs_localhost_3000
     - pipeline_l1_through_l5
-    - ui_event_stream_via_agent_engine
+    - ui_event_stream_via_local_api_sse
+    - bigquery_analytics_cloud
   deferred:
+    - firebase_auth
+    - firestore
     - redis_cache
-    - fastapi_query_sse_hot_path
     - pdf_reports_gcs
     - vertex_memory_bank
     - pipeline_logs_table

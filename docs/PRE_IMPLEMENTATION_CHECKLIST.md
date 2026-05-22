@@ -1,55 +1,50 @@
 # Pre-implementation checklist — Jaybel Sales Analytics Agent
 
-Status: **Phase B complete** — Agent Engine deployed; **Phase C next** (localhost UI). See `docs/DECISIONS.md` and `docs/FINAL_READINESS_REVIEW.md`.
+**Status:** Phases **A**, **B**, **C**, and **question discovery UI (UI-1–3)** are implemented in the repo. **Phase D** (automated QA runner) is next.
+
+See `docs/ARCHITECTURE_LOCAL.md`.
 
 ## Completed (in repo)
 
-- [x] GCP project config: `config/jaybel.yaml`
-- [x] 13 table schema registry YAMLs (validated vs live BQ): `schema_registry/tables/`
-- [x] Join allowlist: `schema_registry/join_allowlist.yaml`
-- [x] Business glossary: `docs/business_glossary.md`
-- [x] QA evaluation set (97 cases: Q001–Q060 generic + Q061–Q097 client): `docs/qa_evaluation_set.yaml`
-- [x] Client question catalog (Office Supplies BI PDF): `docs/office_supplies_client_questions.md`
-- [x] Source client PDF: `Office_Supplies_BI_Analytics_Questions.pdf`
-- [x] Agent Engine architecture: `docs/AGENT_ENGINE_ARCHITECTURE.md`
-- [x] Agent Engine config template: `agent/.agent_engine_config.json`
-- [x] Source schema PDF: `Jaybel_Sales_Analytics_Detailed_Schema.pdf`
-- [x] BQ schema validation report: `docs/bq_schema_validation_report.md`
-- [x] **Timezone:** `Australia/Sydney` (calendar-relative dates)
-- [x] **Auth:** Firebase Google Sign-In on `jaybel-dev`
-- [x] **UI v1:** localhost (`http://localhost:3000`)
-- [x] **Phase A:** `pipeline/` package + unit tests (12 pass) + BQ dry-run integration
-- [x] **Phase B:** ADK agent deployed — ID `8991351443894042624` (`agent/AGENT_ENGINE_RESOURCE.env`)
+- [x] GCP config: `config/jaybel.yaml`
+- [x] 13 table schema registry YAMLs (validated vs live BQ)
+- [x] Join allowlist, glossary, QA set (97 cases, all with `category`)
+- [x] **Phase A:** `pipeline/` + tests
+- [x] **Phase B:** ADK agent on Agent Engine `8991351443894042624`
+- [x] **Phase C:** `backend/`, `frontend/`, Postgres migrations `001`–`004`
+- [x] **Question discovery:** `content/question_catalog.yaml`, catalog API, explore UI, history envelope
+- [x] Local architecture docs
+- [x] Timezone `Australia/Sydney`; app storage = Postgres; UI = localhost
 
-## Verify in GCP (during implementation — not blocking prep)
+## Verify in GCP (analytics)
 
-- [ ] **IAM:** Service account `115724636423-compute@developer.gserviceaccount.com` has `bigquery.jobUser` + dataset `bigquery.dataViewer` on `jaybel_sales_analytics`
-- [ ] **Vertex AI API** enabled in `jaybel-dev`
-- [ ] **Agent Engine** enabled in `us-central1`
-- [ ] **Firebase Console:** Google provider on; `localhost` in authorized domains; Web app config in `frontend/.env.local`
+- [ ] IAM: compute SA has `bigquery.jobUser` + `dataViewer` on `jaybel_sales_analytics`
+- [ ] Vertex AI + Agent Engine enabled in `us-central1`
 
-## After first Agent Engine deploy (done)
+## Local machine (your Mac) — for testing
+
+- [ ] `docker compose up -d postgres` (or `./scripts/start-phase-c.sh`)
+- [ ] `gcloud auth application-default login`
+- [ ] `backend/.env` — `DATABASE_URL` (port **15433**), `AGENT_ENGINE_RESOURCE`
+- [ ] Start API + UI — see `docs/PHASE_C_LOCAL.md`
+
+**Not required for v1:** Firebase, Firestore.
+
+## Agent Engine
 
 | Item | Value |
 |------|--------|
-| **Agent Engine resource ID** | `8991351443894042624` → `frontend/.env.local` |
-
-## Optional (non-blocking)
-
-| Item | Why |
-|------|-----|
-| Dedicated runtime SA | Cleaner prod IAM vs default compute SA |
-| Real rep/account codes in QA | Replace placeholders in `docs/qa_evaluation_set.yaml` |
-| `pipeline_logs` BQ table | Evaluation / metrics framework |
+| Engine ID | `8991351443894042624` |
+| Redeploy script | `./scripts/deploy-sales-agent-engine.sh --agent-engine-id 8991351443894042624` |
 
 ## Locked product decisions
 
 | Decision | Choice |
 |----------|--------|
-| Multi-table | Approved join graph (facts + dims) |
-| Staging for analytics | Avoid unless raw/source |
-| Policy | None — 10GB dry-run soft warning |
-| Entry | Agent Engine only |
+| Analytics warehouse | BigQuery in GCP |
+| App data | Local PostgreSQL |
+| Query entry | Agent Engine only |
+| Auth (v1) | Local dev user in Postgres |
+| UI | localhost Next.js + FastAPI |
 | Timezone | Australia/Sydney |
-| Auth | Firebase Google on jaybel-dev |
-| UI | Localhost dev |
+| Policy | None — 10GB dry-run soft warning |

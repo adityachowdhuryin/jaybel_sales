@@ -6,9 +6,15 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 import vertexai
 from vertexai import agent_engines
+
+from pipeline.config import default_user_id
 
 
 def main() -> None:
@@ -25,9 +31,10 @@ def main() -> None:
 
     vertexai.init(project=args.project, location=args.region)
     engine = agent_engines.get(args.resource)
-    session = engine.create_session(user_id="smoke-test")
+    user_id = default_user_id()
+    session = engine.create_session(user_id=user_id)
     for event in engine.stream_query(
-        user_id="smoke-test",
+        user_id=user_id,
         session_id=session["id"],
         message=args.question,
     ):

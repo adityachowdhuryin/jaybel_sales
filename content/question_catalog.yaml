@@ -1,0 +1,1843 @@
+version: 1
+categories:
+- id: executive_kpi
+  label: Executive & KPIs
+  description: FY totals, GP%, daily averages, year-over-year
+  icon: chart-bar
+  order: 1
+  starter_count: 8
+- id: sales_revenue
+  label: Sales & Revenue
+  description: Revenue, cost, quantity, territory, warehouse
+  icon: currency
+  order: 2
+  starter_count: 24
+- id: product
+  label: Product & Category
+  description: Product groups, items, category trends
+  icon: cube
+  order: 3
+  starter_count: 13
+- id: customer
+  label: Customers & Accounts
+  description: Top customers, account lookup, inactive accounts
+  icon: users
+  order: 4
+  starter_count: 13
+- id: retention
+  label: Customer Retention
+  description: Month-over-month changes, churn patterns
+  icon: arrow-path
+  order: 5
+  starter_count: 3
+- id: new_business
+  label: New Business (Frazer)
+  description: Frazer new business pipeline metrics
+  icon: sparkles
+  order: 6
+  starter_count: 8
+- id: sales_rep
+  label: My Performance
+  description: Rep-scoped sales and GP (set rep code in sidebar)
+  icon: user
+  order: 7
+  requires_rep_code: true
+  starter_count: 7
+- id: targets
+  label: Targets & Goals
+  description: Business targets — some metrics not in BigQuery yet
+  icon: flag
+  order: 8
+  starter_count: 3
+- id: projections
+  label: Projections & Forecasting
+  description: Projected sales/GP and run-rate questions
+  icon: trending-up
+  order: 9
+  starter_count: 4
+- id: orders
+  label: Orders & Line Items
+  description: Invoices, item codes, recent orders
+  icon: document
+  order: 10
+  starter_count: 7
+- id: time_calendar
+  label: Time & Working Days
+  description: Fiscal calendar, quarters, working days
+  icon: calendar
+  order: 11
+  starter_count: 7
+starters:
+- id: Q001
+  category_id: sales_revenue
+  text: What was total sales excluding GST in fiscal year 2025-2026 for Jaybel?
+  data_availability: full
+  intent: aggregation
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q002
+  category_id: executive_kpi
+  text: Show monthly sales trend for fiscal year 2024-2025
+  data_availability: full
+  intent: trend
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q003
+  category_id: customer
+  text: Top 10 customers by gross profit in fiscal Q2 2025-2026
+  data_availability: full
+  intent: ranking
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q004
+  category_id: executive_kpi
+  text: Compare Jaybel vs Frazer total revenue this fiscal year
+  data_availability: full
+  intent: comparison
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q005
+  category_id: sales_revenue
+  text: Average GP percent by territory in calendar year 2025
+  data_availability: full
+  intent: aggregation
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q006
+  category_id: sales_revenue
+  text: How many invoice line items sold in July 2025?
+  data_availability: full
+  intent: aggregation
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q007
+  category_id: product
+  text: Sales by product main group for the last fiscal quarter
+  data_availability: full
+  intent: breakdown
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q008
+  category_id: sales_revenue
+  text: Which warehouse had the highest line sales last month?
+  data_availability: full
+  intent: ranking
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q009
+  category_id: sales_revenue
+  text: Total quantity sold by market segment mkt in FY 2024-2025
+  data_availability: full
+  intent: aggregation
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q010
+  category_id: sales_revenue
+  text: List invoices with line sales over 50000 ex GST in fiscal Q1 2025-2026
+  data_availability: full
+  intent: lookup
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q011
+  category_id: new_business
+  text: Total new business sales for Frazer in fiscal 2025-2026
+  data_availability: full
+  intent: aggregation
+  expected_table_id: fact_new_business_frazer
+  join_pattern: fact_new_business_frazer_with_dims
+  source: generic
+- id: Q012
+  category_id: new_business
+  text: New business GP by territory this fiscal year
+  data_availability: full
+  intent: breakdown
+  expected_table_id: fact_new_business_frazer
+  join_pattern: fact_new_business_frazer_with_dims
+  source: generic
+- id: Q013
+  category_id: new_business
+  text: How many new business transactions in fiscal Q3 2024-2025?
+  data_availability: full
+  intent: aggregation
+  expected_table_id: fact_new_business_frazer
+  join_pattern: fact_new_business_frazer_with_dims
+  source: generic
+- id: Q014
+  category_id: new_business
+  text: New business revenue by sales rep name fiscal 2025-2026
+  data_availability: full
+  intent: ranking
+  expected_table_id: fact_new_business_frazer
+  join_pattern: fact_new_business_frazer_with_dims
+  source: generic
+- id: Q015
+  category_id: new_business
+  text: Monthly new business trend FY 2025-2026
+  data_availability: full
+  intent: trend
+  expected_table_id: fact_new_business_frazer
+  join_pattern: fact_new_business_frazer_with_dims
+  source: generic
+- id: Q016
+  category_id: sales_revenue
+  text: Show me sales performance last month
+  data_availability: full
+  intent: trend
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q017
+  category_id: sales_rep
+  text: List all Frazer sales reps and their names
+  data_availability: full
+  intent: lookup
+  expected_table_id: dim_sales_rep
+  join_pattern: null
+  source: generic
+- id: Q018
+  category_id: time_calendar
+  text: What fiscal quarters exist in FY 2025-2026?
+  data_availability: full
+  intent: lookup
+  expected_table_id: dim_date
+  join_pattern: null
+  source: generic
+- id: Q019
+  category_id: time_calendar
+  text: How many working days in July for fiscal 2025-2026?
+  data_availability: full
+  intent: lookup
+  expected_table_id: stg_total_working_days
+  join_pattern: null
+  source: generic
+- id: Q020
+  category_id: time_calendar
+  text: Yearly total working days for fiscal 2024-2025
+  data_availability: full
+  intent: lookup
+  expected_table_id: stg_total_working_days
+  join_pattern: null
+  source: generic
+- id: Q021
+  category_id: customer
+  text: How many customers are flagged as new accounts?
+  data_availability: full
+  intent: aggregation
+  expected_table_id: dim_sales_customer
+  join_pattern: null
+  source: generic
+- id: Q022
+  category_id: customer
+  text: Customers in industry sub Retail
+  data_availability: full
+  intent: lookup
+  expected_table_id: dim_sales_customer
+  join_pattern: null
+  source: generic
+- id: Q023
+  category_id: product
+  text: List all product main groups
+  data_availability: full
+  intent: lookup
+  expected_table_id: dim_product
+  join_pattern: null
+  source: generic
+- id: Q024
+  category_id: executive_kpi
+  text: What is the department key for Jaybel?
+  data_availability: full
+  intent: lookup
+  expected_table_id: dim_department
+  join_pattern: null
+  source: generic
+- id: Q025
+  category_id: time_calendar
+  text: Count weekdays in December 2025
+  data_availability: full
+  intent: aggregation
+  expected_table_id: dim_date
+  join_pattern: null
+  source: generic
+- id: Q026
+  category_id: orders
+  text: How many raw rows in staging sales report?
+  data_availability: full
+  intent: aggregation
+  expected_table_id: stg_sales_report
+  join_pattern: null
+  source: generic
+- id: Q027
+  category_id: customer
+  text: Show sample raw customer import rows
+  data_availability: full
+  intent: lookup
+  expected_table_id: stg_sales_cust
+  join_pattern: null
+  source: generic
+- id: Q028
+  category_id: orders
+  text: Distinct fiscal_year in raw sales staging
+  data_availability: full
+  intent: lookup
+  expected_table_id: stg_sales_report
+  join_pattern: null
+  source: generic
+- id: Q029
+  category_id: new_business
+  text: Raw new business rows for territory NSW
+  data_availability: full
+  intent: lookup
+  expected_table_id: stg_new_busin_frazer
+  join_pattern: null
+  source: generic
+- id: Q030
+  category_id: product
+  text: Count raw product groups in staging
+  data_availability: full
+  intent: aggregation
+  expected_table_id: stg_main_product
+  join_pattern: null
+  source: generic
+- id: Q031
+  category_id: sales_revenue
+  text: Now filter that by Frazer only
+  data_availability: full
+  intent: filter_followup
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q032
+  category_id: sales_revenue
+  text: Break it down by fiscal month
+  data_availability: full
+  intent: trend
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q033
+  category_id: sales_revenue
+  text: Total line cost for Jaybel in FY 2025-2026
+  data_availability: full
+  intent: aggregation
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q034
+  category_id: sales_revenue
+  text: Unit GP dollars by item code top 20
+  data_availability: full
+  intent: ranking
+  expected_table_id: fact_sales_report
+  join_pattern: null
+  source: generic
+- id: Q035
+  category_id: sales_revenue
+  text: Sales trend by calendar quarter 2024
+  data_availability: full
+  intent: trend
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q036
+  category_id: sales_revenue
+  text: GP percent average by department this fiscal year
+  data_availability: full
+  intent: aggregation
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q037
+  category_id: customer
+  text: Revenue for account code ACC100 in FY 2025-2026
+  data_availability: full
+  intent: lookup
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q038
+  category_id: sales_revenue
+  text: Orders with highest line sales in fiscal Q4 2024-2025
+  data_availability: full
+  intent: ranking
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q039
+  category_id: executive_kpi
+  text: Compare fiscal Q1 vs Q2 sales in 2025-2026
+  data_availability: full
+  intent: comparison
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q040
+  category_id: sales_revenue
+  text: Sales on weekdays only fiscal 2025-2026
+  data_availability: full
+  intent: aggregation
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q041
+  category_id: new_business
+  text: New business vs main sales GP comparison Frazer
+  data_availability: full
+  intent: comparison
+  expected_table_id: fact_new_business_frazer
+  join_pattern: null
+  source: generic
+- id: Q042
+  category_id: customer
+  text: Customers with first transaction in 2024
+  data_availability: full
+  intent: lookup
+  expected_table_id: dim_sales_customer
+  join_pattern: null
+  source: generic
+- id: Q043
+  category_id: sales_rep
+  text: Reps with frazer_link populated
+  data_availability: full
+  intent: lookup
+  expected_table_id: dim_sales_rep
+  join_pattern: null
+  source: generic
+- id: Q044
+  category_id: time_calendar
+  text: Completed working days vs total for fiscal 2025-2026
+  data_availability: full
+  intent: comparison
+  expected_table_id: stg_total_working_days
+  join_pattern: null
+  source: generic
+- id: Q045
+  category_id: time_calendar
+  text: Working days by month fiscal 2024-2025
+  data_availability: full
+  intent: trend
+  expected_table_id: stg_total_working_days
+  join_pattern: null
+  source: generic
+- id: Q046
+  category_id: sales_revenue
+  text: Line sales by original rep orgn_rep top 10
+  data_availability: full
+  intent: ranking
+  expected_table_id: fact_sales_report
+  join_pattern: null
+  source: generic
+- id: Q047
+  category_id: sales_revenue
+  text: Market segment breakdown of quantity sold
+  data_availability: full
+  intent: breakdown
+  expected_table_id: fact_sales_report
+  join_pattern: null
+  source: generic
+- id: Q048
+  category_id: product
+  text: Is Electrical a valid product group?
+  data_availability: full
+  intent: lookup
+  expected_table_id: dim_product
+  join_pattern: null
+  source: generic
+- id: Q049
+  category_id: sales_revenue
+  text: File id traceability in sales facts
+  data_availability: full
+  intent: lookup
+  expected_table_id: fact_sales_report
+  join_pattern: null
+  source: generic
+- id: Q050
+  category_id: new_business
+  text: Distinct territories in new business fact
+  data_availability: full
+  intent: lookup
+  expected_table_id: fact_new_business_frazer
+  join_pattern: null
+  source: generic
+- id: Q051
+  category_id: sales_revenue
+  text: Bookings last fiscal quarter by region
+  data_availability: full
+  intent: trend
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q052
+  category_id: sales_revenue
+  text: Margin trend by fiscal month 2025-2026
+  data_availability: full
+  intent: trend
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q053
+  category_id: sales_revenue
+  text: Count distinct invoices fiscal 2025-2026
+  data_availability: full
+  intent: aggregation
+  expected_table_id: fact_sales_report
+  join_pattern: null
+  source: generic
+- id: Q054
+  category_id: sales_revenue
+  text: Sales per working day July 2025-2026
+  data_availability: full
+  intent: aggregation
+  expected_table_id: fact_sales_report
+  join_pattern: null
+  source: generic
+- id: Q055
+  category_id: orders
+  text: Raw rep codes in staging sales
+  data_availability: full
+  intent: lookup
+  expected_table_id: stg_sales_report
+  join_pattern: null
+  source: generic
+- id: Q056
+  category_id: customer
+  text: Business codes for customers
+  data_availability: full
+  intent: lookup
+  expected_table_id: dim_sales_customer
+  join_pattern: null
+  source: generic
+- id: Q057
+  category_id: time_calendar
+  text: Fiscal year labels in date dimension
+  data_availability: full
+  intent: lookup
+  expected_table_id: dim_date
+  join_pattern: null
+  source: generic
+- id: Q058
+  category_id: sales_revenue
+  text: Jaybel department revenue share percent FY 2025-2026
+  data_availability: full
+  intent: aggregation
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q059
+  category_id: sales_revenue
+  text: Lowest GP percent lines fiscal Q3 2025-2026 bottom 5
+  data_availability: full
+  intent: anomaly
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: generic
+- id: Q060
+  category_id: customer
+  text: New accounts in current fiscal cycle count
+  data_availability: full
+  intent: aggregation
+  expected_table_id: dim_sales_customer
+  join_pattern: null
+  source: generic
+- id: Q061
+  category_id: executive_kpi
+  text: What is our total Sales and Gross Profit (GP$) for the current 2025-2026 financial
+    year compared to last year?
+  data_availability: full
+  intent: comparison
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q062
+  category_id: executive_kpi
+  text: What is our daily average sales amount so far this month, and are we on track
+    to hit our projected monthly sales?
+  data_availability: partial
+  intent: aggregation
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q063
+  category_id: executive_kpi
+  text: How far behind are we on our Overall Business Target of $6M?
+  data_availability: requires_target_table
+  intent: comparison
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q064
+  category_id: executive_kpi
+  text: What is our current Gross Profit margin percentage (GP%) across the business,
+    and how does it compare to FY 24-25?
+  data_availability: full
+  intent: comparison
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q065
+  category_id: product
+  text: Show me the top 10 best-selling products for the current year.
+  data_availability: full
+  intent: ranking
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q066
+  category_id: product
+  text: Which product category generated the most revenue yesterday?
+  data_availability: full
+  intent: ranking
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q067
+  category_id: product
+  text: Compare the Gross Profit percentage of 'Office Supplies' versus 'Furniture'
+    for this year.
+  data_availability: full
+  intent: comparison
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q068
+  category_id: product
+  text: How are we performing against our specific Furniture GP Target of $387K? What
+    is the percentage difference?
+  data_availability: requires_target_table
+  intent: comparison
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q069
+  category_id: product
+  text: Show me the month-by-month sales trend for the 'Ink & Toner' category.
+  data_availability: full
+  intent: trend
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q070
+  category_id: product
+  text: What were the total sales and GP% for Office Supplies compared to Kitchen
+    & Janitorial this year?
+  data_availability: full
+  intent: comparison
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q071
+  category_id: product
+  text: Show me the Year-on-Year sales performance trend for the Apparel category.
+  data_availability: full
+  intent: trend
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q072
+  category_id: product
+  text: Which specific product category is driving the highest daily average Gross
+    Profit (GP)?
+  data_availability: full
+  intent: ranking
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q073
+  category_id: product
+  text: What is the Gross Profit percentage (GP%) for Furniture in the current year
+    versus last year?
+  data_availability: full
+  intent: comparison
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q074
+  category_id: customer
+  text: Who are our top 5 customers by total sales this year?
+  data_availability: full
+  intent: ranking
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q075
+  category_id: customer
+  text: Show me a list of customers who haven't placed an order since 2022.
+  data_availability: full
+  intent: lookup
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q076
+  category_id: customer
+  text: What were the total sales for 'Brisbane City Council' in October compared
+    to November?
+  data_availability: full
+  intent: comparison
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q077
+  category_id: customer
+  text: Which of our accounts have a 'Closed' status but still show historical revenue?
+  data_availability: partial
+  intent: lookup
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q078
+  category_id: customer
+  text: Show me the customer retention performance—compare 'Previous Month Sales'
+    to 'Current Month Sales' for our top 20 accounts.
+  data_availability: full
+  intent: comparison
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q079
+  category_id: retention
+  text: Which customers had the largest negative difference between Previous Month
+    Sales and Current Month Sales?
+  data_availability: full
+  intent: ranking
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q080
+  category_id: retention
+  text: Show me the customer retention performance for the '99 BIKES' franchise locations.
+  data_availability: full
+  intent: comparison
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q081
+  category_id: retention
+  text: How much historical revenue have we lost from accounts currently marked as
+    '*** ACCOUNT CLOSED ***'?
+  data_availability: partial
+  intent: aggregation
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q082
+  category_id: orders
+  text: Show me all recent orders placed by 'Lizard Island Resort'.
+  data_availability: full
+  intent: lookup
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q083
+  category_id: orders
+  text: How many units of item code 'HCL-S901S' (Allegra Bottle) were sold this month?
+  data_availability: full
+  intent: aggregation
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q084
+  category_id: orders
+  text: Pull the transaction date and quantity for the last order of 'Best Doors Rockhampton'.
+  data_availability: full
+  intent: lookup
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q085
+  category_id: orders
+  text: List all embroidery or custom printing jobs we processed this week.
+  data_availability: partial
+  intent: lookup
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q086
+  category_id: sales_rep
+  text: How do my total sales this month compare to my sales during the same month
+    last year?
+  data_availability: requires_rep_context
+  intent: comparison
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q087
+  category_id: sales_rep
+  text: What is my individual Gross Profit (GP$) contribution for the 2025-2026 financial
+    year?
+  data_availability: requires_rep_context
+  intent: aggregation
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q088
+  category_id: sales_rep
+  text: Which of my specific accounts are showing a decline in month-over-month sales?
+  data_availability: requires_rep_context
+  intent: ranking
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q089
+  category_id: targets
+  text: How are we currently performing against the Overall Business Target of $6,067,292.04?
+  data_availability: requires_target_table
+  intent: comparison
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q090
+  category_id: targets
+  text: What is our exact variance against the Furniture Target of $387,173.20?
+  data_availability: requires_target_table
+  intent: comparison
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q091
+  category_id: targets
+  text: Are we currently on track to hit the BTS Target of $613,099.84?
+  data_availability: requires_target_table
+  intent: comparison
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q092
+  category_id: projections
+  text: What are our Projected Monthly Sales compared to our current Sales Month To
+    Date?
+  data_availability: partial
+  intent: comparison
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q093
+  category_id: projections
+  text: Why is the Projected Furniture GP$ showing a negative variance of -$1,695,009.72?
+  data_availability: requires_target_table
+  intent: anomaly
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q094
+  category_id: projections
+  text: What is the Projected GP$ for the entire business, and what is our percentage
+    difference from that goal?
+  data_availability: requires_target_table
+  intent: comparison
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q095
+  category_id: projections
+  text: Based on the 7 completed working days this month, what is our Projected Monthly
+    GP?
+  data_availability: partial
+  intent: aggregation
+  expected_table_id: stg_total_working_days
+  join_pattern: null
+  source: office_supplies_bi_pdf
+- id: Q096
+  category_id: sales_rep
+  text: What is the total Gross Profit (GP$) I have generated for my closed deals
+    this quarter?
+  data_availability: requires_rep_context
+  intent: aggregation
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+- id: Q097
+  category_id: sales_rep
+  text: What is the total value of closed-won sales I have achieved this month to
+    calculate my payout?
+  data_availability: requires_rep_context
+  intent: aggregation
+  expected_table_id: fact_sales_report
+  join_pattern: fact_sales_with_dims
+  source: office_supplies_bi_pdf
+follow_ups:
+- id: Q001-f1
+  parent_starter_id: Q001
+  text: Break that down by product main group
+  intent: breakdown
+  data_availability: full
+- id: Q001-f2
+  parent_starter_id: Q001
+  text: Show fiscal month trend for the same metric
+  intent: trend
+  data_availability: full
+- id: Q002-f1
+  parent_starter_id: Q002
+  text: Compare that trend to the prior fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q002-f2
+  parent_starter_id: Q002
+  text: Break it down by territory
+  intent: breakdown
+  data_availability: full
+- id: Q003-f1
+  parent_starter_id: Q003
+  text: What is total GP$ for the top customer on that list?
+  intent: aggregation
+  data_availability: full
+- id: Q003-f2
+  parent_starter_id: Q003
+  text: 'Show month-over-month sales trend for the #1 customer'
+  intent: trend
+  data_availability: full
+- id: Q004-f1
+  parent_starter_id: Q004
+  text: Show the same comparison for Frazer only
+  intent: comparison
+  data_availability: full
+- id: Q004-f2
+  parent_starter_id: Q004
+  text: Break that down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q005-f1
+  parent_starter_id: Q005
+  text: Break that down by product main group
+  intent: breakdown
+  data_availability: full
+- id: Q005-f2
+  parent_starter_id: Q005
+  text: Show fiscal month trend for the same metric
+  intent: trend
+  data_availability: full
+- id: Q006-f1
+  parent_starter_id: Q006
+  text: Break that down by product main group
+  intent: breakdown
+  data_availability: full
+- id: Q006-f2
+  parent_starter_id: Q006
+  text: Show fiscal month trend for the same metric
+  intent: trend
+  data_availability: full
+- id: Q007-f1
+  parent_starter_id: Q007
+  text: Break it down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q007-f2
+  parent_starter_id: Q007
+  text: Compare Jaybel vs Frazer for the same metric
+  intent: comparison
+  data_availability: full
+- id: Q008-f1
+  parent_starter_id: Q008
+  text: Show the top 5 only with GP% included
+  intent: ranking
+  data_availability: full
+- id: Q008-f2
+  parent_starter_id: Q008
+  text: Break that ranking down by fiscal quarter
+  intent: breakdown
+  data_availability: full
+- id: Q009-f1
+  parent_starter_id: Q009
+  text: Break that down by product main group
+  intent: breakdown
+  data_availability: full
+- id: Q009-f2
+  parent_starter_id: Q009
+  text: Show fiscal month trend for the same metric
+  intent: trend
+  data_availability: full
+- id: Q010-f1
+  parent_starter_id: Q010
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q010-f2
+  parent_starter_id: Q010
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q011-f1
+  parent_starter_id: Q011
+  text: Show new business GP by territory
+  intent: breakdown
+  data_availability: full
+- id: Q011-f2
+  parent_starter_id: Q011
+  text: Monthly trend for new business revenue
+  intent: trend
+  data_availability: full
+- id: Q012-f1
+  parent_starter_id: Q012
+  text: Show new business GP by territory
+  intent: breakdown
+  data_availability: full
+- id: Q012-f2
+  parent_starter_id: Q012
+  text: Monthly trend for new business revenue
+  intent: trend
+  data_availability: full
+- id: Q013-f1
+  parent_starter_id: Q013
+  text: Show new business GP by territory
+  intent: breakdown
+  data_availability: full
+- id: Q013-f2
+  parent_starter_id: Q013
+  text: Monthly trend for new business revenue
+  intent: trend
+  data_availability: full
+- id: Q014-f1
+  parent_starter_id: Q014
+  text: Show the top 5 only with GP% included
+  intent: ranking
+  data_availability: full
+- id: Q014-f2
+  parent_starter_id: Q014
+  text: Break that ranking down by fiscal quarter
+  intent: breakdown
+  data_availability: full
+- id: Q015-f1
+  parent_starter_id: Q015
+  text: Compare that trend to the prior fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q015-f2
+  parent_starter_id: Q015
+  text: Break it down by territory
+  intent: breakdown
+  data_availability: full
+- id: Q016-f1
+  parent_starter_id: Q016
+  text: Compare that trend to the prior fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q016-f2
+  parent_starter_id: Q016
+  text: Break it down by territory
+  intent: breakdown
+  data_availability: full
+- id: Q017-f1
+  parent_starter_id: Q017
+  text: Show total sales for the top rep this fiscal year
+  intent: ranking
+  data_availability: full
+- id: Q018-f1
+  parent_starter_id: Q018
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q018-f2
+  parent_starter_id: Q018
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q019-f1
+  parent_starter_id: Q019
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q019-f2
+  parent_starter_id: Q019
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q020-f1
+  parent_starter_id: Q020
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q020-f2
+  parent_starter_id: Q020
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q021-f1
+  parent_starter_id: Q021
+  text: Break it down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q021-f2
+  parent_starter_id: Q021
+  text: Compare Jaybel vs Frazer for the same metric
+  intent: comparison
+  data_availability: full
+- id: Q022-f1
+  parent_starter_id: Q022
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q022-f2
+  parent_starter_id: Q022
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q023-f1
+  parent_starter_id: Q023
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q023-f2
+  parent_starter_id: Q023
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q024-f1
+  parent_starter_id: Q024
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q024-f2
+  parent_starter_id: Q024
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q025-f1
+  parent_starter_id: Q025
+  text: How many working days remain this fiscal month?
+  intent: lookup
+  data_availability: full
+- id: Q026-f1
+  parent_starter_id: Q026
+  text: Break it down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q026-f2
+  parent_starter_id: Q026
+  text: Compare Jaybel vs Frazer for the same metric
+  intent: comparison
+  data_availability: full
+- id: Q027-f1
+  parent_starter_id: Q027
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q027-f2
+  parent_starter_id: Q027
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q028-f1
+  parent_starter_id: Q028
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q028-f2
+  parent_starter_id: Q028
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q029-f1
+  parent_starter_id: Q029
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q029-f2
+  parent_starter_id: Q029
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q030-f1
+  parent_starter_id: Q030
+  text: Break it down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q030-f2
+  parent_starter_id: Q030
+  text: Compare Jaybel vs Frazer for the same metric
+  intent: comparison
+  data_availability: full
+- id: Q031-f1
+  parent_starter_id: Q031
+  text: Break it down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q031-f2
+  parent_starter_id: Q031
+  text: Compare Jaybel vs Frazer for the same metric
+  intent: comparison
+  data_availability: full
+- id: Q032-f1
+  parent_starter_id: Q032
+  text: Compare that trend to the prior fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q032-f2
+  parent_starter_id: Q032
+  text: Break it down by territory
+  intent: breakdown
+  data_availability: full
+- id: Q033-f1
+  parent_starter_id: Q033
+  text: Break that down by product main group
+  intent: breakdown
+  data_availability: full
+- id: Q033-f2
+  parent_starter_id: Q033
+  text: Show fiscal month trend for the same metric
+  intent: trend
+  data_availability: full
+- id: Q034-f1
+  parent_starter_id: Q034
+  text: Show the top 5 only with GP% included
+  intent: ranking
+  data_availability: full
+- id: Q034-f2
+  parent_starter_id: Q034
+  text: Break that ranking down by fiscal quarter
+  intent: breakdown
+  data_availability: full
+- id: Q035-f1
+  parent_starter_id: Q035
+  text: Compare that trend to the prior fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q035-f2
+  parent_starter_id: Q035
+  text: Break it down by territory
+  intent: breakdown
+  data_availability: full
+- id: Q036-f1
+  parent_starter_id: Q036
+  text: Break that down by product main group
+  intent: breakdown
+  data_availability: full
+- id: Q036-f2
+  parent_starter_id: Q036
+  text: Show fiscal month trend for the same metric
+  intent: trend
+  data_availability: full
+- id: Q037-f1
+  parent_starter_id: Q037
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q037-f2
+  parent_starter_id: Q037
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q038-f1
+  parent_starter_id: Q038
+  text: Show the top 5 only with GP% included
+  intent: ranking
+  data_availability: full
+- id: Q038-f2
+  parent_starter_id: Q038
+  text: Break that ranking down by fiscal quarter
+  intent: breakdown
+  data_availability: full
+- id: Q039-f1
+  parent_starter_id: Q039
+  text: Show the same comparison for Frazer only
+  intent: comparison
+  data_availability: full
+- id: Q039-f2
+  parent_starter_id: Q039
+  text: Break that down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q040-f1
+  parent_starter_id: Q040
+  text: Break that down by product main group
+  intent: breakdown
+  data_availability: full
+- id: Q040-f2
+  parent_starter_id: Q040
+  text: Show fiscal month trend for the same metric
+  intent: trend
+  data_availability: full
+- id: Q041-f1
+  parent_starter_id: Q041
+  text: Show the same comparison for Frazer only
+  intent: comparison
+  data_availability: full
+- id: Q041-f2
+  parent_starter_id: Q041
+  text: Break that down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q042-f1
+  parent_starter_id: Q042
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q042-f2
+  parent_starter_id: Q042
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q043-f1
+  parent_starter_id: Q043
+  text: Show total sales for the top rep this fiscal year
+  intent: ranking
+  data_availability: full
+- id: Q044-f1
+  parent_starter_id: Q044
+  text: Show the same comparison for Frazer only
+  intent: comparison
+  data_availability: full
+- id: Q044-f2
+  parent_starter_id: Q044
+  text: Break that down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q045-f1
+  parent_starter_id: Q045
+  text: Compare that trend to the prior fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q045-f2
+  parent_starter_id: Q045
+  text: Break it down by territory
+  intent: breakdown
+  data_availability: full
+- id: Q046-f1
+  parent_starter_id: Q046
+  text: Show the top 5 only with GP% included
+  intent: ranking
+  data_availability: full
+- id: Q046-f2
+  parent_starter_id: Q046
+  text: Break that ranking down by fiscal quarter
+  intent: breakdown
+  data_availability: full
+- id: Q047-f1
+  parent_starter_id: Q047
+  text: Break it down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q047-f2
+  parent_starter_id: Q047
+  text: Compare Jaybel vs Frazer for the same metric
+  intent: comparison
+  data_availability: full
+- id: Q048-f1
+  parent_starter_id: Q048
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q048-f2
+  parent_starter_id: Q048
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q049-f1
+  parent_starter_id: Q049
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q049-f2
+  parent_starter_id: Q049
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q050-f1
+  parent_starter_id: Q050
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q050-f2
+  parent_starter_id: Q050
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q051-f1
+  parent_starter_id: Q051
+  text: Compare that trend to the prior fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q051-f2
+  parent_starter_id: Q051
+  text: Break it down by territory
+  intent: breakdown
+  data_availability: full
+- id: Q052-f1
+  parent_starter_id: Q052
+  text: Compare that trend to the prior fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q052-f2
+  parent_starter_id: Q052
+  text: Break it down by territory
+  intent: breakdown
+  data_availability: full
+- id: Q053-f1
+  parent_starter_id: Q053
+  text: Break that down by product main group
+  intent: breakdown
+  data_availability: full
+- id: Q053-f2
+  parent_starter_id: Q053
+  text: Show fiscal month trend for the same metric
+  intent: trend
+  data_availability: full
+- id: Q054-f1
+  parent_starter_id: Q054
+  text: Break that down by product main group
+  intent: breakdown
+  data_availability: full
+- id: Q054-f2
+  parent_starter_id: Q054
+  text: Show fiscal month trend for the same metric
+  intent: trend
+  data_availability: full
+- id: Q055-f1
+  parent_starter_id: Q055
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q055-f2
+  parent_starter_id: Q055
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q056-f1
+  parent_starter_id: Q056
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q056-f2
+  parent_starter_id: Q056
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q057-f1
+  parent_starter_id: Q057
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q057-f2
+  parent_starter_id: Q057
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q058-f1
+  parent_starter_id: Q058
+  text: Break that down by product main group
+  intent: breakdown
+  data_availability: full
+- id: Q058-f2
+  parent_starter_id: Q058
+  text: Show fiscal month trend for the same metric
+  intent: trend
+  data_availability: full
+- id: Q059-f1
+  parent_starter_id: Q059
+  text: Break it down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q059-f2
+  parent_starter_id: Q059
+  text: Compare Jaybel vs Frazer for the same metric
+  intent: comparison
+  data_availability: full
+- id: Q060-f1
+  parent_starter_id: Q060
+  text: Break it down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q060-f2
+  parent_starter_id: Q060
+  text: Compare Jaybel vs Frazer for the same metric
+  intent: comparison
+  data_availability: full
+- id: Q061-f1
+  parent_starter_id: Q061
+  text: Show the same comparison for Frazer only
+  intent: comparison
+  data_availability: full
+- id: Q061-f2
+  parent_starter_id: Q061
+  text: Break that down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q062-f1
+  parent_starter_id: Q062
+  text: Break that down by product main group
+  intent: breakdown
+  data_availability: full
+- id: Q062-f2
+  parent_starter_id: Q062
+  text: Show fiscal month trend for the same metric
+  intent: trend
+  data_availability: full
+- id: Q063-f1
+  parent_starter_id: Q063
+  text: Show the same comparison for Frazer only
+  intent: comparison
+  data_availability: full
+- id: Q063-f2
+  parent_starter_id: Q063
+  text: Break that down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q064-f1
+  parent_starter_id: Q064
+  text: Show the same comparison for Frazer only
+  intent: comparison
+  data_availability: full
+- id: Q064-f2
+  parent_starter_id: Q064
+  text: Break that down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q065-f1
+  parent_starter_id: Q065
+  text: Show the top 5 only with GP% included
+  intent: ranking
+  data_availability: full
+- id: Q065-f2
+  parent_starter_id: Q065
+  text: Break that ranking down by fiscal quarter
+  intent: breakdown
+  data_availability: full
+- id: Q066-f1
+  parent_starter_id: Q066
+  text: Show the top 5 only with GP% included
+  intent: ranking
+  data_availability: full
+- id: Q066-f2
+  parent_starter_id: Q066
+  text: Break that ranking down by fiscal quarter
+  intent: breakdown
+  data_availability: full
+- id: Q067-f1
+  parent_starter_id: Q067
+  text: Show the same comparison for Frazer only
+  intent: comparison
+  data_availability: full
+- id: Q067-f2
+  parent_starter_id: Q067
+  text: Break that down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q068-f1
+  parent_starter_id: Q068
+  text: Show the same comparison for Frazer only
+  intent: comparison
+  data_availability: full
+- id: Q068-f2
+  parent_starter_id: Q068
+  text: Break that down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q069-f1
+  parent_starter_id: Q069
+  text: Compare that trend to the prior fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q069-f2
+  parent_starter_id: Q069
+  text: Break it down by territory
+  intent: breakdown
+  data_availability: full
+- id: Q070-f1
+  parent_starter_id: Q070
+  text: Show the same comparison for Frazer only
+  intent: comparison
+  data_availability: full
+- id: Q070-f2
+  parent_starter_id: Q070
+  text: Break that down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q071-f1
+  parent_starter_id: Q071
+  text: Compare that trend to the prior fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q071-f2
+  parent_starter_id: Q071
+  text: Break it down by territory
+  intent: breakdown
+  data_availability: full
+- id: Q072-f1
+  parent_starter_id: Q072
+  text: Show the top 5 only with GP% included
+  intent: ranking
+  data_availability: full
+- id: Q072-f2
+  parent_starter_id: Q072
+  text: Break that ranking down by fiscal quarter
+  intent: breakdown
+  data_availability: full
+- id: Q073-f1
+  parent_starter_id: Q073
+  text: Show the same comparison for Frazer only
+  intent: comparison
+  data_availability: full
+- id: Q073-f2
+  parent_starter_id: Q073
+  text: Break that down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q074-f1
+  parent_starter_id: Q074
+  text: What is total GP$ for the top customer on that list?
+  intent: aggregation
+  data_availability: full
+- id: Q074-f2
+  parent_starter_id: Q074
+  text: 'Show month-over-month sales trend for the #1 customer'
+  intent: trend
+  data_availability: full
+- id: Q075-f1
+  parent_starter_id: Q075
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q075-f2
+  parent_starter_id: Q075
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q076-f1
+  parent_starter_id: Q076
+  text: Show the same comparison for Frazer only
+  intent: comparison
+  data_availability: full
+- id: Q076-f2
+  parent_starter_id: Q076
+  text: Break that down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q077-f1
+  parent_starter_id: Q077
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q077-f2
+  parent_starter_id: Q077
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q078-f1
+  parent_starter_id: Q078
+  text: Show the same comparison for Frazer only
+  intent: comparison
+  data_availability: full
+- id: Q078-f2
+  parent_starter_id: Q078
+  text: Break that down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q079-f1
+  parent_starter_id: Q079
+  text: Show the top 5 only with GP% included
+  intent: ranking
+  data_availability: full
+- id: Q079-f2
+  parent_starter_id: Q079
+  text: Break that ranking down by fiscal quarter
+  intent: breakdown
+  data_availability: full
+- id: Q080-f1
+  parent_starter_id: Q080
+  text: Show the same comparison for Frazer only
+  intent: comparison
+  data_availability: full
+- id: Q080-f2
+  parent_starter_id: Q080
+  text: Break that down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q081-f1
+  parent_starter_id: Q081
+  text: Break that down by product main group
+  intent: breakdown
+  data_availability: full
+- id: Q081-f2
+  parent_starter_id: Q081
+  text: Show fiscal month trend for the same metric
+  intent: trend
+  data_availability: full
+- id: Q082-f1
+  parent_starter_id: Q082
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q082-f2
+  parent_starter_id: Q082
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q083-f1
+  parent_starter_id: Q083
+  text: Break that down by product main group
+  intent: breakdown
+  data_availability: full
+- id: Q083-f2
+  parent_starter_id: Q083
+  text: Show fiscal month trend for the same metric
+  intent: trend
+  data_availability: full
+- id: Q084-f1
+  parent_starter_id: Q084
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q084-f2
+  parent_starter_id: Q084
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q085-f1
+  parent_starter_id: Q085
+  text: Filter that to Jaybel only
+  intent: filter_followup
+  data_availability: full
+- id: Q085-f2
+  parent_starter_id: Q085
+  text: Show the same for last fiscal year
+  intent: comparison
+  data_availability: full
+- id: Q086-f1
+  parent_starter_id: Q086
+  text: Show the same comparison for Frazer only
+  intent: comparison
+  data_availability: full
+- id: Q086-f2
+  parent_starter_id: Q086
+  text: Break that down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q087-f1
+  parent_starter_id: Q087
+  text: Break that down by product main group
+  intent: breakdown
+  data_availability: full
+- id: Q087-f2
+  parent_starter_id: Q087
+  text: Show fiscal month trend for the same metric
+  intent: trend
+  data_availability: full
+- id: Q088-f1
+  parent_starter_id: Q088
+  text: Show the top 5 only with GP% included
+  intent: ranking
+  data_availability: full
+- id: Q088-f2
+  parent_starter_id: Q088
+  text: Break that ranking down by fiscal quarter
+  intent: breakdown
+  data_availability: full
+- id: Q089-f1
+  parent_starter_id: Q089
+  text: Show the same comparison for Frazer only
+  intent: comparison
+  data_availability: full
+- id: Q089-f2
+  parent_starter_id: Q089
+  text: Break that down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q090-f1
+  parent_starter_id: Q090
+  text: Show the same comparison for Frazer only
+  intent: comparison
+  data_availability: full
+- id: Q090-f2
+  parent_starter_id: Q090
+  text: Break that down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q091-f1
+  parent_starter_id: Q091
+  text: Show the same comparison for Frazer only
+  intent: comparison
+  data_availability: full
+- id: Q091-f2
+  parent_starter_id: Q091
+  text: Break that down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q092-f1
+  parent_starter_id: Q092
+  text: Show the same comparison for Frazer only
+  intent: comparison
+  data_availability: full
+- id: Q092-f2
+  parent_starter_id: Q092
+  text: Break that down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q093-f1
+  parent_starter_id: Q093
+  text: What are actual sales month to date from facts?
+  intent: aggregation
+  data_availability: full
+- id: Q094-f1
+  parent_starter_id: Q094
+  text: Show the same comparison for Frazer only
+  intent: comparison
+  data_availability: full
+- id: Q094-f2
+  parent_starter_id: Q094
+  text: Break that down by fiscal month
+  intent: trend
+  data_availability: full
+- id: Q095-f1
+  parent_starter_id: Q095
+  text: What are actual sales month to date from facts?
+  intent: aggregation
+  data_availability: full
+- id: Q096-f1
+  parent_starter_id: Q096
+  text: Break that down by product main group
+  intent: breakdown
+  data_availability: full
+- id: Q096-f2
+  parent_starter_id: Q096
+  text: Show fiscal month trend for the same metric
+  intent: trend
+  data_availability: full
+- id: Q097-f1
+  parent_starter_id: Q097
+  text: Break that down by product main group
+  intent: breakdown
+  data_availability: full
+- id: Q097-f2
+  parent_starter_id: Q097
+  text: Show fiscal month trend for the same metric
+  intent: trend
+  data_availability: full
+rules:
+- id: after_ranking_fact_sales
+  when:
+    last_intent: ranking
+    last_table_id: fact_sales_report
+  suggestions:
+  - text: What is total GP$ for the top result?
+    data_availability: full
+  - text: Show fiscal month trend for the top item
+    data_availability: full
+- id: after_trend
+  when:
+    last_intent: trend
+  suggestions:
+  - text: Compare that to the prior fiscal year
+    data_availability: full
+  - text: Break down by territory
+    data_availability: full
+- id: after_aggregation
+  when:
+    last_intent: aggregation
+  suggestions:
+  - text: Break down by product category
+    data_availability: full
+  - text: Show Jaybel vs Frazer split
+    data_availability: full
+- id: after_dim_customer
+  when:
+    last_table_id: dim_sales_customer
+  suggestions:
+  - text: Show total sales for the largest customer this year
+    data_availability: full

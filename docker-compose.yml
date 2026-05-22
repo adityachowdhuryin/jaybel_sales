@@ -1,0 +1,19 @@
+# Local PostgreSQL for Jaybel Sales Analytics UI (Phase C)
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: jaybel_sales_postgres
+    restart: unless-stopped
+    ports:
+      - "15433:5432"  # host 15433 — avoid clash with other local Postgres
+    environment:
+      POSTGRES_USER: jaybel
+      POSTGRES_PASSWORD: jaybel_local_dev
+      POSTGRES_DB: jaybel_sales_app
+      # Dev: allow host connections via published port (Docker gateway IP)
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - jaybel_pgdata:/var/lib/postgresql/data
+
+volumes:
+  jaybel_pgdata:

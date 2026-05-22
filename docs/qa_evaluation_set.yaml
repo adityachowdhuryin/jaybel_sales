@@ -1,627 +1,757 @@
-# QA / regression set for routing and SQL generation
-# Generated from schema + glossary; validate against live BigQuery before production sign-off.
 version: 1
 project: jaybel-dev
 dataset: jaybel_sales_analytics
-
 metadata:
-  purpose: "Top-1 table routing accuracy + dry-run pass rate"
-  target_routing_accuracy: 0.90
+  purpose: Top-1 table routing accuracy + dry-run pass rate
+  target_routing_accuracy: 0.9
   total_cases: 97
   sources:
-    - id: generic_star_schema
-      cases: Q001-Q060
-      description: "Generated from Jaybel schema + glossary"
-    - id: office_supplies_bi_pdf
-      cases: Q061-Q097
-      description: "Client questions from Office_Supplies_BI_Analytics_Questions.pdf"
-      catalog: docs/office_supplies_client_questions.md
+  - id: generic_star_schema
+    cases: Q001-Q060
+    description: Generated from Jaybel schema + glossary
+  - id: office_supplies_bi_pdf
+    cases: Q061-Q097
+    description: Client questions from Office_Supplies_BI_Analytics_Questions.pdf
+    catalog: docs/office_supplies_client_questions.md
   notes:
-    - "expected_join_pattern null = single-table or infer from primary"
-    - "Re-run after schema drift; sample rep codes/accounts are placeholders"
-    - "Client target/projection questions (Q063,Q064,Q068,Q079-Q085,Q092-Q094) may be partial until budget tables exist"
-
+  - expected_join_pattern null = single-table or infer from primary
+  - Re-run after schema drift; sample rep codes/accounts are placeholders
+  - Client target/projection questions (Q063,Q064,Q068,Q079-Q085,Q092-Q094) may be
+    partial until budget tables exist
 cases:
-  # --- fact_sales_report (with dims) ---
-  - id: Q001
-    question: "What was total sales excluding GST in fiscal year 2025-2026 for Jaybel?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: aggregation
-  - id: Q002
-    question: "Show monthly sales trend for fiscal year 2024-2025"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: trend
-  - id: Q003
-    question: "Top 10 customers by gross profit in fiscal Q2 2025-2026"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: ranking
-  - id: Q004
-    question: "Compare Jaybel vs Frazer total revenue this fiscal year"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: comparison
-  - id: Q005
-    question: "Average GP percent by territory in calendar year 2025"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: aggregation
-  - id: Q006
-    question: "How many invoice line items sold in July 2025?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: aggregation
-  - id: Q007
-    question: "Sales by product main group for the last fiscal quarter"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: breakdown
-  - id: Q008
-    question: "Which warehouse had the highest line sales last month?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: ranking
-  - id: Q009
-    question: "Total quantity sold by market segment mkt in FY 2024-2025"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: aggregation
-  - id: Q010
-    question: "List invoices with line sales over 50000 ex GST in fiscal Q1 2025-2026"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: lookup
-
-  # --- fact_new_business_frazer ---
-  - id: Q011
-    question: "Total new business sales for Frazer in fiscal 2025-2026"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer
-    expected_join_pattern: fact_new_business_frazer_with_dims
-    intent: aggregation
-  - id: Q012
-    question: "New business GP by territory this fiscal year"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer
-    expected_join_pattern: fact_new_business_frazer_with_dims
-    intent: breakdown
-  - id: Q013
-    question: "How many new business transactions in fiscal Q3 2024-2025?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer
-    expected_join_pattern: fact_new_business_frazer_with_dims
-    intent: aggregation
-  - id: Q014
-    question: "New business revenue by sales rep name fiscal 2025-2026"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer
-    expected_join_pattern: fact_new_business_frazer_with_dims
-    intent: ranking
-  - id: Q015
-    question: "Monthly new business trend FY 2025-2026"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer
-    expected_join_pattern: fact_new_business_frazer_with_dims
-    intent: trend
-
-  # --- Routing disambiguation ---
-  - id: Q016
-    question: "Show me sales performance last month"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: trend
-    notes: "Not dim_sales_rep — 'performance' implies revenue metrics"
-  - id: Q017
-    question: "List all Frazer sales reps and their names"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_sales_rep
-    intent: lookup
-  - id: Q018
-    question: "What fiscal quarters exist in FY 2025-2026?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_date
-    intent: lookup
-  - id: Q019
-    question: "How many working days in July for fiscal 2025-2026?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_total_working_days
-    intent: lookup
-  - id: Q020
-    question: "Yearly total working days for fiscal 2024-2025"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_total_working_days
-    intent: lookup
-
-  # --- Dimensions only ---
-  - id: Q021
-    question: "How many customers are flagged as new accounts?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_sales_customer
-    intent: aggregation
-  - id: Q022
-    question: "Customers in industry sub Retail"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_sales_customer
-    intent: lookup
-  - id: Q023
-    question: "List all product main groups"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_product
-    intent: lookup
-  - id: Q024
-    question: "What is the department key for Jaybel?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_department
-    intent: lookup
-  - id: Q025
-    question: "Count weekdays in December 2025"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_date
-    intent: aggregation
-
-  # --- Staging (raw) routing ---
-  - id: Q026
-    question: "How many raw rows in staging sales report?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_sales_report
-    intent: aggregation
-  - id: Q027
-    question: "Show sample raw customer import rows"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_sales_cust
-    intent: lookup
-  - id: Q028
-    question: "Distinct fiscal_year in raw sales staging"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_sales_report
-    intent: lookup
-  - id: Q029
-    question: "Raw new business rows for territory NSW"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_new_busin_frazer
-    intent: lookup
-  - id: Q030
-    question: "Count raw product groups in staging"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_main_product
-    intent: aggregation
-
-  # --- Follow-up style (session context; label primary only) ---
-  - id: Q031
-    question: "Now filter that by Frazer only"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: filter_followup
-    requires_prior_context: true
-  - id: Q032
-    question: "Break it down by fiscal month"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: trend
-    requires_prior_context: true
-
-  # --- Additional coverage (40 more) ---
-  - id: Q033
-    question: "Total line cost for Jaybel in FY 2025-2026"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: aggregation
-  - id: Q034
-    question: "Unit GP dollars by item code top 20"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    intent: ranking
-  - id: Q035
-    question: "Sales trend by calendar quarter 2024"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: trend
-  - id: Q036
-    question: "GP percent average by department this fiscal year"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: aggregation
-  - id: Q037
-    question: "Revenue for account code ACC100 in FY 2025-2026"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: lookup
-  - id: Q038
-    question: "Orders with highest line sales in fiscal Q4 2024-2025"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: ranking
-  - id: Q039
-    question: "Compare fiscal Q1 vs Q2 sales in 2025-2026"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: comparison
-  - id: Q040
-    question: "Sales on weekdays only fiscal 2025-2026"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: aggregation
-  - id: Q041
-    question: "New business vs main sales GP comparison Frazer"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer
-    notes: "May require multi-fact union — flag for v2; acceptable if routes fact_new_business_frazer first"
-    intent: comparison
-  - id: Q042
-    question: "Customers with first transaction in 2024"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_sales_customer
-    intent: lookup
-  - id: Q043
-    question: "Reps with frazer_link populated"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_sales_rep
-    intent: lookup
-  - id: Q044
-    question: "Completed working days vs total for fiscal 2025-2026"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_total_working_days
-    intent: comparison
-  - id: Q045
-    question: "Working days by month fiscal 2024-2025"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_total_working_days
-    intent: trend
-  - id: Q046
-    question: "Line sales by original rep orgn_rep top 10"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    intent: ranking
-  - id: Q047
-    question: "Market segment breakdown of quantity sold"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    intent: breakdown
-  - id: Q048
-    question: "Is Electrical a valid product group?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_product
-    intent: lookup
-  - id: Q049
-    question: "File id traceability in sales facts"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    intent: lookup
-  - id: Q050
-    question: "Distinct territories in new business fact"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer
-    intent: lookup
-
-  - id: Q051
-    question: "Bookings last fiscal quarter by region"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: trend
-    notes: "Glossary: bookings → line_sales_ex_gst"
-  - id: Q052
-    question: "Margin trend by fiscal month 2025-2026"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: trend
-  - id: Q053
-    question: "Count distinct invoices fiscal 2025-2026"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    intent: aggregation
-  - id: Q054
-    question: "Sales per working day July 2025-2026"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    notes: "Advanced: may need working days join in v2; primary fact still sales"
-    intent: aggregation
-  - id: Q055
-    question: "Raw rep codes in staging sales"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_sales_report
-    intent: lookup
-  - id: Q056
-    question: "Business codes for customers"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_sales_customer
-    intent: lookup
-  - id: Q057
-    question: "Fiscal year labels in date dimension"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_date
-    intent: lookup
-  - id: Q058
-    question: "Jaybel department revenue share percent FY 2025-2026"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: aggregation
-  - id: Q059
-    question: "Lowest GP percent lines fiscal Q3 2025-2026 bottom 5"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: anomaly
-  - id: Q060
-    question: "New accounts in current fiscal cycle count"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_sales_customer
-    intent: aggregation
-
-  # --- Client: Office Supplies BI (Office_Supplies_BI_Analytics_Questions.pdf) Q061-Q097 ---
-  - id: Q061
-    source: office_supplies_bi_pdf
-    category: executive_kpi
-    question: "What is our total Sales and Gross Profit (GP$) for the current 2025-2026 financial year compared to last year?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: comparison
-    data_availability: full
-  - id: Q062
-    source: office_supplies_bi_pdf
-    category: executive_kpi
-    question: "What is our daily average sales amount so far this month, and are we on track to hit our projected monthly sales?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: aggregation
-    data_availability: partial
-    notes: "MTD daily avg from facts; projected monthly sales may need target/forecast table or run-rate (v2)"
-  - id: Q063
-    source: office_supplies_bi_pdf
-    category: executive_kpi
-    question: "How far behind are we on our Overall Business Target of $6M?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: comparison
-    data_availability: requires_target_table
-    notes: "Target $6M not in BQ schema; compare FY sales to constant or add budget table"
-  - id: Q064
-    source: office_supplies_bi_pdf
-    category: executive_kpi
-    question: "What is our current Gross Profit margin percentage (GP%) across the business, and how does it compare to FY 24-25?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: comparison
-    data_availability: full
-  - id: Q065
-    source: office_supplies_bi_pdf
-    category: product
-    question: "Show me the top 10 best-selling products for the current year."
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: ranking
-    data_availability: full
-    notes: "Rank by item_code or product group per business preference"
-  - id: Q066
-    source: office_supplies_bi_pdf
-    category: product
-    question: "Which product category generated the most revenue yesterday?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: ranking
-    data_availability: full
-  - id: Q067
-    source: office_supplies_bi_pdf
-    category: product
-    question: "Compare the Gross Profit percentage of 'Office Supplies' versus 'Furniture' for this year."
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: comparison
-    data_availability: full
-  - id: Q068
-    source: office_supplies_bi_pdf
-    category: product
-    question: "How are we performing against our specific Furniture GP Target of $387K? What is the percentage difference?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: comparison
-    data_availability: requires_target_table
-    notes: "Furniture GP actual from facts; $387K target external until loaded"
-  - id: Q069
-    source: office_supplies_bi_pdf
-    category: product
-    question: "Show me the month-by-month sales trend for the 'Ink & Toner' category."
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: trend
-    data_availability: full
-  - id: Q070
-    source: office_supplies_bi_pdf
-    category: product
-    question: "What were the total sales and GP% for Office Supplies compared to Kitchen & Janitorial this year?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: comparison
-    data_availability: full
-  - id: Q071
-    source: office_supplies_bi_pdf
-    category: product
-    question: "Show me the Year-on-Year sales performance trend for the Apparel category."
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: trend
-    data_availability: full
-  - id: Q072
-    source: office_supplies_bi_pdf
-    category: product
-    question: "Which specific product category is driving the highest daily average Gross Profit (GP)?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: ranking
-    data_availability: full
-  - id: Q073
-    source: office_supplies_bi_pdf
-    category: product
-    question: "What is the Gross Profit percentage (GP%) for Furniture in the current year versus last year?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: comparison
-    data_availability: full
-  - id: Q074
-    source: office_supplies_bi_pdf
-    category: customer
-    question: "Who are our top 5 customers by total sales this year?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: ranking
-    data_availability: full
-  - id: Q075
-    source: office_supplies_bi_pdf
-    category: customer
-    question: "Show me a list of customers who haven't placed an order since 2022."
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: lookup
-    data_availability: full
-    notes: "Inactive = no fact rows after 2022-12-31"
-  - id: Q076
-    source: office_supplies_bi_pdf
-    category: customer
-    question: "What were the total sales for 'Brisbane City Council' in October compared to November?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: comparison
-    data_availability: full
-    notes: "Calendar Oct/Nov in Australia/Sydney unless user specifies fiscal"
-  - id: Q077
-    source: office_supplies_bi_pdf
-    category: customer
-    question: "Which of our accounts have a 'Closed' status but still show historical revenue?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: lookup
-    data_availability: partial
-    notes: "Closed status likely in account_name pattern; no dedicated status column in dim"
-  - id: Q078
-    source: office_supplies_bi_pdf
-    category: customer
-    question: "Show me the customer retention performance—compare 'Previous Month Sales' to 'Current Month Sales' for our top 20 accounts."
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: comparison
-    data_availability: full
-    notes: "MoM two-period pivot per customer_key"
-  - id: Q079
-    source: office_supplies_bi_pdf
-    category: retention
-    question: "Which customers had the largest negative difference between Previous Month Sales and Current Month Sales?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: ranking
-    data_availability: full
-  - id: Q080
-    source: office_supplies_bi_pdf
-    category: retention
-    question: "Show me the customer retention performance for the '99 BIKES' franchise locations."
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: comparison
-    data_availability: full
-    notes: "Filter account_name LIKE '%99 BIKES%'"
-  - id: Q081
-    source: office_supplies_bi_pdf
-    category: retention
-    question: "How much historical revenue have we lost from accounts currently marked as '*** ACCOUNT CLOSED ***'?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: aggregation
-    data_availability: partial
-    notes: "Match closed pattern in account_name; define 'lost' with business"
-  - id: Q082
-    source: office_supplies_bi_pdf
-    category: tactical
-    question: "Show me all recent orders placed by 'Lizard Island Resort'."
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: lookup
-    data_availability: full
-  - id: Q083
-    source: office_supplies_bi_pdf
-    category: tactical
-    question: "How many units of item code 'HCL-S901S' (Allegra Bottle) were sold this month?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: aggregation
-    data_availability: full
-  - id: Q084
-    source: office_supplies_bi_pdf
-    category: tactical
-    question: "Pull the transaction date and quantity for the last order of 'Best Doors Rockhampton'."
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: lookup
-    data_availability: full
-  - id: Q085
-    source: office_supplies_bi_pdf
-    category: tactical
-    question: "List all embroidery or custom printing jobs we processed this week."
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: lookup
-    data_availability: partial
-    notes: "Confirm which column identifies embroidery/custom print (item_code, product group, description)"
-  - id: Q086
-    source: office_supplies_bi_pdf
-    category: rep
-    question: "How do my total sales this month compare to my sales during the same month last year?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: comparison
-    data_availability: requires_rep_context
-    notes: "Filter by authenticated rep"
-  - id: Q087
-    source: office_supplies_bi_pdf
-    category: rep
-    question: "What is my individual Gross Profit (GP$) contribution for the 2025-2026 financial year?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: aggregation
-    data_availability: requires_rep_context
-  - id: Q088
-    source: office_supplies_bi_pdf
-    category: rep
-    question: "Which of my specific accounts are showing a decline in month-over-month sales?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: ranking
-    data_availability: requires_rep_context
-  - id: Q089
-    source: office_supplies_bi_pdf
-    category: targets
-    question: "How are we currently performing against the Overall Business Target of $6,067,292.04?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: comparison
-    data_availability: requires_target_table
-  - id: Q090
-    source: office_supplies_bi_pdf
-    category: targets
-    question: "What is our exact variance against the Furniture Target of $387,173.20?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: comparison
-    data_availability: requires_target_table
-  - id: Q091
-    source: office_supplies_bi_pdf
-    category: targets
-    question: "Are we currently on track to hit the BTS Target of $613,099.84?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: comparison
-    data_availability: requires_target_table
-    notes: "BTS category mapping to main_group_name TBD with business"
-  - id: Q092
-    source: office_supplies_bi_pdf
-    category: projections
-    question: "What are our Projected Monthly Sales compared to our current Sales Month To Date?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: comparison
-    data_availability: partial
-    notes: "MTD from facts; projection from BI model not in BQ"
-  - id: Q093
-    source: office_supplies_bi_pdf
-    category: projections
-    question: "Why is the Projected Furniture GP$ showing a negative variance of -$1,695,009.72?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: anomaly
-    data_availability: requires_target_table
-    notes: "Explain only if forecast tables exist; else state unavailable in BQ"
-  - id: Q094
-    source: office_supplies_bi_pdf
-    category: projections
-    question: "What is the Projected GP$ for the entire business, and what is our percentage difference from that goal?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: comparison
-    data_availability: requires_target_table
-  - id: Q095
-    source: office_supplies_bi_pdf
-    category: projections
-    question: "Based on the 7 completed working days this month, what is our Projected Monthly GP?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_total_working_days
-    intent: aggregation
-    data_availability: partial
-    notes: "May join working days with fact GP run-rate; primary table working days"
-  - id: Q096
-    source: office_supplies_bi_pdf
-    category: commission
-    question: "What is the total Gross Profit (GP$) I have generated for my closed deals this quarter?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: aggregation
-    data_availability: requires_rep_context
-    notes: "Define 'closed deals' with business"
-  - id: Q097
-    source: office_supplies_bi_pdf
-    category: commission
-    question: "What is the total value of closed-won sales I have achieved this month to calculate my payout?"
-    expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
-    expected_join_pattern: fact_sales_with_dims
-    intent: aggregation
-    data_availability: requires_rep_context
+- id: Q001
+  question: What was total sales excluding GST in fiscal year 2025-2026 for Jaybel?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+  category: sales_revenue
+  data_availability: full
+- id: Q002
+  question: Show monthly sales trend for fiscal year 2024-2025
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: trend
+  category: executive_kpi
+  data_availability: full
+- id: Q003
+  question: Top 10 customers by gross profit in fiscal Q2 2025-2026
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: ranking
+  category: customer
+  data_availability: full
+- id: Q004
+  question: Compare Jaybel vs Frazer total revenue this fiscal year
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: comparison
+  category: executive_kpi
+  data_availability: full
+- id: Q005
+  question: Average GP percent by territory in calendar year 2025
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+  category: sales_revenue
+  data_availability: full
+- id: Q006
+  question: How many invoice line items sold in July 2025?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+  category: sales_revenue
+  data_availability: full
+- id: Q007
+  question: Sales by product main group for the last fiscal quarter
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: breakdown
+  category: product
+  data_availability: full
+- id: Q008
+  question: Which warehouse had the highest line sales last month?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: ranking
+  category: sales_revenue
+  data_availability: full
+- id: Q009
+  question: Total quantity sold by market segment mkt in FY 2024-2025
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+  category: sales_revenue
+  data_availability: full
+- id: Q010
+  question: List invoices with line sales over 50000 ex GST in fiscal Q1 2025-2026
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: lookup
+  category: sales_revenue
+  data_availability: full
+- id: Q011
+  question: Total new business sales for Frazer in fiscal 2025-2026
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer
+  expected_join_pattern: fact_new_business_frazer_with_dims
+  intent: aggregation
+  category: new_business
+  data_availability: full
+- id: Q012
+  question: New business GP by territory this fiscal year
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer
+  expected_join_pattern: fact_new_business_frazer_with_dims
+  intent: breakdown
+  category: new_business
+  data_availability: full
+- id: Q013
+  question: How many new business transactions in fiscal Q3 2024-2025?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer
+  expected_join_pattern: fact_new_business_frazer_with_dims
+  intent: aggregation
+  category: new_business
+  data_availability: full
+- id: Q014
+  question: New business revenue by sales rep name fiscal 2025-2026
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer
+  expected_join_pattern: fact_new_business_frazer_with_dims
+  intent: ranking
+  category: new_business
+  data_availability: full
+- id: Q015
+  question: Monthly new business trend FY 2025-2026
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer
+  expected_join_pattern: fact_new_business_frazer_with_dims
+  intent: trend
+  category: new_business
+  data_availability: full
+- id: Q016
+  question: Show me sales performance last month
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: trend
+  notes: Not dim_sales_rep — 'performance' implies revenue metrics
+  category: sales_revenue
+  data_availability: full
+- id: Q017
+  question: List all Frazer sales reps and their names
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_sales_rep
+  intent: lookup
+  category: sales_rep
+  data_availability: full
+- id: Q018
+  question: What fiscal quarters exist in FY 2025-2026?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_date
+  intent: lookup
+  category: time_calendar
+  data_availability: full
+- id: Q019
+  question: How many working days in July for fiscal 2025-2026?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_total_working_days
+  intent: lookup
+  category: time_calendar
+  data_availability: full
+- id: Q020
+  question: Yearly total working days for fiscal 2024-2025
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_total_working_days
+  intent: lookup
+  category: time_calendar
+  data_availability: full
+- id: Q021
+  question: How many customers are flagged as new accounts?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_sales_customer
+  intent: aggregation
+  category: customer
+  data_availability: full
+- id: Q022
+  question: Customers in industry sub Retail
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_sales_customer
+  intent: lookup
+  category: customer
+  data_availability: full
+- id: Q023
+  question: List all product main groups
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_product
+  intent: lookup
+  category: product
+  data_availability: full
+- id: Q024
+  question: What is the department key for Jaybel?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_department
+  intent: lookup
+  category: executive_kpi
+  data_availability: full
+- id: Q025
+  question: Count weekdays in December 2025
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_date
+  intent: aggregation
+  category: time_calendar
+  data_availability: full
+- id: Q026
+  question: How many raw rows in staging sales report?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_sales_report
+  intent: aggregation
+  category: orders
+  data_availability: full
+- id: Q027
+  question: Show sample raw customer import rows
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_sales_cust
+  intent: lookup
+  category: customer
+  data_availability: full
+- id: Q028
+  question: Distinct fiscal_year in raw sales staging
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_sales_report
+  intent: lookup
+  category: orders
+  data_availability: full
+- id: Q029
+  question: Raw new business rows for territory NSW
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_new_busin_frazer
+  intent: lookup
+  category: new_business
+  data_availability: full
+- id: Q030
+  question: Count raw product groups in staging
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_main_product
+  intent: aggregation
+  category: product
+  data_availability: full
+- id: Q031
+  question: Now filter that by Frazer only
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: filter_followup
+  requires_prior_context: true
+  category: sales_revenue
+  data_availability: full
+- id: Q032
+  question: Break it down by fiscal month
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: trend
+  requires_prior_context: true
+  category: sales_revenue
+  data_availability: full
+- id: Q033
+  question: Total line cost for Jaybel in FY 2025-2026
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+  category: sales_revenue
+  data_availability: full
+- id: Q034
+  question: Unit GP dollars by item code top 20
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  intent: ranking
+  category: sales_revenue
+  data_availability: full
+- id: Q035
+  question: Sales trend by calendar quarter 2024
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: trend
+  category: sales_revenue
+  data_availability: full
+- id: Q036
+  question: GP percent average by department this fiscal year
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+  category: sales_revenue
+  data_availability: full
+- id: Q037
+  question: Revenue for account code ACC100 in FY 2025-2026
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: lookup
+  category: customer
+  data_availability: full
+- id: Q038
+  question: Orders with highest line sales in fiscal Q4 2024-2025
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: ranking
+  category: sales_revenue
+  data_availability: full
+- id: Q039
+  question: Compare fiscal Q1 vs Q2 sales in 2025-2026
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: comparison
+  category: executive_kpi
+  data_availability: full
+- id: Q040
+  question: Sales on weekdays only fiscal 2025-2026
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+  category: sales_revenue
+  data_availability: full
+- id: Q041
+  question: New business vs main sales GP comparison Frazer
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer
+  notes: May require multi-fact union — flag for v2; acceptable if routes fact_new_business_frazer
+    first
+  intent: comparison
+  category: new_business
+  data_availability: full
+- id: Q042
+  question: Customers with first transaction in 2024
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_sales_customer
+  intent: lookup
+  category: customer
+  data_availability: full
+- id: Q043
+  question: Reps with frazer_link populated
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_sales_rep
+  intent: lookup
+  category: sales_rep
+  data_availability: full
+- id: Q044
+  question: Completed working days vs total for fiscal 2025-2026
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_total_working_days
+  intent: comparison
+  category: time_calendar
+  data_availability: full
+- id: Q045
+  question: Working days by month fiscal 2024-2025
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_total_working_days
+  intent: trend
+  category: time_calendar
+  data_availability: full
+- id: Q046
+  question: Line sales by original rep orgn_rep top 10
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  intent: ranking
+  category: sales_revenue
+  data_availability: full
+- id: Q047
+  question: Market segment breakdown of quantity sold
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  intent: breakdown
+  category: sales_revenue
+  data_availability: full
+- id: Q048
+  question: Is Electrical a valid product group?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_product
+  intent: lookup
+  category: product
+  data_availability: full
+- id: Q049
+  question: File id traceability in sales facts
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  intent: lookup
+  category: sales_revenue
+  data_availability: full
+- id: Q050
+  question: Distinct territories in new business fact
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_new_business_frazer
+  intent: lookup
+  category: new_business
+  data_availability: full
+- id: Q051
+  question: Bookings last fiscal quarter by region
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: trend
+  notes: 'Glossary: bookings → line_sales_ex_gst'
+  category: sales_revenue
+  data_availability: full
+- id: Q052
+  question: Margin trend by fiscal month 2025-2026
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: trend
+  category: sales_revenue
+  data_availability: full
+- id: Q053
+  question: Count distinct invoices fiscal 2025-2026
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  intent: aggregation
+  category: sales_revenue
+  data_availability: full
+- id: Q054
+  question: Sales per working day July 2025-2026
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  notes: 'Advanced: may need working days join in v2; primary fact still sales'
+  intent: aggregation
+  category: sales_revenue
+  data_availability: full
+- id: Q055
+  question: Raw rep codes in staging sales
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_sales_report
+  intent: lookup
+  category: orders
+  data_availability: full
+- id: Q056
+  question: Business codes for customers
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_sales_customer
+  intent: lookup
+  category: customer
+  data_availability: full
+- id: Q057
+  question: Fiscal year labels in date dimension
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_date
+  intent: lookup
+  category: time_calendar
+  data_availability: full
+- id: Q058
+  question: Jaybel department revenue share percent FY 2025-2026
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+  category: sales_revenue
+  data_availability: full
+- id: Q059
+  question: Lowest GP percent lines fiscal Q3 2025-2026 bottom 5
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: anomaly
+  category: sales_revenue
+  data_availability: full
+- id: Q060
+  question: New accounts in current fiscal cycle count
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.dim_sales_customer
+  intent: aggregation
+  category: customer
+  data_availability: full
+- id: Q061
+  source: office_supplies_bi_pdf
+  category: executive_kpi
+  question: What is our total Sales and Gross Profit (GP$) for the current 2025-2026
+    financial year compared to last year?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: comparison
+  data_availability: full
+- id: Q062
+  source: office_supplies_bi_pdf
+  category: executive_kpi
+  question: What is our daily average sales amount so far this month, and are we on
+    track to hit our projected monthly sales?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+  data_availability: partial
+  notes: MTD daily avg from facts; projected monthly sales may need target/forecast
+    table or run-rate (v2)
+- id: Q063
+  source: office_supplies_bi_pdf
+  category: executive_kpi
+  question: How far behind are we on our Overall Business Target of $6M?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: comparison
+  data_availability: requires_target_table
+  notes: Target $6M not in BQ schema; compare FY sales to constant or add budget table
+- id: Q064
+  source: office_supplies_bi_pdf
+  category: executive_kpi
+  question: What is our current Gross Profit margin percentage (GP%) across the business,
+    and how does it compare to FY 24-25?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: comparison
+  data_availability: full
+- id: Q065
+  source: office_supplies_bi_pdf
+  category: product
+  question: Show me the top 10 best-selling products for the current year.
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: ranking
+  data_availability: full
+  notes: Rank by item_code or product group per business preference
+- id: Q066
+  source: office_supplies_bi_pdf
+  category: product
+  question: Which product category generated the most revenue yesterday?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: ranking
+  data_availability: full
+- id: Q067
+  source: office_supplies_bi_pdf
+  category: product
+  question: Compare the Gross Profit percentage of 'Office Supplies' versus 'Furniture'
+    for this year.
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: comparison
+  data_availability: full
+- id: Q068
+  source: office_supplies_bi_pdf
+  category: product
+  question: How are we performing against our specific Furniture GP Target of $387K?
+    What is the percentage difference?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: comparison
+  data_availability: requires_target_table
+  notes: Furniture GP actual from facts; $387K target external until loaded
+- id: Q069
+  source: office_supplies_bi_pdf
+  category: product
+  question: Show me the month-by-month sales trend for the 'Ink & Toner' category.
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: trend
+  data_availability: full
+- id: Q070
+  source: office_supplies_bi_pdf
+  category: product
+  question: What were the total sales and GP% for Office Supplies compared to Kitchen
+    & Janitorial this year?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: comparison
+  data_availability: full
+- id: Q071
+  source: office_supplies_bi_pdf
+  category: product
+  question: Show me the Year-on-Year sales performance trend for the Apparel category.
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: trend
+  data_availability: full
+- id: Q072
+  source: office_supplies_bi_pdf
+  category: product
+  question: Which specific product category is driving the highest daily average Gross
+    Profit (GP)?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: ranking
+  data_availability: full
+- id: Q073
+  source: office_supplies_bi_pdf
+  category: product
+  question: What is the Gross Profit percentage (GP%) for Furniture in the current
+    year versus last year?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: comparison
+  data_availability: full
+- id: Q074
+  source: office_supplies_bi_pdf
+  category: customer
+  question: Who are our top 5 customers by total sales this year?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: ranking
+  data_availability: full
+- id: Q075
+  source: office_supplies_bi_pdf
+  category: customer
+  question: Show me a list of customers who haven't placed an order since 2022.
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: lookup
+  data_availability: full
+  notes: Inactive = no fact rows after 2022-12-31
+- id: Q076
+  source: office_supplies_bi_pdf
+  category: customer
+  question: What were the total sales for 'Brisbane City Council' in October compared
+    to November?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: comparison
+  data_availability: full
+  notes: Calendar Oct/Nov in Australia/Sydney unless user specifies fiscal
+- id: Q077
+  source: office_supplies_bi_pdf
+  category: customer
+  question: Which of our accounts have a 'Closed' status but still show historical
+    revenue?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: lookup
+  data_availability: partial
+  notes: Closed status likely in account_name pattern; no dedicated status column
+    in dim
+- id: Q078
+  source: office_supplies_bi_pdf
+  category: customer
+  question: Show me the customer retention performance—compare 'Previous Month Sales'
+    to 'Current Month Sales' for our top 20 accounts.
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: comparison
+  data_availability: full
+  notes: MoM two-period pivot per customer_key
+- id: Q079
+  source: office_supplies_bi_pdf
+  category: retention
+  question: Which customers had the largest negative difference between Previous Month
+    Sales and Current Month Sales?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: ranking
+  data_availability: full
+- id: Q080
+  source: office_supplies_bi_pdf
+  category: retention
+  question: Show me the customer retention performance for the '99 BIKES' franchise
+    locations.
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: comparison
+  data_availability: full
+  notes: Filter account_name LIKE '%99 BIKES%'
+- id: Q081
+  source: office_supplies_bi_pdf
+  category: retention
+  question: How much historical revenue have we lost from accounts currently marked
+    as '*** ACCOUNT CLOSED ***'?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+  data_availability: partial
+  notes: Match closed pattern in account_name; define 'lost' with business
+- id: Q082
+  source: office_supplies_bi_pdf
+  category: orders
+  question: Show me all recent orders placed by 'Lizard Island Resort'.
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: lookup
+  data_availability: full
+- id: Q083
+  source: office_supplies_bi_pdf
+  category: orders
+  question: How many units of item code 'HCL-S901S' (Allegra Bottle) were sold this
+    month?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+  data_availability: full
+- id: Q084
+  source: office_supplies_bi_pdf
+  category: orders
+  question: Pull the transaction date and quantity for the last order of 'Best Doors
+    Rockhampton'.
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: lookup
+  data_availability: full
+- id: Q085
+  source: office_supplies_bi_pdf
+  category: orders
+  question: List all embroidery or custom printing jobs we processed this week.
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: lookup
+  data_availability: partial
+  notes: Confirm which column identifies embroidery/custom print (item_code, product
+    group, description)
+- id: Q086
+  source: office_supplies_bi_pdf
+  category: sales_rep
+  question: How do my total sales this month compare to my sales during the same month
+    last year?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: comparison
+  data_availability: requires_rep_context
+  notes: Filter by authenticated rep
+- id: Q087
+  source: office_supplies_bi_pdf
+  category: sales_rep
+  question: What is my individual Gross Profit (GP$) contribution for the 2025-2026
+    financial year?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+  data_availability: requires_rep_context
+- id: Q088
+  source: office_supplies_bi_pdf
+  category: sales_rep
+  question: Which of my specific accounts are showing a decline in month-over-month
+    sales?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: ranking
+  data_availability: requires_rep_context
+- id: Q089
+  source: office_supplies_bi_pdf
+  category: targets
+  question: How are we currently performing against the Overall Business Target of
+    $6,067,292.04?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: comparison
+  data_availability: requires_target_table
+- id: Q090
+  source: office_supplies_bi_pdf
+  category: targets
+  question: What is our exact variance against the Furniture Target of $387,173.20?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: comparison
+  data_availability: requires_target_table
+- id: Q091
+  source: office_supplies_bi_pdf
+  category: targets
+  question: Are we currently on track to hit the BTS Target of $613,099.84?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: comparison
+  data_availability: requires_target_table
+  notes: BTS category mapping to main_group_name TBD with business
+- id: Q092
+  source: office_supplies_bi_pdf
+  category: projections
+  question: What are our Projected Monthly Sales compared to our current Sales Month
+    To Date?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: comparison
+  data_availability: partial
+  notes: MTD from facts; projection from BI model not in BQ
+- id: Q093
+  source: office_supplies_bi_pdf
+  category: projections
+  question: Why is the Projected Furniture GP$ showing a negative variance of -$1,695,009.72?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: anomaly
+  data_availability: requires_target_table
+  notes: Explain only if forecast tables exist; else state unavailable in BQ
+- id: Q094
+  source: office_supplies_bi_pdf
+  category: projections
+  question: What is the Projected GP$ for the entire business, and what is our percentage
+    difference from that goal?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: comparison
+  data_availability: requires_target_table
+- id: Q095
+  source: office_supplies_bi_pdf
+  category: projections
+  question: Based on the 7 completed working days this month, what is our Projected
+    Monthly GP?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_total_working_days
+  intent: aggregation
+  data_availability: partial
+  notes: May join working days with fact GP run-rate; primary table working days
+- id: Q096
+  source: office_supplies_bi_pdf
+  category: sales_rep
+  question: What is the total Gross Profit (GP$) I have generated for my closed deals
+    this quarter?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+  data_availability: requires_rep_context
+  notes: Define 'closed deals' with business
+- id: Q097
+  source: office_supplies_bi_pdf
+  category: sales_rep
+  question: What is the total value of closed-won sales I have achieved this month
+    to calculate my payout?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+  data_availability: requires_rep_context

@@ -33,8 +33,8 @@ Usage: scripts/deploy-sales-agent-engine.sh [options]
   --force-new-engine    create new engine (omit --agent_engine_id)
 
 After deploy, copy the reasoning engine id into:
-  frontend/.env.local  -> NEXT_PUBLIC_AGENT_ENGINE_ID
   agent/AGENT_ENGINE_RESOURCE.env
+  backend/.env  -> AGENT_ENGINE_RESOURCE=projects/.../reasoningEngines/<ID>
 EOF
 }
 
@@ -65,7 +65,7 @@ GOOGLE_CLOUD_LOCATION=$REGION
 EOF
 
 CMD=("$ADK" deploy agent_engine --project "$PROJECT" --region "$REGION"
-  --display_name="Jaybel Sales Analytics Agent"
+  --display_name="Sales and analytics agent"
   --trace_to_cloud --otel_to_cloud)
 if [[ -n "$AGENT_ENGINE_ID" && "$FORCE_NEW" -eq 0 ]]; then
   CMD+=(--agent_engine_id "$AGENT_ENGINE_ID")

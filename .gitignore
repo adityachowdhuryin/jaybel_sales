@@ -4,6 +4,8 @@ __pycache__/
 .env
 .env.*
 !.env*.example
+backend/.env
+frontend/.env.local
 _schema_extract.txt
 _office_supplies_questions_extract.txt
 .DS_Store

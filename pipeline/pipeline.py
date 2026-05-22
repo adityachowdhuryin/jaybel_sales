@@ -26,6 +26,7 @@ from pipeline.registry.join_allowlist import JoinAllowlist
 from pipeline.registry.keyword_index import KeywordIndex
 from pipeline.registry.loader import Registry
 from pipeline.sql_generator import SQLGenerator
+from pipeline.user_context import UserContext
 from pipeline.validators.orchestrator import ValidationOrchestrator
 
 
@@ -58,10 +59,16 @@ class Pipeline:
         *,
         session_id: str | None = None,
         history: list[dict[str, Any]] | None = None,
+        user_context: UserContext | dict[str, Any] | None = None,
         skip_execute: bool = False,
     ) -> PipelineResult:
         query_id = str(uuid.uuid4())
         session_id = session_id or str(uuid.uuid4())
+        ctx = (
+            user_context
+            if isinstance(user_context, UserContext)
+            else UserContext.from_mapping(user_context)
+        )
         out = PipelineResult(query_id=query_id)
         events: list[PipelineEvent] = []
 
@@ -70,7 +77,7 @@ class Pipeline:
 
         try:
             emit(status("Analyzing your question..."))
-            l1 = self.router.route(question, history=history)
+            l1 = self.router.route(question, history=history, user_context=ctx)
             out.l1 = l1
             emit(
                 table_name(
@@ -80,13 +87,15 @@ class Pipeline:
             )
 
             emit(status("Generating query..."))
-            sql = self.sql_gen.generate(question, l1)
+            sql = self.sql_gen.generate(question, l1, user_context=ctx)
             validation = self.validator.validate_all(sql)
             if not self.validator.all_passed(validation):
                 fail = self.validator.first_failure(validation)
                 if fail and not self.validator.safety_failed(validation):
                     hint = f"{fail.validator}: {fail.message}"
-                    sql = self.sql_gen.generate(question, l1, repair_hint=hint)
+                    sql = self.sql_gen.generate(
+                        question, l1, repair_hint=hint, user_context=ctx
+                    )
                     validation = self.validator.validate_all(sql)
                 if not self.validator.all_passed(validation):
                     fail = self.validator.first_failure(validation)
