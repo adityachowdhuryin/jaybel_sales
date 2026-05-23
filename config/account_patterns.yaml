@@ -1,0 +1,12 @@
+# Closed-account detection via account_name (no account_status column in dim yet).
+
+version: 1
+
+closed_status_patterns:
+  - "%CLOSED%"
+  - "%*** ACCOUNT CLOSED ***%"
+  - "%ACCOUNT CLOSED%"
+
+lost_revenue_definition: >
+  Sum of historical line_sales_ex_gst for accounts matching closed patterns.
+  This is total historical revenue on closed accounts, not incremental churn dollars.

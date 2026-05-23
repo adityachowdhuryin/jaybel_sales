@@ -13,6 +13,16 @@ Recorded from product owner. **Updated:** local Postgres for app data (no Fireba
 | D7 | **API layer** | **FastAPI required** at `http://localhost:8000` — sessions in Postgres + proxies `stream_query` to UI via SSE. |
 | D8 | **Policy** | None for v1; 10GB BQ dry-run soft warning. |
 | D9 | **Client questions** | Office Supplies PDF → Q061–Q097 in QA set. |
+| D10 | **v1.2 targets & projections** | FY targets in `config/sales_targets.yaml` (not BQ). Run-rate via `stg_total_working_days` subqueries. Q093 remains BI-only. |
+| D11 | **v1.2 deploy** | Agent Engine `8991351443894042624` redeployed 2026-05-22 with `config/` + `analytics_context`. |
+| D12 | **v1.3 charts & answers** | Rule-based `chart_selector` (line/bar/pie/paired/grouped); L5 markdown sections; UI renders after stream ends. Redeploy Agent Engine after `pipeline/` changes. |
+
+## v1.2 validation
+
+```bash
+PYTHONPATH=. .venv/bin/python scripts/validate_dim_product_categories.py
+SMOKE_REP_CODE=37 ./scripts/smoke_v12_office_supplies.sh
+```
 
 ## Local PostgreSQL setup
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pipeline.analytics_context import prompt_block as analytics_prompt_block
 from pipeline.few_shot import select_few_shots
 from pipeline.models import L1Result
 from pipeline.user_context import UserContext
@@ -19,6 +20,8 @@ Hard rules:
 - Never SELECT *; list columns explicitly.
 - LIMIT 1000 unless user needs fewer rows.
 - Apply the provided time range exactly.
+- FY target amounts in the analytics context block are literals — do not SELECT from a target table.
+- stg_total_working_days may appear only in scalar subqueries when joined with fact_sales_report pattern.
 - Return SQL only, no markdown or explanation.
 """
 
@@ -58,6 +61,7 @@ Schema:
 
 Examples:
 {fs_block}
+{analytics_prompt_block(question)}
 {(user_context or UserContext()).prompt_block()}
 """
         if repair_hint:

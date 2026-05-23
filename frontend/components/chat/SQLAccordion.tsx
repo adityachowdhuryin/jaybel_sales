@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronDown, Copy } from "lucide-react";
 
 export function SQLAccordion({ sql }: { sql?: string }) {
   const [open, setOpen] = useState(false);
@@ -14,25 +15,29 @@ export function SQLAccordion({ sql }: { sql?: string }) {
   }
 
   return (
-    <div className="mt-3 rounded-lg border border-[var(--border)] overflow-hidden">
-      <div className="flex items-center bg-[var(--panel)]">
+    <div className="mt-3 rounded-xl border border-[var(--border)] overflow-hidden bg-[var(--bg)]">
+      <div className="flex items-center">
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="flex-1 px-3 py-2 text-left text-sm font-medium hover:bg-[#243044]"
+          className="flex-1 flex items-center gap-2 px-3 py-2.5 text-left text-xs font-medium text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-elevated)] transition"
         >
-          {open ? "▼" : "▶"} View SQL
+          <ChevronDown
+            className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`}
+          />
+          View SQL
         </button>
         <button
           type="button"
           onClick={copy}
-          className="px-3 py-2 text-xs text-[var(--muted)] hover:text-[var(--text)] border-l border-[var(--border)]"
+          className="flex items-center gap-1 px-3 py-2.5 text-xs text-[var(--muted)] hover:text-brand-300 border-l border-[var(--border)]"
         >
+          <Copy className="w-3.5 h-3.5" />
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
       {open && (
-        <pre className="p-3 text-xs overflow-x-auto bg-black/30 text-emerald-200/90">
+        <pre className="p-4 text-[11px] leading-relaxed overflow-x-auto font-mono bg-black/40 text-emerald-300/95 border-t border-[var(--border)]">
           {sql}
         </pre>
       )}

@@ -9,6 +9,7 @@ from pipeline.models import L1Result, TableMeta
 from pipeline.registry.join_allowlist import JoinAllowlist
 from pipeline.registry.keyword_index import KeywordIndex
 from pipeline.registry.loader import Registry
+from pipeline.analytics_context import l1_routing_hints, prompt_block as analytics_prompt_block
 from pipeline.time_range import resolve_time_range
 from pipeline.user_context import UserContext
 from pipeline.vertex_llm import generate_text, parse_json_response
@@ -25,9 +26,11 @@ plan (3-5 plain-English SQL steps, no SQL syntax).
 
 Rules:
 - Prefer fact_sales_report for sales/revenue/GP; fact_new_business_frazer for Frazer new business.
-- Use stg_total_working_days only for working days questions.
-- Use staging tables only if user asks for raw/source data.
+- Use stg_total_working_days for working days OR scalar subqueries in run-rate projection SQL.
+- Use stg_sales_report for embroidery/custom printing line descriptions (STRING columns).
+- Use staging tables only if user asks for raw/source data or embroidery jobs.
 - join_pattern required when querying a fact table with dimensions.
+- FY targets come from config prompts, not a BigQuery target table.
 """
 
 
@@ -64,6 +67,8 @@ Table catalog:
 {catalog}
 
 Allowed join patterns: {self.allowlist.pattern_ids()}
+Routing hints: {l1_routing_hints(question)}
+{analytics_prompt_block(question)}
 {hist}{(user_context or UserContext()).prompt_block()}
 """
         raw = generate_text(L1_SYSTEM, user, json_mode=True)

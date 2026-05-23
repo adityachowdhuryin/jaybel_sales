@@ -186,3 +186,20 @@ few_shot_examples:
 - question: Raw territory codes
   sql: SELECT DISTINCT ter FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_report`
     LIMIT 1000
+- question: Embroidery or custom printing jobs this week
+  sql: SELECT account_name, item_code, description, trans_date, qty, line_sales_ex_gst
+    FROM `jaybel-dev.jaybel_sales_analytics.stg_sales_report`
+    WHERE COALESCE(
+        SAFE.PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%S', trans_date),
+        SAFE.PARSE_TIMESTAMP('%Y-%m-%d', trans_date)
+      ) >= TIMESTAMP_TRUNC(CURRENT_TIMESTAMP(), WEEK(MONDAY), 'Australia/Sydney')
+      AND COALESCE(
+        SAFE.PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%S', trans_date),
+        SAFE.PARSE_TIMESTAMP('%Y-%m-%d', trans_date)
+      ) < TIMESTAMP_TRUNC(TIMESTAMP_ADD(CURRENT_TIMESTAMP(), INTERVAL 7 DAY), WEEK(MONDAY), 'Australia/Sydney')
+      AND (LOWER(description) LIKE '%embroid%'
+        OR LOWER(description) LIKE '%custom print%'
+        OR LOWER(description) LIKE '%custom printing%'
+        OR LOWER(description) LIKE '%screen print%')
+    ORDER BY trans_date DESC
+    LIMIT 1000

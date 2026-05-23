@@ -9,7 +9,11 @@ These are **additional** questions the client may ask the agent, on top of the g
 - **Product categories** (examples from the BI report): map to `dim_product.main_group_name` — e.g. `Office Supplies`, `Furniture`, `Ink & Toner`, `Kitchen & Janitorial`, `Apparel`. Confirm exact strings in live data.
 - **Customer names** (examples): filter `dim_sales_customer.account_name` (e.g. `Brisbane City Council`, `Lizard Island Resort`, `Best Doors Rockhampton`, `99 BIKES`).
 - **Rep-scoped questions** (“my sales”, “my GP”): require **rep context** from local `users.sales_rep_code` (Postgres) passed into Agent Engine session → filter `dim_sales_rep` / facts by `rep_key` or `sales_rep_code`.
-- **Targets & projections** ($6M business target, Furniture $387K, BTS $613K, projected monthly sales/GP): originated in the **Power BI Office Supplies report**. They are **not** in the current 13-table BigQuery star schema unless you add target/budget tables or views. v1 behavior: answer what is computable from facts; clearly state when a target/projection metric is **not available** in BigQuery.
+- **Targets (v1.2):** FY goals from `config/sales_targets.yaml` (Overall $6,067,292.04, Furniture GP $387,173.20, BTS $613,099.84). SQL compares BigQuery **actuals** to these config literals — not a BQ budget table.
+- **Projections (v1.2):** **Run-rate estimates** use MTD actuals + `stg_total_working_days` (`(MTD / Completed_days) × total_working_days`). This is **not** the exact Power BI “Projected Monthly Sales/GP” measure — the agent must say so.
+- **BI-only forecast (Q093):** Explaining the -$1,695,009.72 Furniture projected variance requires the Power BI model; offer actuals + config target variance instead.
+- **Closed accounts / embroidery:** Pattern rules in `config/account_patterns.yaml` and `config/embroidery_patterns.yaml` (no `account_status` or job_type columns in dims yet).
+- **BTS target:** Program-level target in config; **no single `main_group_name` mapped yet** — confirm with business which product groups roll up to BTS.
 
 ## Categories and questions (verbatim intent, normalized spelling)
 

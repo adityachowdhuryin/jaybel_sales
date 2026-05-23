@@ -1,6 +1,6 @@
 # UI Enhancement Plan — Question Discovery & High-Impact Features
 
-**Status:** Complete (UI-1 through UI-3; UI-4/P3 deferred by design)  
+**Status:** Complete (UI-1 through UI-3; v1.2 badges; v1.3 chart/answer UX integrated)  
 **Scope:** Phase C+ UI/UX (local Next.js + FastAPI); does not change Agent Engine–only query path  
 **Author:** Implementation plan derived from codebase + `docs/qa_evaluation_set.yaml` + `docs/office_supplies_client_questions.md`
 

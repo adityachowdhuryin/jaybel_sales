@@ -16,8 +16,7 @@ metadata:
   notes:
   - expected_join_pattern null = single-table or infer from primary
   - Re-run after schema drift; sample rep codes/accounts are placeholders
-  - Client target/projection questions (Q063,Q064,Q068,Q079-Q085,Q092-Q094) may be
-    partial until budget tables exist
+  - v1.2: targets from config/sales_targets.yaml; run-rate for projections; Q093 not_in_bq_forecast
 cases:
 - id: Q001
   question: What was total sales excluding GST in fiscal year 2025-2026 for Jaybel?
@@ -432,9 +431,8 @@ cases:
   expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
   expected_join_pattern: fact_sales_with_dims
   intent: aggregation
-  data_availability: partial
-  notes: MTD daily avg from facts; projected monthly sales may need target/forecast
-    table or run-rate (v2)
+  data_availability: partial_run_rate
+  notes: MTD from facts; projected monthly sales via run-rate + working days (estimate)
 - id: Q063
   source: office_supplies_bi_pdf
   category: executive_kpi
@@ -442,8 +440,8 @@ cases:
   expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
   expected_join_pattern: fact_sales_with_dims
   intent: comparison
-  data_availability: requires_target_table
-  notes: Target $6M not in BQ schema; compare FY sales to constant or add budget table
+  data_availability: full_with_config_target
+  notes: Target from config/sales_targets.yaml (6000000 or 6067292 per wording)
 - id: Q064
   source: office_supplies_bi_pdf
   category: executive_kpi
@@ -487,8 +485,8 @@ cases:
   expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
   expected_join_pattern: fact_sales_with_dims
   intent: comparison
-  data_availability: requires_target_table
-  notes: Furniture GP actual from facts; $387K target external until loaded
+  data_availability: full_with_config_target
+  notes: Furniture GP actual from facts; target 387173.20 from config
 - id: Q069
   source: office_supplies_bi_pdf
   category: product
@@ -567,9 +565,8 @@ cases:
   expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
   expected_join_pattern: fact_sales_with_dims
   intent: lookup
-  data_availability: partial
-  notes: Closed status likely in account_name pattern; no dedicated status column
-    in dim
+  data_availability: partial_pattern
+  notes: Closed status via account_name patterns (config/account_patterns.yaml)
 - id: Q078
   source: office_supplies_bi_pdf
   category: customer
@@ -607,8 +604,8 @@ cases:
   expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
   expected_join_pattern: fact_sales_with_dims
   intent: aggregation
-  data_availability: partial
-  notes: Match closed pattern in account_name; define 'lost' with business
+  data_availability: partial_pattern
+  notes: Match closed pattern in account_name; historical sum per config definition
 - id: Q082
   source: office_supplies_bi_pdf
   category: orders
@@ -642,9 +639,8 @@ cases:
   expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
   expected_join_pattern: fact_sales_with_dims
   intent: lookup
-  data_availability: partial
-  notes: Confirm which column identifies embroidery/custom print (item_code, product
-    group, description)
+  data_availability: partial_pattern
+  notes: stg_sales_report description keywords (config/embroidery_patterns.yaml)
 - id: Q086
   source: office_supplies_bi_pdf
   category: sales_rep
@@ -681,7 +677,7 @@ cases:
   expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
   expected_join_pattern: fact_sales_with_dims
   intent: comparison
-  data_availability: requires_target_table
+  data_availability: full_with_config_target
 - id: Q090
   source: office_supplies_bi_pdf
   category: targets
@@ -689,7 +685,7 @@ cases:
   expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
   expected_join_pattern: fact_sales_with_dims
   intent: comparison
-  data_availability: requires_target_table
+  data_availability: full_with_config_target
 - id: Q091
   source: office_supplies_bi_pdf
   category: targets
@@ -697,8 +693,8 @@ cases:
   expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
   expected_join_pattern: fact_sales_with_dims
   intent: comparison
-  data_availability: requires_target_table
-  notes: BTS category mapping to main_group_name TBD with business
+  data_availability: full_with_config_target
+  notes: BTS category_main_group TBD in config — actuals + target amount still returned
 - id: Q092
   source: office_supplies_bi_pdf
   category: projections
@@ -707,8 +703,8 @@ cases:
   expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
   expected_join_pattern: fact_sales_with_dims
   intent: comparison
-  data_availability: partial
-  notes: MTD from facts; projection from BI model not in BQ
+  data_availability: partial_run_rate
+  notes: MTD from facts; projection is run-rate estimate not BI forecast
 - id: Q093
   source: office_supplies_bi_pdf
   category: projections
@@ -716,8 +712,8 @@ cases:
   expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
   expected_join_pattern: fact_sales_with_dims
   intent: anomaly
-  data_availability: requires_target_table
-  notes: Explain only if forecast tables exist; else state unavailable in BQ
+  data_availability: not_in_bq_forecast
+  notes: BI forecast variance; agent explains gap and offers actuals/target alt
 - id: Q094
   source: office_supplies_bi_pdf
   category: projections
@@ -726,7 +722,7 @@ cases:
   expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
   expected_join_pattern: fact_sales_with_dims
   intent: comparison
-  data_availability: requires_target_table
+  data_availability: partial_run_rate
 - id: Q095
   source: office_supplies_bi_pdf
   category: projections
@@ -734,8 +730,8 @@ cases:
     Monthly GP?
   expected_primary_table: jaybel-dev.jaybel_sales_analytics.stg_total_working_days
   intent: aggregation
-  data_availability: partial
-  notes: May join working days with fact GP run-rate; primary table working days
+  data_availability: partial_run_rate
+  notes: Run-rate GP via stg_total_working_days + fact_sales_report subquery
 - id: Q096
   source: office_supplies_bi_pdf
   category: sales_rep

@@ -48,6 +48,10 @@ query_patterns:
         table: dim_department
         on: "f.department_key = dept.department_key"
 
+# Tables allowed ONLY in scalar subqueries alongside an approved fact+dims pattern
+auxiliary_scalar_tables:
+  - stg_total_working_days
+
 # Single-table queries (no joins) allowed on any registered table_id
 single_table_queries: true
 

@@ -57,7 +57,7 @@ flowchart LR
 2. UI opens SSE to `POST /api/chat/stream` with optional `starter_id` / `category_id`.
 3. FastAPI loads last **5** turns from Postgres → builds `[SALES_CONTEXT]` envelope.
 4. FastAPI calls Agent Engine `stream_query`.
-5. Agent tool runs pipeline with `history` → BigQuery → streams events.
+5. Agent tool runs pipeline with `history` → BigQuery → streams events (`chart_spec` from `chart_selector`, markdown from L5).
 6. FastAPI forwards SSE to browser; on completion persists turn and emits `done` with `turn_id`.
 7. UI loads **follow-up chips** via `POST /api/question-catalog/follow-ups` (uses turn + `ui_context`).
 
@@ -80,6 +80,16 @@ Migrations: `sql/migrations/001` through `004`.
 - Path: `content/question_catalog.yaml` (config: `config/jaybel.yaml` → `ui.question_catalog_path`)
 - Build: `scripts/build_question_catalog.py` (from `docs/qa_evaluation_set.yaml`)
 - Served by FastAPI — **not** stored in Postgres (except turn-level `starter_id` / `category_id`)
+
+---
+
+## Pipeline extensions (v1.2 / v1.3)
+
+| Module | Role |
+|--------|------|
+| `pipeline/analytics_context.py` | Injects target/run-rate/pattern archetypes into L1/L2/L5 |
+| `pipeline/chart_selector.py` | Rule-based chart type after L4 (not L5 JSON) |
+| `config/sales_targets.yaml` | FY targets compared to BQ actuals in SQL |
 
 ---
 

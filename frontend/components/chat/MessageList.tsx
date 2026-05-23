@@ -43,17 +43,20 @@ export function MessageList({
   return (
     <div ref={containerRef} className="flex-1 overflow-y-auto px-4 py-6">
       {messages.length === 0 && (
-        <div className="text-center max-w-lg mx-auto mt-16 px-4">
-          <h2 className="text-xl font-semibold text-[var(--text)]">
+        <div className="text-center max-w-lg mx-auto mt-20 px-4">
+          <h2 className="text-2xl font-semibold tracking-tight text-[var(--text)]">
             What would you like to explore?
           </h2>
-          <p className="text-sm text-[var(--muted)] mt-2">
-            Open <strong className="font-medium text-brand-400">Browse questions</strong> to pick
-            a category, or type your own question below.
+          <p className="text-sm text-[var(--muted)] mt-3 leading-relaxed">
+            Open{" "}
+            <strong className="font-medium text-brand-400">Browse questions</strong> for curated
+            starters, or ask in plain English below.
           </p>
           {!user?.sales_rep_code && (
             <p className="text-xs text-amber-400/90 mt-3">
-              Set your sales rep code in the sidebar for &quot;My Performance&quot; questions.
+              My Performance and commission questions need your{" "}
+              <strong className="font-medium">sales rep code</strong> in the sidebar (Settings).
+              Other categories work without it.
             </p>
           )}
         </div>

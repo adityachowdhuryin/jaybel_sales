@@ -27,11 +27,21 @@ export interface UIEvent {
   [key: string]: unknown;
 }
 
+export interface ChartSeries {
+  key: string;
+  label: string;
+  format?: string;
+}
+
 export interface ChartSpec {
-  chart_type?: "line" | "bar" | "pie" | string;
+  chart_type?: "line" | "bar" | "pie" | "paired_bar" | "grouped_bar" | string;
   x?: string;
   y?: string;
   title?: string;
+  format?: "currency" | "percent" | "number" | string;
+  orientation?: "horizontal" | "vertical" | string;
+  series?: ChartSeries[];
+  source?: string;
   [key: string]: unknown;
 }
 

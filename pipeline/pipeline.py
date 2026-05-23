@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from typing import Any, Iterator
 
 from pipeline.answer_generator import AnswerGenerator
+from pipeline.chart_selector import select_chart
 from pipeline.bq_executor import BQExecutor
 from pipeline.events import (
     PipelineEvent,
@@ -130,6 +131,9 @@ class Pipeline:
 
             emit(status("Summarizing results..."))
             answer = self.answer_gen.generate(question, l1, sql, qr)
+            spec = select_chart(question, l1, qr)
+            if spec:
+                answer.chart_spec = spec
             out.answer = answer
             for word in answer.text.split():
                 emit(token(word + " "))

@@ -66,14 +66,14 @@ CATEGORIES = [
     {
         "id": "targets",
         "label": "Targets & Goals",
-        "description": "Business targets — some metrics not in BigQuery yet",
+        "description": "FY targets from config — compared to BigQuery actuals",
         "icon": "flag",
         "order": 8,
     },
     {
         "id": "projections",
         "label": "Projections & Forecasting",
-        "description": "Projected sales/GP and run-rate questions",
+        "description": "Run-rate estimates — not exact Power BI forecasts",
         "icon": "trending-up",
         "order": 9,
     },
@@ -129,12 +129,22 @@ def infer_category(case: dict) -> str:
 
 def normalize_availability(case: dict) -> str:
     da = case.get("data_availability") or "full"
-    if da == "requires_target_table":
-        return "requires_target_table"
-    if da == "requires_rep_context":
-        return "requires_rep_context"
-    if da == "partial":
-        return "partial"
+    legacy_map = {
+        "requires_target_table": "full_with_config_target",
+        "partial": "partial_run_rate",
+    }
+    if da in legacy_map:
+        return legacy_map[da]
+    allowed = {
+        "full",
+        "full_with_config_target",
+        "partial_run_rate",
+        "partial_pattern",
+        "requires_rep_context",
+        "not_in_bq_forecast",
+    }
+    if da in allowed:
+        return da
     return "full"
 
 

@@ -16,6 +16,9 @@ class JoinAllowlist:
         self.dataset = data["dataset"]
         self.patterns = {p["id"]: p for p in data["query_patterns"]}
         self.single_table_allowed = bool(data.get("single_table_queries", True))
+        self.auxiliary_scalar_tables: set[str] = set()
+        for short in data.get("auxiliary_scalar_tables") or []:
+            self.auxiliary_scalar_tables.add(self._fq(short))
         cfg = load_config()
         self._all_table_ids: set[str] = set()
         for key in ("primary_fact_tables", "dimension_tables", "staging_tables"):
@@ -42,10 +45,15 @@ class JoinAllowlist:
                 return referenced
         for pattern_id, p in self.patterns.items():
             allowed = self.allowed_tables_for_pattern(pattern_id)
+            primary = self._fq(p["primary_table"])
             if referenced <= allowed and referenced:
-                primary = self._fq(p["primary_table"])
                 if primary in referenced:
                     return allowed
+            # Fact + dims + auxiliary scalar tables (e.g. stg_total_working_days subquery)
+            if self.auxiliary_scalar_tables and primary in referenced:
+                extra = referenced - allowed
+                if extra and extra <= self.auxiliary_scalar_tables:
+                    return allowed | extra
         return None
 
     def pattern_for_primary(self, table_id: str) -> str | None:

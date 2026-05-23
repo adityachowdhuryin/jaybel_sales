@@ -1,0 +1,14 @@
+# Embroidery / custom printing job detection on stg_sales_report (STRING columns).
+
+version: 1
+
+description_keywords:
+  - embroid
+  - embroidery
+  - custom print
+  - custom printing
+  - screen print
+
+item_code_prefixes: []
+
+main_group_names: []

@@ -92,3 +92,18 @@ few_shot_examples:
 - question: Accounts with missing industry sub
   sql: SELECT account_name FROM `jaybel-dev.jaybel_sales_analytics.dim_sales_customer`
     WHERE industry_sub IS NULL LIMIT 1000
+- question: Closed accounts with historical revenue
+  sql: 'SELECT c.account_name, SUM(f.line_sales_ex_gst) AS historical_sales
+    FROM `jaybel-dev.jaybel_sales_analytics.fact_sales_report` AS f
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_sales_customer` AS c ON f.customer_key = c.customer_key
+    WHERE UPPER(c.account_name) LIKE ''%CLOSED%''
+       OR UPPER(c.account_name) LIKE ''%ACCOUNT CLOSED%''
+    GROUP BY c.account_name
+    ORDER BY historical_sales DESC
+    LIMIT 1000'
+- question: Historical revenue from ACCOUNT CLOSED accounts
+  sql: 'SELECT SUM(f.line_sales_ex_gst) AS historical_revenue
+    FROM `jaybel-dev.jaybel_sales_analytics.fact_sales_report` AS f
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_sales_customer` AS c ON f.customer_key = c.customer_key
+    WHERE UPPER(c.account_name) LIKE ''%*** ACCOUNT CLOSED ***%''
+    LIMIT 1000'

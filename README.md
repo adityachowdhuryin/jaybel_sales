@@ -18,9 +18,26 @@ Natural-language agent for Jaybel sales data on **BigQuery**, deployed on **Vert
 | [docs/PHASE_A_B_SCOPE.md](docs/PHASE_A_B_SCOPE.md) | Why A/B unchanged for Postgres; what was aligned |
 | [docs/PHASE_B_DEPLOY.md](docs/PHASE_B_DEPLOY.md) | Deploy / redeploy Agent Engine |
 | [docs/business_glossary.md](docs/business_glossary.md) | Business terms → tables/columns |
+| [docs/PHASE_D_QA.md](docs/PHASE_D_QA.md) | QA runner + v1.2 Office Supplies coverage |
+| [docs/CHART_AND_ANSWER_UX_PLAN.md](docs/CHART_AND_ANSWER_UX_PLAN.md) | v1.3 charts + markdown answer UX |
+| [docs/ANSWER_FORMAT.md](docs/ANSWER_FORMAT.md) | L5 markdown section spec |
 | [docs/qa_evaluation_set.yaml](docs/qa_evaluation_set.yaml) | 97 routing/regression questions (with `category`) |
 | [content/question_catalog.yaml](content/question_catalog.yaml) | UI starters, follow-ups, rules |
 | [schema_registry/README.md](schema_registry/README.md) | Table registry layout |
+
+## Charts & formatted answers (v1.3)
+
+- Rule-based charts: line, bar, horizontal bar, pie, **paired** (Actual vs Target), **grouped**
+- Markdown answers: Summary, Key figures, Notes, Caveats — see `docs/ANSWER_FORMAT.md`
+- Redeploy Agent Engine after `pipeline/` changes
+
+## Office Supplies v1.2 (targets & run-rate)
+
+- **Targets:** [config/sales_targets.yaml](config/sales_targets.yaml) — FY goals compared to BigQuery actuals (not a BQ table)
+- **Patterns:** [config/account_patterns.yaml](config/account_patterns.yaml), [config/embroidery_patterns.yaml](config/embroidery_patterns.yaml)
+- **Pipeline:** [pipeline/analytics_context.py](pipeline/analytics_context.py) — injected into L1/L2/L5
+- **Redeploy** Agent Engine after changes: `./scripts/deploy-sales-agent-engine.sh --agent-engine-id 8991351443894042624`
+- **Smoke:** `./scripts/smoke_v12_office_supplies.sh` (set `SMOKE_REP_CODE` from `dim_sales_rep`)
 
 ## Configuration
 
@@ -37,7 +54,7 @@ Natural-language agent for Jaybel sales data on **BigQuery**, deployed on **Vert
 | App data | **PostgreSQL** on localhost (`jaybel_sales_app`) |
 | Auth | Default dev user in Postgres — **no Firebase** |
 | UI | `http://localhost:3000` (Next.js) |
-| API | `http://localhost:8000` (FastAPI) |
+| API | `http://localhost:8000` (FastAPI; use **8001** if 8000 is busy — set `NEXT_PUBLIC_API_BASE_URL` accordingly) |
 | Analytics | BigQuery in GCP (not in Postgres) |
 | Queries | Vertex AI Agent Engine only |
 
@@ -50,6 +67,7 @@ Natural-language agent for Jaybel sales data on **BigQuery**, deployed on **Vert
 cp backend/.env.example backend/.env
 gcloud auth application-default login   # Agent Engine + BQ
 PYTHONPATH=. .venv/bin/uvicorn backend.main:app --reload --port 8000
+# If port 8000 is in use: --port 8001 and NEXT_PUBLIC_API_BASE_URL=http://localhost:8001
 
 # Terminal 2 — UI
 cp frontend/.env.local.example frontend/.env.local
@@ -95,21 +113,24 @@ Redeploy after changes to `agent/sales_analytics_agent/agent.py` (e.g. conversat
 - Multi-turn history via `[SALES_CONTEXT]` → pipeline L1
 - Turn feedback (thumbs + comment), session search
 
-Regenerate catalog from QA set:
+## Phase D — QA & smoke (implemented)
 
 ```bash
-.venv/bin/python scripts/build_question_catalog.py
+# Keyword routing check (free, no Vertex)
+PYTHONPATH=. .venv/bin/python scripts/run_qa_suite.py --cases Q061-Q097 --mode keyword
+
+# Pipeline smoke (Vertex + BQ)
+SMOKE_REP_CODE=37 ./scripts/smoke_v12_office_supplies.sh
+
+# Stack health before UI testing
+./scripts/test_improvements_ui.sh
 ```
 
-Tests (with Postgres):
+See [docs/PHASE_D_QA.md](docs/PHASE_D_QA.md).
+
+## Tests (full suite)
 
 ```bash
 export DATABASE_URL=postgresql://jaybel:jaybel_local_dev@localhost:15433/jaybel_sales_app
-PYTHONPATH=. .venv/bin/pytest tests/test_phase_c_api.py tests/test_question_catalog.py tests/test_chat_history.py tests/test_catalog_integrity.py tests/test_q031_q032_history.py -q
+PYTHONPATH=. .venv/bin/pytest tests/ -m "not integration" -q
 ```
-
-See [docs/PHASE_C_LOCAL.md](docs/PHASE_C_LOCAL.md).
-
-## Phase D (next)
-
-Automated QA runner on Q001–Q097 — not started yet.

@@ -44,16 +44,16 @@ export function SessionSidebar({
   const groups = groupSessions(sessions);
 
   return (
-    <aside className="w-72 shrink-0 border-r border-[var(--border)] bg-[var(--panel)] flex flex-col">
+    <aside className="w-72 shrink-0 border-r border-[var(--border)] bg-[var(--panel)]/95 flex flex-col">
       <div className="p-4 border-b border-[var(--border)]">
-        <h1 className="text-sm font-semibold text-[var(--text)]">
-          Sales and analytics agent
+        <h1 className="text-base font-semibold tracking-tight text-[var(--text)]">
+          Jaybel Analytics
         </h1>
-        <p className="text-xs text-[var(--muted)] mt-1">Local · BigQuery via Agent Engine</p>
+        <p className="text-[11px] text-[var(--muted)] mt-1">NL → SQL · BigQuery</p>
         <button
           type="button"
           onClick={onNew}
-          className="mt-3 w-full py-2 rounded-lg border border-[var(--border)] text-sm hover:bg-[#243044]"
+          className="mt-4 w-full py-2.5 rounded-xl bg-brand-600/90 text-white text-sm font-medium hover:bg-brand-500 transition shadow-sm"
         >
           + New chat
         </button>

@@ -114,6 +114,19 @@ client_questions:
     - Ink & Toner
     - Kitchen & Janitorial
     - Apparel
+  # Also in dim_product (not in PDF examples): Custom Printing, Decoration & Artwork, Paper, etc.
+  product_categories_validated_at: "2026-05-21"
+  sales_targets_path: config/sales_targets.yaml
+  account_patterns_path: config/account_patterns.yaml
+  embroidery_patterns_path: config/embroidery_patterns.yaml
+  targets_from_config_v12:
+    - Overall Business Target
+    - Furniture GP Target
+    - BTS Target
+  forecasts_not_in_bq:
+    - Power BI Projected Monthly Sales (exact)
+    - Power BI Projected GP (exact)
+    - Projected Furniture GP variance explanation (-1695009.72)
   targets_not_in_bq_v1:
     - Overall Business Target
     - Furniture GP Target

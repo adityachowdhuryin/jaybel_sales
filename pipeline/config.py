@@ -74,3 +74,10 @@ def question_catalog_path() -> Path:
         "question_catalog_path", "content/question_catalog.yaml"
     )
     return PROJECT_ROOT / rel
+
+
+def sales_targets_path() -> Path:
+    rel = load_config().get("client_questions", {}).get(
+        "sales_targets_path", "config/sales_targets.yaml"
+    )
+    return PROJECT_ROOT / rel

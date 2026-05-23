@@ -32,6 +32,8 @@ class UserContext:
         if self.sales_rep_code:
             rep_note = (
                 " When the user says 'my' / 'mine' / 'my sales' / 'my GP', filter to this "
-                "rep via dim_sales_rep (sales_rep_code or rep_key) joined to the fact table."
+                "rep via dim_sales_rep (sales_rep_code or rep_key) joined to the fact table. "
+                "For closed-won / closed deals / payout: sum line_sales_ex_gst or line_gp_dollar "
+                "on fact_sales_report for this rep in the requested month or fiscal quarter."
             )
         return f"\nAuthenticated user context: {', '.join(parts)}.{rep_note}\n"

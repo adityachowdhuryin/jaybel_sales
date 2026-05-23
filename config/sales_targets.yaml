@@ -1,0 +1,78 @@
+# FY targets from Office Supplies BI report (v1.2 config — not a BigQuery table).
+# Update amounts when Power BI targets change; prefer ETL to BQ for production sync later.
+
+version: 1
+source: office_supplies_bi_pdf
+fiscal_year_default: "2025-2026"
+
+targets:
+  - id: overall_business_sales
+    label: Overall Business Target
+    metric: sales_ex_gst
+    scope: company
+    fiscal_year: "2025-2026"
+    amount: 6067292.04
+    aliases:
+      - "$6M"
+      - "6 million"
+      - "overall business target"
+      - "6067292"
+
+  - id: overall_business_sales_round
+    label: Overall Business Target (rounded)
+    metric: sales_ex_gst
+    scope: company
+    fiscal_year: "2025-2026"
+    amount: 6000000.0
+    aliases:
+      - "$6 million target"
+      - "6m target"
+
+  - id: furniture_gp
+    label: Furniture GP Target
+    metric: gp_dollar
+    scope: category
+    category_main_group: Furniture
+    fiscal_year: "2025-2026"
+    amount: 387173.20
+    aliases:
+      - "furniture gp target"
+      - "$387K"
+      - "387173"
+
+  - id: furniture_gp_round
+    label: Furniture GP Target (rounded)
+    metric: gp_dollar
+    scope: category
+    category_main_group: Furniture
+    fiscal_year: "2025-2026"
+    amount: 387000.0
+    aliases:
+      - "$387K target"
+
+  - id: bts_sales
+    label: BTS Target
+    metric: sales_ex_gst
+    scope: program
+    # No single main_group_name in dim_product — BI program target across groups.
+    # Live groups include Office Supplies, Promotional Products, etc. Confirm mapping with client.
+    category_main_group: null
+    fiscal_year: "2025-2026"
+    amount: 613099.84
+    aliases:
+      - "bts target"
+      - "back to school"
+    notes: Compare company-wide or agreed subset of main_group_name values when mapping is confirmed
+
+  - id: projected_furniture_gp_variance_reference
+    label: Projected Furniture GP variance (BI reference only)
+    metric: gp_dollar
+    scope: category
+    category_main_group: Furniture
+    fiscal_year: "2025-2026"
+    amount: -1695009.72
+    aliases:
+      - "negative variance"
+      - "-1695009"
+      - "projected furniture gp variance"
+    notes: BI forecast figure — not computable from facts; for explanation only

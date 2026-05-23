@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import { ExplorePanel } from "./ExplorePanel";
 import type { QuestionCategory } from "@/types/questionCatalog";
 
@@ -30,14 +31,14 @@ export function ExploreDrawer({
     >
       <button
         type="button"
-        className="flex-1 bg-black/50"
+        className="flex-1 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
         aria-label="Close explore"
       />
-      <div className="w-full max-w-lg h-full bg-[var(--bg)] border-l border-[var(--border)] shadow-xl flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] shrink-0">
-          <div className="text-xs text-[var(--muted)]">
-            <span className="text-brand-400">Explore</span>
+      <div className="w-full max-w-lg h-full bg-[var(--bg)]/98 backdrop-blur-md border-l border-[var(--border)] shadow-2xl flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-4 border-b border-[var(--border)] shrink-0 bg-[var(--panel)]/80">
+          <div className="text-sm font-medium text-[var(--muted)]">
+            <span className="text-brand-400">Explore questions</span>
             {activeCategory && (
               <>
                 {" "}
@@ -48,9 +49,10 @@ export function ExploreDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="text-sm text-[var(--muted)] hover:text-[var(--text)]"
+            className="p-2 rounded-lg text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-elevated)] transition"
+            aria-label="Close"
           >
-            Close
+            <X className="w-5 h-5" />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto">

@@ -45,13 +45,13 @@ categories:
   starter_count: 7
 - id: targets
   label: Targets & Goals
-  description: Business targets — some metrics not in BigQuery yet
+  description: FY targets from config — compared to BigQuery actuals
   icon: flag
   order: 8
   starter_count: 3
 - id: projections
   label: Projections & Forecasting
-  description: Projected sales/GP and run-rate questions
+  description: Run-rate estimates — not exact Power BI forecasts
   icon: trending-up
   order: 9
   starter_count: 4
@@ -561,7 +561,7 @@ starters:
   category_id: executive_kpi
   text: What is our daily average sales amount so far this month, and are we on track
     to hit our projected monthly sales?
-  data_availability: partial
+  data_availability: partial_run_rate
   intent: aggregation
   expected_table_id: fact_sales_report
   join_pattern: fact_sales_with_dims
@@ -569,7 +569,7 @@ starters:
 - id: Q063
   category_id: executive_kpi
   text: How far behind are we on our Overall Business Target of $6M?
-  data_availability: requires_target_table
+  data_availability: full_with_config_target
   intent: comparison
   expected_table_id: fact_sales_report
   join_pattern: fact_sales_with_dims
@@ -612,7 +612,7 @@ starters:
   category_id: product
   text: How are we performing against our specific Furniture GP Target of $387K? What
     is the percentage difference?
-  data_availability: requires_target_table
+  data_availability: full_with_config_target
   intent: comparison
   expected_table_id: fact_sales_report
   join_pattern: fact_sales_with_dims
@@ -688,7 +688,7 @@ starters:
 - id: Q077
   category_id: customer
   text: Which of our accounts have a 'Closed' status but still show historical revenue?
-  data_availability: partial
+  data_availability: partial_pattern
   intent: lookup
   expected_table_id: fact_sales_report
   join_pattern: fact_sales_with_dims
@@ -723,7 +723,7 @@ starters:
   category_id: retention
   text: How much historical revenue have we lost from accounts currently marked as
     '*** ACCOUNT CLOSED ***'?
-  data_availability: partial
+  data_availability: partial_pattern
   intent: aggregation
   expected_table_id: fact_sales_report
   join_pattern: fact_sales_with_dims
@@ -755,7 +755,7 @@ starters:
 - id: Q085
   category_id: orders
   text: List all embroidery or custom printing jobs we processed this week.
-  data_availability: partial
+  data_availability: partial_pattern
   intent: lookup
   expected_table_id: fact_sales_report
   join_pattern: fact_sales_with_dims
@@ -789,7 +789,7 @@ starters:
 - id: Q089
   category_id: targets
   text: How are we currently performing against the Overall Business Target of $6,067,292.04?
-  data_availability: requires_target_table
+  data_availability: full_with_config_target
   intent: comparison
   expected_table_id: fact_sales_report
   join_pattern: fact_sales_with_dims
@@ -797,7 +797,7 @@ starters:
 - id: Q090
   category_id: targets
   text: What is our exact variance against the Furniture Target of $387,173.20?
-  data_availability: requires_target_table
+  data_availability: full_with_config_target
   intent: comparison
   expected_table_id: fact_sales_report
   join_pattern: fact_sales_with_dims
@@ -805,7 +805,7 @@ starters:
 - id: Q091
   category_id: targets
   text: Are we currently on track to hit the BTS Target of $613,099.84?
-  data_availability: requires_target_table
+  data_availability: full_with_config_target
   intent: comparison
   expected_table_id: fact_sales_report
   join_pattern: fact_sales_with_dims
@@ -814,7 +814,7 @@ starters:
   category_id: projections
   text: What are our Projected Monthly Sales compared to our current Sales Month To
     Date?
-  data_availability: partial
+  data_availability: partial_run_rate
   intent: comparison
   expected_table_id: fact_sales_report
   join_pattern: fact_sales_with_dims
@@ -822,7 +822,7 @@ starters:
 - id: Q093
   category_id: projections
   text: Why is the Projected Furniture GP$ showing a negative variance of -$1,695,009.72?
-  data_availability: requires_target_table
+  data_availability: not_in_bq_forecast
   intent: anomaly
   expected_table_id: fact_sales_report
   join_pattern: fact_sales_with_dims
@@ -831,7 +831,7 @@ starters:
   category_id: projections
   text: What is the Projected GP$ for the entire business, and what is our percentage
     difference from that goal?
-  data_availability: requires_target_table
+  data_availability: partial_run_rate
   intent: comparison
   expected_table_id: fact_sales_report
   join_pattern: fact_sales_with_dims
@@ -840,7 +840,7 @@ starters:
   category_id: projections
   text: Based on the 7 completed working days this month, what is our Projected Monthly
     GP?
-  data_availability: partial
+  data_availability: partial_run_rate
   intent: aggregation
   expected_table_id: stg_total_working_days
   join_pattern: null

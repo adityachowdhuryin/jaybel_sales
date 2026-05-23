@@ -142,6 +142,19 @@ export function ExplorePanel({
           onPick={onPickStarter}
         />
       ) : activeCategoryId && starters.length > 0 ? (
+        <>
+          {activeCategoryId === "projections" && (
+            <p className="max-w-xl mx-auto mb-4 text-xs text-amber-300/90 text-center px-4">
+              Projection starters use a run-rate estimate from BigQuery actuals and working days —
+              not the exact Power BI forecast measures.
+            </p>
+          )}
+          {activeCategoryId === "targets" && (
+            <p className="max-w-xl mx-auto mb-4 text-xs text-sky-300/90 text-center px-4">
+              Targets are compared to FY goals from configured Office Supplies BI values, not a
+              BigQuery budget table.
+            </p>
+          )}
         <StarterList
           starters={starters}
           categoryLabel={activeCategory?.label}
@@ -151,6 +164,7 @@ export function ExplorePanel({
           }}
           onPick={onPickStarter}
         />
+        </>
       ) : (
         <CategoryGrid
           categories={categories}

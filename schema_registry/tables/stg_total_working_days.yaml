@@ -68,3 +68,14 @@ few_shot_examples:
 - question: Compare completed vs total days
   sql: SELECT month, Completed_days, total_working_days FROM `jaybel-dev.jaybel_sales_analytics.stg_total_working_days`
     WHERE fiscal_year = '2025-2026' LIMIT 1000
+- question: Projected monthly GP run-rate from completed working days
+  sql: SELECT
+    (SELECT CAST(Completed_days AS INT64) FROM `jaybel-dev.jaybel_sales_analytics.stg_total_working_days`
+      WHERE fiscal_year = '2025-2026' AND month = 'Current' LIMIT 1) AS completed_days,
+    (SELECT CAST(total_working_days AS INT64) FROM `jaybel-dev.jaybel_sales_analytics.stg_total_working_days`
+      WHERE fiscal_year = '2025-2026' AND month = 'Current' LIMIT 1) AS total_working_days
+    LIMIT 1
+- question: Run-rate projected sales using working days reference
+  sql: SELECT fiscal_year, month, Completed_days, total_working_days
+    FROM `jaybel-dev.jaybel_sales_analytics.stg_total_working_days`
+    WHERE fiscal_year = '2025-2026' AND month = 'Current' LIMIT 1

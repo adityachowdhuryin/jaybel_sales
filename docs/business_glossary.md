@@ -108,10 +108,11 @@ From `Office_Supplies_BI_Analytics_Questions.pdf`. Full list: `docs/office_suppl
 | **Item code HCL-S901S** | SKU / product line | `fact_sales_report.item_code` |
 | **Embroidery / custom printing** | Job type | Filter `item_code`, `description` (staging), or product group — confirm with business which field encodes job type |
 | **My sales / my GP / my accounts** | Rep-scoped | Filter by logged-in rep (`dim_sales_rep.sales_rep_code` from auth context) |
-| **Overall Business Target ($6M / $6,067,292.04)** | FY sales goal from BI | **Not in current BQ schema** — needs budget/target table or view |
-| **Furniture GP Target ($387K / $387,173.20)** | Category GP goal | **Not in current BQ schema** — compare actual Furniture `SUM(line_gp_dollar)` only until targets loaded |
-| **BTS Target ($613,099.84)** | Category/segment goal | **Not in current BQ schema** |
-| **Projected Monthly Sales / Projected GP$** | Forecast from BI model | **Not in current BQ schema** — may approximate using MTD run-rate × working days from `stg_total_working_days` (v2) |
+| **Overall Business Target ($6M / $6,067,292.04)** | FY sales goal from BI | **v1.2:** `config/sales_targets.yaml` — compare `SUM(line_sales_ex_gst)` actuals to literal target in SQL |
+| **Furniture GP Target ($387K / $387,173.20)** | Category GP goal | **v1.2:** config target `387173.20` vs `SUM(line_gp_dollar)` where `main_group_name = 'Furniture'` |
+| **BTS Target ($613,099.84)** | Category/segment goal | **v1.2:** config target amount; `category_main_group` TBD — filter pending business confirmation |
+| **Projected Monthly Sales / Projected GP$** | Forecast from BI model | **Run-rate estimate (v1.2):** `(MTD / Completed_days) × total_working_days` — **not** exact Power BI forecast |
+| **BI Furniture projected variance (-$1,695,009.72)** | Power BI forecast only | **not_in_bq_forecast** — explain BI model; offer actuals + config target |
 | **Sales Month To Date (MTD)** | Month-to-date sales | `fact_sales_report` + `dim_date` current calendar month (Sydney) |
 | **Completed working days** | Days elapsed in month | `stg_total_working_days.Completed_days` |
 | **Closed deals / closed-won / payout** | Commission proxy | Map to closed invoices or rep-attributed `line_sales_ex_gst` / `line_gp_dollar` for period; define “closed” with business if unclear |

@@ -16,7 +16,7 @@
 | Relative dates | **`Australia/Sydney`**; default = **calendar** month/quarter (use **fiscal** only when user says so) |
 | Auth (v1) | **Local Postgres user** — no Firebase (`dev@localhost` default) |
 | App data storage | **PostgreSQL on local device** — sessions & chat turns (not Firestore) |
-| UI hosting (v1) | **localhost** — Next.js `:3000` + FastAPI `:8000` on this machine |
+| UI hosting (v1) | **localhost** — Next.js `:3000` + FastAPI `:8000` (use `:8001` if 8000 is busy) |
 | Analytics data | **BigQuery** in GCP (unchanged — not copied to Postgres) |
 
 **Prepared artifacts (do not re-derive at implementation time):**
@@ -32,6 +32,10 @@
 | Question discovery UI spec | `docs/UI_QUESTION_DISCOVERY_PLAN.md` |
 | Client question catalog (source PDF) | `docs/office_supplies_client_questions.md` |
 | Client questions PDF | `Office_Supplies_BI_Analytics_Questions.pdf` |
+| **v1.2 targets & patterns** | `config/sales_targets.yaml`, `account_patterns.yaml`, `embroidery_patterns.yaml` |
+| **v1.2 analytics context** | `pipeline/analytics_context.py` |
+| **v1.3 charts & answers** | `pipeline/chart_selector.py`, `docs/ANSWER_FORMAT.md`, `docs/CHART_AND_ANSWER_UX_PLAN.md` |
+| Phase D QA | `docs/PHASE_D_QA.md`, `scripts/run_qa_suite.py` |
 | Agent Engine architecture | `docs/AGENT_ENGINE_ARCHITECTURE.md` |
 | Pre-flight checklist | `docs/PRE_IMPLEMENTATION_CHECKLIST.md` |
 | Locked decisions | `docs/DECISIONS.md` |
@@ -56,7 +60,9 @@
 | Registry, validators, BQ read-only (cloud) | Vertex Memory Bank |
 | UI SSE via **local API** → Agent Engine stream | Cloud Run / cloud hosting |
 | Question discovery UI (categories, starters, follow-ups) | LLM follow-ups, ⌘K palette, mobile sheet (UI-4) |
-| Honest handling of missing target/projection metrics | `pipeline_logs` table |
+| **v1.2:** config targets, run-rate, closed/embroidery patterns | Exact Power BI forecast measures (Q093) |
+| **v1.3:** rule-based charts + markdown answers | Framer Motion, `answer_meta` SSE, ChartPanel vitest |
+| Phase D QA runner (keyword + archetype tests) | Full nightly L1 routing on all 97 cases (optional) |
 
 ---
 
@@ -103,66 +109,42 @@ Validator A (column existence) and Validator C (table allowlist) **must be exten
 ```
 project-root/
 ├── config/
-│   └── jaybel.yaml                      # GCP project, dataset, fiscal rules, SA
+│   ├── jaybel.yaml
+│   ├── sales_targets.yaml               # v1.2 FY targets (not in BQ)
+│   ├── account_patterns.yaml
+│   └── embroidery_patterns.yaml
 ├── agent/
-│   ├── .agent_engine_config.json        # Deploy display name, SA, tool list
-│   └── (agent package — implementation phase)
+│   ├── .agent_engine_config.json
+│   ├── AGENT_ENGINE_RESOURCE.env
+│   └── sales_analytics_agent/           # Agent Engine entry (agent.py)
 ├── schema_registry/
 │   ├── join_allowlist.yaml
-│   ├── tables/                          # 13 Jaybel BQ tables (generated + curated)
-│   │   ├── fact_sales_report.yaml
-│   │   ├── fact_new_business_frazer.yaml
-│   │   ├── dim_*.yaml
-│   │   └── stg_*.yaml
-├── docs/
-│   ├── business_glossary.md
-│   ├── qa_evaluation_set.yaml
-│   ├── AGENT_ENGINE_ARCHITECTURE.md
-│   └── PRE_IMPLEMENTATION_CHECKLIST.md
-├── scripts/
-│   └── generate_schema_registry.py
-├── content/
-│   └── question_catalog.yaml            # UI categories, 97 starters, follow-ups, rules
-├── backend/                             # FastAPI localhost:8000
-│   ├── main.py
-│   ├── routers/                         # sessions, chat, question_catalog
-│   ├── services/                        # agent_engine, question_catalog
-│   └── db/postgres.py
-├── pipeline/                            # L1–L5 (also bundled in Agent Engine deploy)
-├── sql/migrations/                      # 001–004 local Postgres
-├── docker-compose.yml                   # Postgres host port 15433
+│   └── tables/                          # 13 Jaybel BQ tables
+├── docs/                                # architecture, QA, UX plans, glossary
+├── content/question_catalog.yaml
+├── backend/                             # FastAPI (default :8000)
+├── pipeline/
+│   ├── analytics_context.py             # v1.2
+│   ├── chart_selector.py                # v1.3
+│   ├── qa_runner.py                     # Phase D
+│   └── … (L1–L5, validators)
+├── sql/migrations/                      # 001–004
+├── sql/reference/run_rate_projection.sql
+├── tests/
 ├── scripts/
 │   ├── build_question_catalog.py
 │   ├── deploy-sales-agent-engine.sh
+│   ├── run_qa_suite.py
+│   ├── smoke_v12_office_supplies.sh
+│   ├── test_improvements_ui.sh
 │   └── start-phase-c.sh
-├── agent/sales_analytics_agent/         # Agent Engine entry (agent.py)
 ├── frontend/
-│   ├── app/
-│   │   ├── page.tsx                     # Root: redirects to /chat
-│   │   ├── chat/
-│   │   │   └── page.tsx                 # Main chat page
-│   │   └── api/
-│   │       └── proxy/route.ts           # Optional: proxy SSE to avoid CORS
-│   ├── components/
-│   │   ├── chat/                        # ChatShell, SessionSidebar, ChatWindow, …
-│   │   └── explore/                     # ExploreDrawer, CategoryGrid, StarterList, badges
-│   ├── hooks/
-│   │   ├── useChatStream.ts
-│   │   ├── useQuestionCatalog.ts
-│   │   └── useFollowUps.ts
-│   ├── lib/
-│   │   ├── api.ts
-│   │   ├── questionCatalog.ts
-│   │   └── sse.ts
-│   │   └── reportExport.ts             # CSV + PDF download utilities
-│   └── types/
-│       └── index.ts                     # All shared TypeScript types
-├── infra/
-│   ├── gcs_lifecycle.json               # Report bucket lifecycle (auto-delete after 7d) — deferred
-│   └── iam_bindings.sh                  # Service account IAM setup script
-└── schema_registry_docs/
-    └── how_to_add_a_table.md            # Runbook for adding new BQ tables
+│   ├── components/chat/                 # AnswerMarkdown, MetricCards, ChartPanel
+│   └── components/explore/
+└── docker-compose.yml                   # Postgres :15433
 ```
+
+*(Deferred folders from early plan — not in repo: `infra/`, `schema_registry_docs/`.)*
 
 ---
 
@@ -959,10 +941,20 @@ See `docs/UI_QUESTION_DISCOVERY_PLAN.md`.
 16. Tests: `tests/test_phase_c_api.py` (with `DATABASE_URL`)  
 17. Run: `./scripts/start-phase-c.sh` then uvicorn + `npm run dev` (see README)
 
-### Phase D — Quality — **next**
+### Chart & answer UX (v1.3) — **complete (2026-05-22)**
 
-18. QA runner: routing accuracy + dry-run pass rate on Q001–Q097  
-19. Handle `requires_target_table` / `requires_rep_context` cases per glossary  
+- `pipeline/chart_selector.py` — line / bar / horizontal / pie / **paired_bar** / **grouped_bar**
+- L5 markdown answers (`## Summary`, `## Key figures`, `## Notes`, `## Caveats`) + `_normalize_markdown_sections` fallback
+- Frontend: `AnswerMarkdown`, `MetricCards`, `ChartPanel`, `DataTable` refresh — see `docs/CHART_AND_ANSWER_UX_PLAN.md`
+- Tests: `tests/test_chart_selector.py`, `tests/test_answer_markdown.py`
+- Redeploy Agent Engine after `pipeline/` changes
+
+### Phase D — Quality — **complete**
+
+18. QA runner: `scripts/run_qa_suite.py` + `pipeline/qa_runner.py` (keyword mode for CI) — **done**  
+19. v1.2: `config/sales_targets.yaml`, `pipeline/analytics_context.py`, run-rate + pattern partials — **done**  
+20. v1.2/v1.3 Agent Engine redeploy — **done** (`8991351443894042624`, 2026-05-22)  
+21. Smoke: `./scripts/smoke_v12_office_supplies.sh`, `./scripts/test_improvements_ui.sh`
 
 ### Deferred (v1.1+)
 
@@ -1009,9 +1001,11 @@ See `docs/UI_QUESTION_DISCOVERY_PLAN.md`.
 - [x] QA YAML: `category` on all 97 cases
 - [x] Tests: `test_phase_c_api`, `test_question_catalog`, `test_chat_history`, `test_catalog_integrity`, `test_q031_q032_history`
 - [x] Agent Engine redeployed with `SALES_CONTEXT` / `history_json` parsing
-- [ ] On your Mac: run stack for manual testing (`./scripts/start-phase-c.sh`, uvicorn, `npm run dev`)
-- [ ] Phase D QA runner automation
+- [x] v1.2 config targets + `analytics_context` + Office Supplies Q061–Q097
+- [x] v1.3 chart selector + markdown answers + UI refresh
+- [x] Phase D QA runner (`run_qa_suite.py`, archetype tests)
 - [ ] Optional: dedicated non-default compute SA for production
+- [ ] Optional: BTS `category_main_group` confirmed with business
 
 ---
 
@@ -1024,7 +1018,7 @@ See `docs/UI_QUESTION_DISCOVERY_PLAN.md`.
 | Validators (sqlglot + dry run + safety) | **Sound** — join-aware for facts |
 | Time range (Australia/Sydney) | **Locked** |
 | Agent Engine entry + in-agent tools | **Aligned** (streaming → UI events) |
-| Client targets / projections | **Scoped** — honest partial answers until budget tables |
+| Client targets / projections | **Implemented (v1.2)** — config targets + run-rate; Q093 BI-only |
 | Redis / Cloud Run SSE hot path | **Deferred** — not v1 blockers |
 | L5 answer faithfulness | **Risk** — mitigate with DataTable as source of truth |
 | Full readiness | **`docs/FINAL_READINESS_REVIEW.md`** |

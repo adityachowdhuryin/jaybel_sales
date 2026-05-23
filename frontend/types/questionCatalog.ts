@@ -1,4 +1,13 @@
-export type DataAvailability = "full" | "partial" | "target_not_in_bq" | string;
+export type DataAvailability =
+  | "full"
+  | "full_with_config_target"
+  | "partial_run_rate"
+  | "partial_pattern"
+  | "requires_rep_context"
+  | "not_in_bq_forecast"
+  | "partial"
+  | "requires_target_table"
+  | "target_not_in_bq";
 
 export interface QuestionCategory {
   id: string;

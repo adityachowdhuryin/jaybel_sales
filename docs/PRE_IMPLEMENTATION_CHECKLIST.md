@@ -1,6 +1,6 @@
 # Pre-implementation checklist — Jaybel Sales Analytics Agent
 
-**Status:** Phases **A**, **B**, **C**, and **question discovery UI (UI-1–3)** are implemented in the repo. **Phase D** (automated QA runner) is next.
+**Status:** Phases **A**, **B**, **C**, **question discovery (UI-1–3)**, **v1.2**, **v1.3 chart/answer UX**, and **Phase D** QA runner are implemented in the repo.
 
 See `docs/ARCHITECTURE_LOCAL.md`.
 
@@ -13,6 +13,9 @@ See `docs/ARCHITECTURE_LOCAL.md`.
 - [x] **Phase B:** ADK agent on Agent Engine `8991351443894042624`
 - [x] **Phase C:** `backend/`, `frontend/`, Postgres migrations `001`–`004`
 - [x] **Question discovery:** `content/question_catalog.yaml`, catalog API, explore UI, history envelope
+- [x] **v1.2:** config targets, run-rate, account/embroidery patterns, `analytics_context`
+- [x] **v1.3:** `chart_selector`, markdown L5 answers, `AnswerMarkdown` / `MetricCards` / chart types
+- [x] **Phase D:** `run_qa_suite.py`, smoke scripts, archetype tests
 - [x] Local architecture docs
 - [x] Timezone `Australia/Sydney`; app storage = Postgres; UI = localhost
 
