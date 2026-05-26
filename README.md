@@ -7,6 +7,8 @@ Natural-language agent for Jaybel sales data on **BigQuery**, deployed on **Vert
 
 | Doc | Purpose |
 |-----|---------|
+| **[docs/PROJECT_ARCHITECTURE_GUIDE.pdf](docs/PROJECT_ARCHITECTURE_GUIDE.pdf)** | **PDF** — full architecture guide with diagrams |
+| [docs/PROJECT_ARCHITECTURE_GUIDE.md](docs/PROJECT_ARCHITECTURE_GUIDE.md) | Architecture guide (Markdown + diagrams) |
 | [nl_to_sql_agent_full_plan.md](nl_to_sql_agent_full_plan.md) | End-to-end implementation plan |
 | [docs/ARCHITECTURE_LOCAL.md](docs/ARCHITECTURE_LOCAL.md) | **Local stack** — Postgres app data, Agent Engine + BQ analytics |
 | [docs/PHASE_C_LOCAL.md](docs/PHASE_C_LOCAL.md) | Phase C + question discovery — run locally |

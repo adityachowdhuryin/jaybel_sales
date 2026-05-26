@@ -10,6 +10,7 @@ _schema_extract.txt
 _office_supplies_questions_extract.txt
 .DS_Store
 node_modules/
+scripts/node_modules/
 .next/
 dist/
 .pytest_cache/

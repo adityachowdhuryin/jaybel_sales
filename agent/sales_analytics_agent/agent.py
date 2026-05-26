@@ -115,9 +115,12 @@ def query_sales_analytics(
             history=history,
             user_context=ctx,
         )
+        stop = result.stop_reason.value if result.stop_reason else "none"
         payload: dict[str, Any] = {
             "query_id": result.query_id,
             "success": not any(e.type == "error" for e in result.events),
+            "stop_reason": stop,
+            "guidance_code": result.guidance_code,
             "events": [e.to_dict() for e in result.events],
             "table_id": result.l1.table_id if result.l1 else None,
             "join_pattern": result.l1.join_pattern if result.l1 else None,
@@ -129,6 +132,8 @@ def query_sales_analytics(
             "answer": result.answer.text if result.answer else None,
             "chart_spec": result.answer.chart_spec if result.answer else None,
         }
+        if result.validation_detail:
+            payload["validation_detail"] = result.validation_detail
         if result.l1:
             payload["l1"] = {
                 "table_id": result.l1.table_id,
@@ -163,10 +168,19 @@ root_agent = LlmAgent(
         "When the tool returns a string starting with SALES_ANALYTICS_JSON:, parse the JSON "
         "after that prefix. If success is false or events contain type error, explain the "
         "error clearly to the user.\n\n"
+        "If events contain clarification_needed: show the message and options; do NOT call the "
+        "tool again until the user picks an option or replies. Wait for their next message.\n\n"
+        "If events contain user_guidance with code off_topic or out_of_dataset: briefly explain "
+        "the assistant only answers Jaybel sales analytics from BigQuery; do not invent data.\n\n"
+        "If user_guidance code is rep_context_required: tell the user to set sales rep code in "
+        "the sidebar Settings.\n\n"
+        "If user_guidance code is empty_result: present the answer markdown; do not invent KPIs.\n\n"
+        "If user_guidance code is sql_validation_failed: explain the query could not be built "
+        "in plain language using the suggestions; do NOT repeat raw column lists or sqlglot traces.\n\n"
         "If success is true: present the answer field as Markdown (headings, bullets, bold metrics). "
-        "Mention which table was queried briefly. If chart_spec is present, describe the chart type "
-        "in one sentence; the UI renders the chart. Do not repeat the full data table if rows_sample "
-        "is large — highlight key figures from the answer text.\n\n"
+        "Mention which table was queried briefly when sql is present. If chart_spec is present, "
+        "describe the chart type in one sentence; the UI renders the chart. Do not repeat the full "
+        "data table if rows_sample is large — highlight key figures from the answer text.\n\n"
         "FY targets ($6M / $6,067,292, Furniture GP $387K, BTS $613K) are applied via "
         "config literals in the pipeline — compare SQL actuals to those targets when present "
         "in the tool payload. Run-rate projections are ESTIMATES (not Power BI forecast). "

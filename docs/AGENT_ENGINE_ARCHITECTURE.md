@@ -87,4 +87,4 @@ Redeploy after changes to `agent/sales_analytics_agent/agent.py` or bundled `pip
 | Postgres | `./scripts/start-phase-c.sh` (port **15433**) |
 | Auth | `gcloud auth application-default login` |
 
-See `docs/ARCHITECTURE_LOCAL.md`, `docs/PHASE_C_LOCAL.md`.
+See `docs/ARCHITECTURE_LOCAL.md`, `docs/PROJECT_ARCHITECTURE_GUIDE.md`, `docs/PHASE_C_LOCAL.md`.

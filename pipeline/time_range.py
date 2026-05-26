@@ -11,6 +11,16 @@ from pipeline.models import TimeRange
 
 _FISCAL_KW = None
 
+_CURRENT_FY_RE = re.compile(
+    r"\b(?:current|this|latest|most\s+recent)\s+(?:fiscal\s+)?(?:year|fy)\b"
+    r"|\b(?:current|this|latest)\s+fy\b",
+    re.I,
+)
+_LAST_FY_RE = re.compile(
+    r"\b(?:last|previous|prior)\s+(?:fiscal\s+)?(?:year|fy)\b|\blast\s+fy\b",
+    re.I,
+)
+
 
 def _fiscal_keywords() -> list[str]:
     global _FISCAL_KW
@@ -33,12 +43,35 @@ def is_fiscal_phrase(text: str) -> bool:
 
 def resolve_time_range(question: str, llm_range: TimeRange | None = None) -> TimeRange | None:
     """Server-side resolution; LLM range used when explicit ISO dates provided."""
-    if llm_range and llm_range.start and llm_range.end:
-        return llm_range
-
     now = _tz_now().date()
     q = question.lower()
     fiscal = is_fiscal_phrase(question)
+
+    # Authoritative fiscal FY labels — override LLM date guesses (e.g. Apr–Sep)
+    if fiscal:
+        from pipeline.fiscal_calendar import (
+            current_fiscal_year_label,
+            last_fiscal_year_label,
+        )
+
+        m = re.search(r"20\d{2}-20\d{2}", question)
+        if m:
+            return TimeRange(start="", end="", label=m.group(0))
+        if _CURRENT_FY_RE.search(question):
+            return TimeRange(
+                start="",
+                end="",
+                label=current_fiscal_year_label(),
+            )
+        if _LAST_FY_RE.search(question):
+            return TimeRange(
+                start="",
+                end="",
+                label=last_fiscal_year_label(),
+            )
+
+    if llm_range and llm_range.start and llm_range.end:
+        return llm_range
 
     if "yesterday" in q:
         d = now - timedelta(days=1)
@@ -69,19 +102,25 @@ def resolve_time_range(question: str, llm_range: TimeRange | None = None) -> Tim
             label="this year",
         )
 
-    # FY label e.g. 2025-2026
-    m = re.search(r"20\d{2}-20\d{2}", question)
-    if m and fiscal:
-        return TimeRange(start="", end="", label=m.group(0))  # filter via dim_date.fy in SQL
-
     return llm_range
 
 
 def format_time_range_for_prompt(tr: TimeRange | None) -> str:
     if not tr:
-        return "No explicit time range; use question context and dim_date as needed."
+        from pipeline.fiscal_calendar import fiscal_calendar_prompt_block
+
+        return (
+            "No explicit time range; use question context and dim_date as needed. "
+            + fiscal_calendar_prompt_block()
+        )
     if tr.start and tr.end:
         return f"Use dates {tr.start} through {tr.end} inclusive ({tr.label or 'resolved'})."
     if tr.label:
-        return f"Use fiscal year label fy = '{tr.label}' on dim_date."
+        return (
+            f"MANDATORY time filter: WHERE fy = '{tr.label}' (exact string). "
+            "Do NOT use ORDER BY fy DESC, MAX(fy), DISTINCT fy without this filter, "
+            "or pick the latest row in dim_date — relative phrases are already resolved. "
+            "Full FY: fiscal_month_no=1 is July (start), fiscal_month_no=12 is June (end). "
+            "Return start_month and end_month via MIN/MAX on fiscal_month_name for months 1 and 12."
+        )
     return "No time range."

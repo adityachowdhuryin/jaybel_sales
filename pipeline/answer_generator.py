@@ -34,6 +34,7 @@ Rules:
 - Do not include CHART_JSON or chart configuration — charts are handled separately.
 - Under 200 words unless the user asked for a detailed breakdown.
 - Do not expose SQL unless the user asked how the query was built.
+- Jaybel fiscal years are always July through June (dim_date fiscal_month_no 1–12). Never state April–September as a full fiscal year; Q4 is only Apr–Jun within a FY.
 """
 
 
@@ -88,7 +89,7 @@ Data JSON:
 """
         raw = generate_text(L5_SYSTEM, user, temperature=0.2)
         text = _strip_legacy_chart_json(raw)
-        text = _normalize_markdown_answer(
+        text = _normalize_markdown_sections(
             text,
             query_result.rows[:5],
             query_result.columns,
@@ -153,6 +154,15 @@ def _normalize_markdown_sections(
 ) -> str:
     """Ensure standard sections; fill Key figures / Caveats when the model omits them."""
     body = text.strip()
+    body = re.sub(r"([^\n])##\s+", r"\1\n\n## ", body)
+    if body.count("## Summary") > 1:
+        second = body.find("## Summary", body.find("## Summary") + 1)
+        if second > 0:
+            body = body[:second].strip()
+    if body.count("## Key figures") > 1:
+        second = body.find("## Key figures", body.find("## Key figures") + 1)
+        if second > 0:
+            body = body[:second].strip()
     if "## Summary" not in body:
         body = f"## Summary\n\n{body}\n" if body else "## Summary\n\n_No summary generated._\n"
     if "## Key figures" not in body:
@@ -163,3 +173,6 @@ def _normalize_markdown_sections(
     if "## Notes" not in body and disclaimers:
         pass
     return body
+
+
+_normalize_markdown_answer = _normalize_markdown_sections

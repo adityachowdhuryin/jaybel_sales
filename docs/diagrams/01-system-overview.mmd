@@ -1,0 +1,25 @@
+flowchart TB
+  subgraph YOU["Your computer - localhost"]
+    USER[("You - browser")]
+    UI["Next.js UI - port 3000"]
+    API["FastAPI - port 8000 or 8001"]
+    PG[("PostgreSQL - port 15433")]
+    FILES["Config and schema files"]
+  end
+
+  subgraph GCP["Google Cloud - jaybel-dev"]
+    AE["Vertex AI Agent Engine"]
+    LLM["Gemini - routing SQL summary"]
+    BQ[("BigQuery - 13 tables")]
+  end
+
+  USER --> UI
+  UI -->|"HTTP + SSE"| API
+  API --> PG
+  API --> FILES
+  API -->|"stream_query"| AE
+  AE --> LLM
+  AE -->|"SQL"| BQ
+  BQ -->|"rows"| AE
+  AE --> API
+  API --> UI

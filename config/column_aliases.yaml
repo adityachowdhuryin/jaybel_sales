@@ -1,0 +1,48 @@
+# Natural language / LLM column name → registry column name
+# Edit this file when new hallucination patterns appear; redeploy Agent Engine once.
+
+global:
+  customer_name: account_name
+  cust_name: account_name
+  fiscal_q: fiscal_quarter
+  fiscal_m: fiscal_month_no
+  fy_quarter: fiscal_quarter
+  region: territory_code
+
+fiscal_calendar:
+  start_month: July
+  end_month: June
+  fiscal_month_no_start: 1
+  fiscal_month_no_end: 12
+  note: "Full FY is never April–September; Q4 is only Apr–Jun within a FY"
+
+by_table:
+  jaybel-dev.jaybel_sales_analytics.dim_sales_customer:
+    customer_name: account_name
+    customer: account
+  jaybel-dev.jaybel_sales_analytics.fact_sales_report:
+    territory: territory_code
+    region: territory_code
+
+value_hints:
+  territory_code:
+    description: "Use territory_code on fact (JAY, FRA, JOK, EXP, NSW) — not APAC or region labels"
+    examples:
+      - JAY
+      - FRA
+      - JOK
+      - EXP
+  fiscal_quarter:
+    description: "Use fiscal_quarter on dim_date with fy (Q1–Q4)"
+    examples:
+      - Q1
+      - Q2
+      - Q3
+      - Q4
+
+metric_columns:
+  gp: line_gp_dollar
+  gross_profit: line_gp_dollar
+  sales: line_sales_ex_gst
+  revenue: line_sales_ex_gst
+  margin: gp_percent

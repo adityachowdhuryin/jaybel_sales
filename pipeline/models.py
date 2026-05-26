@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any
 
 
@@ -96,6 +97,7 @@ class ValidationResult:
     validator: str
     message: str = ""
     bytes_scanned: int | None = None
+    details: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -111,3 +113,42 @@ class QueryResult:
 class AnswerResult:
     text: str
     chart_spec: dict[str, Any] | None = None
+
+
+class PipelineStopReason(str, Enum):
+    NONE = "none"
+    CLARIFICATION = "clarification"
+    GUIDANCE = "guidance"
+    ERROR = "error"
+
+
+@dataclass
+class ClarificationOption:
+    id: str
+    label: str
+    send_text: str
+
+    def to_dict(self) -> dict[str, str]:
+        return {"id": self.id, "label": self.label, "send_text": self.send_text}
+
+
+@dataclass
+class ClarificationPayload:
+    code: str
+    message: str
+    options: list[ClarificationOption] = field(default_factory=list)
+
+
+@dataclass
+class ScopeOutcome:
+    blocked: bool = False
+    reason_code: str | None = None  # off_topic | out_of_dataset | vague | rep_context_required
+    message: str = ""
+    suggestions: list[str] = field(default_factory=list)
+    clarification: ClarificationPayload | None = None
+
+
+@dataclass
+class RoutingOutcome:
+    proceed: bool = True
+    clarification: ClarificationPayload | None = None

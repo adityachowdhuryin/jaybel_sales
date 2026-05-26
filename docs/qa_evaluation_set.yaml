@@ -751,3 +751,152 @@ cases:
   expected_join_pattern: fact_sales_with_dims
   intent: aggregation
   data_availability: requires_rep_context
+- id: G001
+  source: query_understanding_guards
+  question: What is the capital of France?
+  expected_stop_reason: out_of_dataset
+  category: guard_off_topic
+- id: G002
+  source: query_understanding_guards
+  question: help
+  expected_stop_reason: vague
+  category: guard_vague
+- id: G003
+  source: query_understanding_guards
+  question: What are my sales this month?
+  expected_stop_reason: rep_context_required
+  category: guard_rep
+- id: G004
+  source: query_understanding_guards
+  question: hi
+  expected_stop_reason: vague
+  category: guard_vague
+- id: G005
+  source: query_understanding_guards
+  question: Why is the projected Furniture GP variance -1695009 in BI?
+  expected_stop_reason: out_of_dataset
+  category: guard_bi_forecast
+- id: G006
+  source: query_understanding_guards
+  question: What is the weather in Melbourne today?
+  expected_stop_reason: out_of_dataset
+  category: guard_external
+- id: G007
+  source: query_understanding_guards
+  question: Total sales for fiscal year 2025-2026
+  expected_stop_reason: ok
+  category: guard_in_scope
+- id: G008
+  source: query_understanding_guards
+  question: What is my commission payout this quarter?
+  expected_stop_reason: rep_context_required
+  category: guard_rep
+- id: G009
+  source: query_understanding_guards
+  question: What is my commission payout this quarter?
+  expected_stop_reason: ok
+  sales_rep_code: REP01
+  category: guard_rep_ok
+- id: S001
+  source: sql_hardening_regression
+  question: Top 5 customers by GP for each territory in fiscal Q1 2025-2026
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+- id: S002
+  source: sql_hardening_regression
+  question: Top 10 customers by gross profit in fiscal Q1 2025-2026
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+- id: S003
+  source: sql_hardening_regression
+  question: Average GP percent by territory code in calendar year 2025
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+- id: S004
+  source: sql_hardening_regression
+  question: Top 5 customers by GP for each territory in fiscal Q1 2025-2026
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+- id: S005
+  source: sql_hardening_regression
+  question: Now filter to FRA territory only
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+  history:
+  - question: Top 5 customers by GP for each territory in fiscal Q1 2025-2026
+    table_id: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+    join_pattern: fact_sales_with_dims
+    intent: aggregation
+    sql_excerpt: SELECT f.territory_code, c.account_name, SUM(f.line_gp_dollar) FROM fact_sales_report f JOIN dim_date d ON f.date_key = d.date_key WHERE d.fy = '2025-2026' AND d.fiscal_quarter = 'Q1'
+    metric_hint: line_gp_dollar (GP)
+    filter_summary: d.fy = '2025-2026' AND d.fiscal_quarter = 'Q1'
+- id: S006
+  source: sql_hardening_regression
+  question: Break that down by fiscal month
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+  history:
+  - question: Top 5 customers by GP for FRA territory fiscal Q1 2025-2026
+    table_id: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+    join_pattern: fact_sales_with_dims
+    intent: aggregation
+    sql_excerpt: SELECT d.fiscal_month_no, SUM(f.line_gp_dollar) FROM fact_sales_report f JOIN dim_date d WHERE f.territory_code = 'FRA' AND d.fy = '2025-2026' AND d.fiscal_quarter = 'Q1'
+    metric_hint: line_gp_dollar (GP)
+    filter_summary: f.territory_code = 'FRA' AND d.fy = '2025-2026' AND d.fiscal_quarter = 'Q1'
+- id: S007
+  source: sql_hardening_regression
+  question: What about sales instead of GP?
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+  history:
+  - question: Top customers by GP fiscal Q1 2025-2026
+    table_id: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+    join_pattern: fact_sales_with_dims
+    intent: aggregation
+    sql_excerpt: SELECT c.account_name, SUM(f.line_gp_dollar) FROM fact_sales_report f WHERE d.fiscal_quarter = 'Q1'
+    metric_hint: line_gp_dollar (GP)
+- id: S008
+  source: sql_hardening_regression
+  question: Same but for JAY territory
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+  history:
+  - question: Top 10 customers by gross profit fiscal Q1 2025-2026
+    table_id: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+    join_pattern: fact_sales_with_dims
+    intent: aggregation
+    sql_excerpt: SELECT c.account_name, SUM(f.line_gp_dollar) FROM fact_sales_report f JOIN dim_date d WHERE d.fy = '2025-2026' AND d.fiscal_quarter = 'Q1'
+    metric_hint: line_gp_dollar (GP)
+    filter_summary: d.fy = '2025-2026' AND d.fiscal_quarter = 'Q1'
+- id: S009
+  source: sql_hardening_regression
+  question: List customer names with highest GP in fiscal Q1 2025-2026
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+- id: S010
+  source: sql_hardening_regression
+  question: Sales by fiscal quarter for FY 2025-2026
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+- id: S011
+  source: sql_hardening_regression
+  question: GP by territory for APAC in fiscal Q1 2025-2026
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation
+- id: S012
+  source: sql_hardening_regression
+  question: Show cust_name and total GP fiscal Q2 2025-2026
+  expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
+  expected_join_pattern: fact_sales_with_dims
+  intent: aggregation

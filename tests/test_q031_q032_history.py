@@ -72,6 +72,7 @@ def test_history_includes_prior_turn_for_q032_style(client: TestClient):
     hist = captured.get("history") or []
     assert len(hist) == 1
     assert "monthly sales" in hist[0]["question"].lower()
+    assert "sql_excerpt" in hist[0]
 
     msg = ae.build_message("Break it down by fiscal month", None, hist)
     assert "history_json" in msg

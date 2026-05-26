@@ -1,0 +1,18 @@
+flowchart TB
+  subgraph Page["Chat page /chat"]
+    Side["SessionSidebar"]
+    Win["ChatWindow"]
+    Exp["ExploreDrawer"]
+  end
+
+  subgraph Msg["Agent message"]
+    Status["StatusIndicator"]
+    MD["AnswerMarkdown"]
+    KPI["MetricCards"]
+    Chart["ChartPanel"]
+    Table["DataTable"]
+    SQL["SQLAccordion"]
+    FU["FollowUpChips"]
+  end
+
+  Win --> Msg

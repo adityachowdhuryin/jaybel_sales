@@ -1,0 +1,10 @@
+flowchart TB
+  Empty["Empty chat"]
+  Explore["Explore drawer"]
+  Cat["Pick category"]
+  Start["Pick starter"]
+  Chat["Send with starter_id"]
+  Ans["Answer + follow-ups"]
+
+  Empty --> Explore --> Cat --> Start --> Chat --> Ans
+  Ans -->|follow-up| Chat

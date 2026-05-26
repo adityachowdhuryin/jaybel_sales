@@ -46,7 +46,10 @@ def load_cases(
         if re.match(r"^Q\d{3}-Q\d{3}$", case_filter):
             lo, hi = case_filter.split("-")
             cases = [c for c in cases if lo <= c.get("id", "") <= hi]
-        elif case_filter.startswith("Q"):
+        elif re.match(r"^S\d{3}-S\d{3}$", case_filter):
+            lo, hi = case_filter.split("-")
+            cases = [c for c in cases if lo <= c.get("id", "") <= hi]
+        elif case_filter.startswith("Q") or case_filter.startswith("S"):
             ids = {x.strip() for x in case_filter.split(",")}
             cases = [c for c in cases if c.get("id") in ids]
     return cases

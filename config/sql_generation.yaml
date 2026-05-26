@@ -1,0 +1,21 @@
+# SQL generation — repair policy and schema context limits
+
+schema_context:
+  max_chars: 12000
+
+repair:
+  deterministic_first: true
+  max_llm_retries: 2
+
+few_shot:
+  default_k: 3
+  intent_boost_tags:
+    - top
+    - each
+    - per
+    - territory
+    - fiscal
+    - customer
+    - breakdown
+    - quarter
+    - month

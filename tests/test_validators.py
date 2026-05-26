@@ -31,6 +31,20 @@ LIMIT 10
 
 DML_SQL = "DELETE FROM `jaybel-dev.jaybel_sales_analytics.fact_sales_report` WHERE TRUE"
 
+CTE_TOP_N_SQL = """
+WITH ranked AS (
+  SELECT f.territory_code, c.account_name, SUM(f.line_gp_dollar) AS total_gp,
+    ROW_NUMBER() OVER (PARTITION BY f.territory_code ORDER BY SUM(f.line_gp_dollar) DESC) AS rn
+  FROM `jaybel-dev.jaybel_sales_analytics.fact_sales_report` AS f
+  JOIN `jaybel-dev.jaybel_sales_analytics.dim_date` AS d ON f.date_key = d.date_key
+  JOIN `jaybel-dev.jaybel_sales_analytics.dim_sales_customer` AS c ON f.customer_key = c.customer_key
+  WHERE d.fy = '2025-2026' AND d.fiscal_quarter = 'Q1'
+  GROUP BY f.territory_code, c.account_name
+)
+SELECT territory_code, account_name, total_gp FROM ranked WHERE rn <= 5
+LIMIT 1000
+"""
+
 
 def test_safety_rejects_dml():
     al = JoinAllowlist()
@@ -42,6 +56,12 @@ def test_safety_accepts_good_sql():
     al = JoinAllowlist()
     r = validate_safety(GOOD_SQL, al)
     assert r.passed
+
+
+def test_safety_accepts_cte_top_n():
+    al = JoinAllowlist()
+    r = validate_safety(CTE_TOP_N_SQL, al)
+    assert r.passed, r.message
 
 
 def test_column_check_good():

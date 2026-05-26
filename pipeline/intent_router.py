@@ -16,11 +16,11 @@ from pipeline.vertex_llm import generate_text, parse_json_response
 
 L1_SYSTEM = """You are a BigQuery analytics router for Jaybel sales data.
 Return ONLY valid JSON with keys:
-intent (aggregation|trend|comparison|lookup|ranking|anomaly),
+intent (aggregation|trend|comparison|lookup|ranking|anomaly|breakdown|filter_followup),
 table_id (exact id from catalog),
 join_pattern (fact_sales_with_dims | fact_new_business_frazer_with_dims | null for single-table),
 confidence (0-1),
-entities (string array),
+entities (string array of dimension values mentioned, e.g. Frazer, Furniture, APAC),
 time_range ({start,end,label} ISO dates or fy label, or null),
 plan (3-5 plain-English SQL steps, no SQL syntax).
 
@@ -31,6 +31,7 @@ Rules:
 - Use staging tables only if user asks for raw/source data or embroidery jobs.
 - join_pattern required when querying a fact table with dimensions.
 - FY targets come from config prompts, not a BigQuery target table.
+- Jaybel fiscal year: July (fiscal_month_no=1) through June (fiscal_month_no=12); label YYYY-YYYY (e.g. 2025-2026). Never April–September as full FY.
 """
 
 
@@ -50,11 +51,12 @@ class IntentRouter:
         question: str,
         history: list[dict[str, Any]] | None = None,
         user_context: UserContext | None = None,
+        history_block: str | None = None,
     ) -> L1Result:
         keyword_hits = self.keyword_index.top_table_ids(question, top_k=2)
         catalog = self.registry.compact_catalog()
-        hist = ""
-        if history:
+        hist = history_block or ""
+        if not hist and history:
             hist = "Prior turns (use for follow-up filters and table context):\n" + json.dumps(
                 history[-5:], indent=2
             )

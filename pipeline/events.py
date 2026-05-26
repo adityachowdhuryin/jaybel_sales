@@ -31,11 +31,47 @@ def cost_warning(bytes_scanned: int) -> PipelineEvent:
     return PipelineEvent("cost_warning", {"bytes_scanned": bytes_scanned})
 
 
-def results(rows: list[dict], row_count: int, columns: list[str]) -> PipelineEvent:
+def results(
+    rows: list[dict],
+    row_count: int,
+    columns: list[str],
+    *,
+    empty_result: bool = False,
+) -> PipelineEvent:
     return PipelineEvent(
         "results",
-        {"rows": rows, "row_count": row_count, "columns": columns},
+        {
+            "rows": rows,
+            "row_count": row_count,
+            "columns": columns,
+            "empty_result": empty_result,
+        },
     )
+
+
+def clarification_needed(
+    code: str,
+    message: str,
+    options: list[dict[str, str]],
+) -> PipelineEvent:
+    return PipelineEvent(
+        "clarification_needed",
+        {"code": code, "message": message, "options": options},
+    )
+
+
+def user_guidance(
+    code: str,
+    message: str,
+    suggestions: list[str] | None = None,
+    validation_detail: str | None = None,
+) -> PipelineEvent:
+    payload: dict[str, Any] = {"code": code, "message": message}
+    if suggestions:
+        payload["suggestions"] = suggestions
+    if validation_detail:
+        payload["validation_detail"] = validation_detail
+    return PipelineEvent("user_guidance", payload)
 
 
 def token(text: str) -> PipelineEvent:

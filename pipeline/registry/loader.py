@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -81,3 +82,42 @@ class Registry:
         for c in t.columns:
             parts.append(f"  - {c.name} ({c.type}): {c.description}")
         return "\n".join(parts)
+
+    def schema_block_for_alias(
+        self,
+        table_id: str,
+        alias: str,
+        join_on: str = "",
+    ) -> str:
+        t = self.get(table_id)
+        parts = [f"{alias} → {t.table_id}"]
+        if join_on:
+            parts.append(f"join on: {join_on}")
+        parts.extend([f"grain: {t.grain}", "columns:"])
+        for c in t.columns:
+            parts.append(f"  - {alias}.{c.name} ({c.type}): {c.description}")
+        return "\n".join(parts)
+
+    def joined_schemas_block(
+        self,
+        pattern_id: str,
+        allowlist: Any,
+    ) -> str:
+        """All dimension schemas for a join pattern (fact uses schema_block separately)."""
+        from pipeline.registry.join_allowlist import JoinAllowlist
+
+        al: JoinAllowlist = allowlist
+        if pattern_id not in al.patterns:
+            return ""
+        pattern = al.patterns[pattern_id]
+        parts: list[str] = []
+        for join in pattern.get("allowed_joins") or []:
+            alias = join.get("alias", "")
+            table_short = join.get("table", "")
+            if not table_short:
+                continue
+            tid = al._fq(table_short)
+            parts.append(
+                self.schema_block_for_alias(tid, alias, join.get("on", ""))
+            )
+        return "\n\n".join(parts)

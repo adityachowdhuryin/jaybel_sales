@@ -1,0 +1,133 @@
+# Query understanding — Section A (routing, scope, clarification)
+
+routing:
+  confidence_proceed: 0.85
+  confidence_agree_min: 0.70
+  confidence_clarify_max: 0.84
+  keyword_score_min_gap: 1
+
+scope:
+  min_tokens: 3
+  vague_requires_metric_or_period: true
+
+rep:
+  patterns:
+    - "my sales"
+    - "my gp"
+    - "my gross profit"
+    - "my accounts"
+    - "my customers"
+    - "my performance"
+    - "my commission"
+    - "my payout"
+    - "closed-won"
+    - "closed won"
+    - "closed deal"
+    - "how much did i sell"
+    - "how much have i sold"
+
+off_topic:
+  sales_keywords:
+    - sales
+    - revenue
+    - gp
+    - gross profit
+    - profit
+    - customer
+    - product
+    - rep
+    - fiscal
+    - fy
+    - frazer
+    - target
+    - variance
+    - trend
+    - month
+    - quarter
+    - year
+    - invoice
+    - order
+    - department
+    - category
+    - furniture
+    - bts
+    - embroidery
+    - working day
+    - run rate
+    - run-rate
+    - commission
+    - account
+    - jaybel
+    - line sales
+    - line gp
+
+external_concepts:
+  - weather
+  - stock price
+  - hubspot
+  - salesforce crm
+  - email open rate
+  - website traffic
+  - social media
+  - capital of
+  - recipe
+  - movie
+  - football
+  - basketball
+
+l0_classifier:
+  enabled: true
+  trigger: uncertain_only
+  min_confidence: 0.75
+
+follow_up:
+  inherit_table_min_confidence: 0.70
+  inherit_boost_confidence: 0.82
+  max_history_turns: 5
+  follow_up_phrases:
+    - filter
+    - break down
+    - breakdown
+    - only
+    - same period
+    - that by
+    - now show
+    - exclude
+    - include only
+
+empty_result:
+  use_llm_for_empty: false
+
+metric_signals:
+  - sales
+  - revenue
+  - gp
+  - profit
+  - cost
+  - count
+  - total
+  - average
+  - trend
+  - top
+  - bottom
+  - rank
+  - compare
+  - variance
+  - target
+
+period_signals:
+  - month
+  - quarter
+  - year
+  - fiscal
+  - fy
+  - last
+  - this
+  - ytd
+  - mtd
+  - week
+  - today
+  - yesterday
+  - "2024"
+  - "2025"
+  - "2026"

@@ -11,12 +11,14 @@ export function MessageList({
   sessionId,
   user,
   onFollowUpPick,
+  onClarificationPick,
   hideFollowUps,
 }: {
   messages: ChatMessage[];
   sessionId: string | null;
   user: AppUser | null;
   onFollowUpPick: (text: string) => void;
+  onClarificationPick?: (text: string) => void;
   hideFollowUps?: boolean;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -68,8 +70,12 @@ export function MessageList({
           <UserMessage key={m.id} content={m.content} createdAt={m.createdAt} />
         ) : (
           <div key={m.id}>
-            <AgentMessage message={m} sessionId={sessionId} />
-            {isLastAgent && sessionId && m.question && (
+            <AgentMessage
+              message={m}
+              sessionId={sessionId}
+              onClarificationPick={onClarificationPick}
+            />
+            {isLastAgent && sessionId && m.question && !m.clarification && (
               <FollowUpChips
                 sessionId={sessionId}
                 turnId={m.turnId}

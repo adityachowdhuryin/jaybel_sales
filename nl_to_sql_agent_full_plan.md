@@ -35,6 +35,7 @@
 | **v1.2 targets & patterns** | `config/sales_targets.yaml`, `account_patterns.yaml`, `embroidery_patterns.yaml` |
 | **v1.2 analytics context** | `pipeline/analytics_context.py` |
 | **v1.3 charts & answers** | `pipeline/chart_selector.py`, `docs/ANSWER_FORMAT.md`, `docs/CHART_AND_ANSWER_UX_PLAN.md` |
+| **Architecture guide (beginner)** | `docs/PROJECT_ARCHITECTURE_GUIDE.md` |
 | Phase D QA | `docs/PHASE_D_QA.md`, `scripts/run_qa_suite.py` |
 | Agent Engine architecture | `docs/AGENT_ENGINE_ARCHITECTURE.md` |
 | Pre-flight checklist | `docs/PRE_IMPLEMENTATION_CHECKLIST.md` |

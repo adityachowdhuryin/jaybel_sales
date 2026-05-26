@@ -63,6 +63,13 @@ class StreamAccumulator:
         self.row_count = payload.get("row_count") or self.row_count
         self.chart_spec = payload.get("chart_spec") or self.chart_spec
         self.results_sample = payload.get("rows_sample") or self.results_sample
+        if not self.answer:
+            tokens: list[str] = []
+            for ev in payload.get("events") or []:
+                if isinstance(ev, dict) and ev.get("type") == "token":
+                    tokens.append(str(ev.get("text") or ""))
+            if tokens:
+                self.answer = "".join(tokens).strip() or None
 
     def to_turn_record(self) -> dict[str, Any]:
         answer = self.answer or self.agent_text.strip() or None

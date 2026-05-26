@@ -11,6 +11,8 @@ import { MetricCards, shouldShowMetricCards } from "./MetricCards";
 import { SQLAccordion } from "./SQLAccordion";
 import { StatusIndicator } from "./StatusIndicator";
 import { StreamingText } from "./StreamingText";
+import { ClarificationCard } from "./ClarificationCard";
+import { GuidanceBanner } from "./GuidanceBanner";
 import type { ChatMessage } from "@/types";
 
 function formatTime(iso?: string) {
@@ -29,10 +31,12 @@ export function AgentMessage({
   message,
   sessionId,
   onFeedbackChange,
+  onClarificationPick,
 }: {
   message: ChatMessage;
   sessionId?: string | null;
   onFeedbackChange?: (rating: number) => void;
+  onClarificationPick?: (sendText: string) => void;
 }) {
   const time = formatTime(message.createdAt);
   const showTableLabel = message.tableDisplay && !message.status && !message.streaming;
@@ -80,6 +84,20 @@ export function AgentMessage({
             </p>
           )}
           <CostWarning bytes={message.costWarningBytes} />
+          {message.guidance && (
+            <GuidanceBanner
+              code={message.guidance.code}
+              message={message.guidance.message}
+              suggestions={message.guidance.suggestions}
+            />
+          )}
+          {message.clarification && onClarificationPick && !message.streaming && (
+            <ClarificationCard
+              message={message.clarification.message}
+              options={message.clarification.options}
+              onPick={onClarificationPick}
+            />
+          )}
           {message.error ? (
             <p className="text-sm text-red-400">{message.error}</p>
           ) : message.streaming ? (

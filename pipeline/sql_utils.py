@@ -31,9 +31,26 @@ def strip_markdown_sql(text: str) -> str:
     return text.strip()
 
 
+def fix_common_column_typos(sql: str, table_id: str | None = None) -> str:
+    """Apply config/column_aliases.yaml mappings (legacy name kept for callers)."""
+    from pipeline.column_aliases import apply_column_aliases
+
+    return apply_column_aliases(sql, table_id)
+
+
+def _cte_aliases(parsed: exp.Expression) -> set[str]:
+    aliases: set[str] = set()
+    for cte in parsed.find_all(exp.CTE):
+        alias = cte.alias
+        if alias:
+            aliases.add(alias)
+    return aliases
+
+
 def extract_table_references(sql: str) -> set[str]:
-    """Fully-qualified table IDs from FROM/JOIN."""
+    """Fully-qualified table IDs from FROM/JOIN (excludes CTE names)."""
     parsed = parse_sql(sql)
+    cte_names = _cte_aliases(parsed)
     refs: set[str] = set()
     for table in parsed.find_all(exp.Table):
         parts = []
@@ -45,7 +62,7 @@ def extract_table_references(sql: str) -> set[str]:
             parts.append(table.name)
         if len(parts) == 3:
             refs.add(".".join(parts))
-        elif table.name:
+        elif table.name and table.name not in cte_names:
             refs.add(table.name)
     return refs
 

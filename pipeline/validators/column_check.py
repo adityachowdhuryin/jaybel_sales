@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pipeline.column_aliases import suggested_replacements
 from pipeline.models import TableMeta, ValidationResult
 from pipeline.registry.join_allowlist import JoinAllowlist
 from pipeline.registry.loader import Registry
@@ -55,10 +56,19 @@ def validate_columns(
             valid = meta.column_names()
             bad = [c for c in cols if c not in valid and c != "*"]
             if bad:
+                valid_sample = sorted(valid)[:25]
+                repl = suggested_replacements(fq, bad)
                 return ValidationResult(
                     passed=False,
                     validator="column_check",
-                    message=f"Invalid columns on {fq}: {bad}. Valid: {sorted(valid)[:20]}...",
+                    message=f"Invalid columns on {fq}: {bad}. Valid: {valid_sample}...",
+                    details={
+                        "table_id": fq,
+                        "alias": alias,
+                        "bad_columns": bad,
+                        "valid_columns_sample": valid_sample,
+                        "suggested_replacements": repl,
+                    },
                 )
         return ValidationResult(passed=True, validator="column_check")
     except Exception as e:

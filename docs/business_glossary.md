@@ -2,6 +2,8 @@
 
 Derived from `Jaybel_Sales_Analytics_Detailed_Schema.pdf` and star-schema design. Used by L1 routing and answer generation.
 
+**Column aliases** for SQL generation (NL → registry column names) live in `config/column_aliases.yaml` — edit that file when the model hallucinates column names; redeploy once and re-run the SQL regression suite.
+
 ## Companies & departments
 
 | Term | Meaning | Data location |

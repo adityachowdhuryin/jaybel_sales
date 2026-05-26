@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jaybel Sales Analytics — Architecture (Mermaid)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 1100px; margin: 2rem auto; padding: 0 1.5rem; background: #0f172a; color: #e2e8f0; line-height: 1.5; }
+    h1, h2 { color: #f8fafc; }
+    h2 { margin-top: 2.5rem; border-bottom: 1px solid #334155; padding-bottom: 0.5rem; }
+    .mermaid { background: #fff; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; overflow-x: auto; }
+    p.note { background: #1e293b; padding: 1rem; border-radius: 8px; border-left: 4px solid #38bdf8; }
+    a { color: #38bdf8; }
+  </style>
+</head>
+<body>
+  <h1>Jaybel Sales Analytics — Architecture Diagrams</h1>
+  <p class="note">
+    Open this file in any browser (double-click or drag into Chrome/Safari).
+    For the full written guide, see
+    <a href="PROJECT_ARCHITECTURE_GUIDE.md">PROJECT_ARCHITECTURE_GUIDE.md</a>.
+  </p>
+
+  <h2>1. System overview (local + GCP)</h2>
+  <pre class="mermaid">
+flowchart TB
+  subgraph YOU["Your computer - localhost"]
+    USER[("You - browser")]
+    UI["Next.js UI - port 3000"]
+    API["FastAPI - port 8000 or 8001"]
+    PG[("PostgreSQL - port 15433")]
+    FILES["Config and schema files"]
+  end
+  subgraph GCP["Google Cloud - jaybel-dev"]
+    AE["Vertex AI Agent Engine"]
+    LLM["Gemini"]
+    BQ[("BigQuery - 13 tables")]
+  end
+  USER --> UI
+  UI -->|"HTTP + SSE"| API
+  API --> PG
+  API --> FILES
+  API -->|"stream_query"| AE
+  AE --> LLM
+  AE -->|"SQL"| BQ
+  BQ -->|"rows"| AE
+  AE --> API
+  API --> UI
+  </pre>
+
+  <h2>2. End-to-end request flow</h2>
+  <pre class="mermaid">
+sequenceDiagram
+  autonumber
+  actor User
+  participant UI as Next.js UI
+  participant API as FastAPI
+  participant PG as PostgreSQL
+  participant AE as Agent Engine
+  participant Pipe as Pipeline L1-L5
+  participant BQ as BigQuery
+  User->>UI: Send question
+  UI->>API: POST /api/chat/stream
+  API->>PG: Load session + history
+  API->>AE: stream_query
+  AE->>Pipe: query_sales_analytics
+  Pipe->>BQ: SQL
+  BQ-->>Pipe: Rows
+  Pipe-->>AE: Events
+  AE-->>API: Stream
+  API-->>UI: SSE
+  API->>PG: Save turn
+  UI->>User: Answer + chart
+  </pre>
+
+  <h2>3. Pipeline L1 → L5</h2>
+  <pre class="mermaid">
+flowchart LR
+  Q["Question"] --> L1["L1 Route"] --> L2["L2 SQL"] --> V["Validate"]
+  V -->|pass| L4["L4 BQ"] --> L5["L5 Answer"] --> OUT["UI"]
+  V -->|retry| L2
+  V -->|fail| ERR["error"]
+  </pre>
+
+  <h2>4. Where data lives</h2>
+  <pre class="mermaid">
+flowchart TB
+  Pipe["Pipeline"] --> BQ["BigQuery"]
+  Pipe --> REG["schema_registry"]
+  Pipe --> TGT["sales_targets.yaml"]
+  API["FastAPI"] --> PG["PostgreSQL"]
+  API --> CAT["question_catalog"]
+  </pre>
+
+  <h2>5. Agent Engine path</h2>
+  <pre class="mermaid">
+flowchart LR
+  API["FastAPI"] -->|stream_query| AE["Agent Engine"]
+  AE --> Tool["query_sales_analytics"] --> Pipe["Pipeline"]
+  </pre>
+
+  <h2>6. Question discovery UI</h2>
+  <pre class="mermaid">
+flowchart TB
+  Empty --> Explore --> Cat["Category"] --> Start --> Chat --> Ans["Answer"]
+  Ans -->|follow-up| Chat
+  </pre>
+
+  <h2>7. Chat UI layout</h2>
+  <pre class="mermaid">
+flowchart TB
+  subgraph Page["/chat"]
+    Side["Sidebar"]
+    Win["ChatWindow"]
+  end
+  subgraph Msg["Agent message"]
+    MD["Markdown"] --> Chart["Chart"] --> Table["Table"]
+  end
+  Win --> Msg
+  </pre>
+
+  <h2>8. Mental model</h2>
+  <pre class="mermaid">
+flowchart TB
+  root["Jaybel Agent"] --> Local["Local app"]
+  root --> Cloud["GCP"]
+  root --> Pipe["Pipeline"]
+  root --> Safe["Safety"]
+  </pre>
+
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({ startOnLoad: true, theme: "default", securityLevel: "loose" });
+  </script>
+</body>
+</html>

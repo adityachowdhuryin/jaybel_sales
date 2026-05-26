@@ -1,0 +1,25 @@
+flowchart TB
+  subgraph BQ["BigQuery - numbers"]
+    F1[fact_sales_report]
+    F2[fact_new_business_frazer]
+    D[dim tables]
+    S[stg tables]
+  end
+
+  subgraph PG["PostgreSQL - app"]
+    U[users]
+    CS[chat_sessions]
+    CT[chat_turns]
+  end
+
+  subgraph REPO["Repo files"]
+    REG[schema_registry]
+    CAT[question_catalog]
+    TGT[sales_targets.yaml]
+  end
+
+  Pipe["Pipeline"] --> BQ
+  Pipe --> REG
+  Pipe --> TGT
+  API["FastAPI"] --> PG
+  API --> CAT

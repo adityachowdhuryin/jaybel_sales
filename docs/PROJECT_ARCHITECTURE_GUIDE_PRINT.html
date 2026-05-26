@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Jaybel Sales Analytics — Architecture Guide</title>
+  <style>
+    @page { size: A4; margin: 18mm 14mm; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      font-size: 11pt;
+      line-height: 1.45;
+      color: #1e293b;
+      max-width: 100%;
+      margin: 0;
+      padding: 0 4mm;
+    }
+    h1 { font-size: 22pt; color: #0f172a; border-bottom: 3px solid #0ea5e9; padding-bottom: 8px; page-break-after: avoid; }
+    h2 { font-size: 15pt; color: #0f172a; margin-top: 1.4em; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; page-break-after: avoid; }
+    h3 { font-size: 12pt; color: #334155; page-break-after: avoid; }
+    p, li { orphans: 3; widows: 3; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 10pt; page-break-inside: avoid; }
+    th, td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; vertical-align: top; }
+    th { background: #f1f5f9; font-weight: 600; }
+    tr:nth-child(even) td { background: #f8fafc; }
+    code { font-family: ui-monospace, monospace; font-size: 9pt; background: #f1f5f9; padding: 1px 4px; border-radius: 3px; }
+    pre { background: #f1f5f9; padding: 10px; border-radius: 6px; font-size: 9pt; overflow-x: auto; page-break-inside: avoid; }
+    pre code { background: none; padding: 0; }
+    blockquote { border-left: 4px solid #0ea5e9; margin: 12px 0; padding: 8px 16px; background: #f0f9ff; color: #334155; }
+    .mermaid {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 16px 0;
+      text-align: center;
+      page-break-inside: avoid;
+    }
+    .mermaid svg { max-width: 100% !important; height: auto !important; }
+    hr { border: none; border-top: 1px solid #e2e8f0; margin: 24px 0; }
+    .cover {
+      text-align: center;
+      padding: 48px 24px 32px;
+      page-break-after: always;
+    }
+    .cover h1 { border: none; font-size: 26pt; }
+    .cover p { color: #64748b; font-size: 12pt; }
+    .toc { page-break-after: always; }
+    .toc ol { line-height: 1.8; }
+    a { color: #0369a1; text-decoration: none; }
+    .footer-note { font-size: 9pt; color: #64748b; margin-top: 24px; }
+  </style>
+</head>
+<body>
+  <div class="cover">
+    <h1>Jaybel Sales Analytics</h1>
+    <p><strong>Complete Architecture Guide</strong></p>
+    <p>Natural Language → SQL Agent · Local App + Google Cloud</p>
+    <p style="margin-top:32px;font-size:10pt;">jaybel-dev · Vertex AI Agent Engine · BigQuery</p>
+  </div>
+  <div class="toc">
+    <h2>Contents</h2>
+    <ol>
+      <li>What is this project?</li>
+      <li>The big picture — two worlds</li>
+      <li>Main components</li>
+      <li>End-to-end journey</li>
+      <li>Pipeline L1–L5</li>
+      <li>Where data lives</li>
+      <li>Schema registry</li>
+      <li>Agent Engine</li>
+      <li>Question discovery UI</li>
+      <li>UI building blocks</li>
+      <li>Streaming events</li>
+      <li>Special cases (v1.2 / v1.3)</li>
+      <li>Repository map</li>
+      <li>Running locally</li>
+      <li>Security model</li>
+      <li>Out of scope for v1</li>
+      <li>Deeper reading</li>
+      <li>One-page mental model</li>
+    </ol>
+  </div>
+  <p><strong>Purpose of this document:</strong> If you read only one file, read this one. It explains what the project does, how every piece connects, and what happens from the moment a user types a question until they see an answer and chart.</p>
+<p><strong>Audience:</strong> New developers, analysts, or stakeholders with no prior knowledge of this codebase.</p>
+<hr />
+<h2>1. What is this project? (In plain English)</h2>
+<p>Imagine a <strong>smart assistant for sales data</strong>. A user asks a question in normal English, for example:</p>
+<blockquote>
+<p><em>"How far behind are we on our Overall Business Target of $6M?"</em></p>
+</blockquote>
+<p>The system:</p>
+<ol>
+<li><strong>Understands</strong> what they are asking (sales target, not weather).</li>
+<li><strong>Picks</strong> the right database tables in Google BigQuery.</li>
+<li><strong>Writes</strong> a safe SQL query (not guessed blindly — validated step by step).</li>
+<li><strong>Runs</strong> that query on real Jaybel sales data in the cloud.</li>
+<li><strong>Explains</strong> the answer in readable text, shows a <strong>table</strong>, and sometimes a <strong>chart</strong>.</li>
+</ol>
+<p>The chat <strong>looks</strong> like ChatGPT, but underneath it is a <strong>controlled pipeline</strong> designed to reduce wrong SQL and wrong numbers.</p>
+<hr />
+<h2>2. The big picture — two worlds</h2>
+<p>Your app lives in <strong>two places</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Where</th>
+<th>What lives there</th>
+<th>Think of it as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Your Mac (local)</strong></td>
+<td>Web UI, API, Postgres, config files</td>
+<td>The “app shell” — chat history, buttons, sessions</td>
+</tr>
+<tr>
+<td><strong>Google Cloud (GCP)</strong></td>
+<td>Agent Engine, BigQuery, Vertex AI (LLM)</td>
+<td>The “brain + warehouse” — analytics and AI</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Important rule:</strong> Sales numbers are <strong>never</strong> copied into Postgres. Postgres only stores <strong>chat sessions and messages</strong>. All sales figures come from <strong>BigQuery</strong>.</p>
+<h3>Diagram — System overview — local Mac and Google Cloud</h3>
+<div class="mermaid">
+flowchart TB
+  subgraph YOU["Your computer - localhost"]
+    USER[("You - browser")]
+    UI["Next.js UI - port 3000"]
+    API["FastAPI - port 8000 or 8001"]
+    PG[("PostgreSQL - port 15433")]
+    FILES["Config and schema files"]
+  end
+
+  subgraph GCP["Google Cloud - jaybel-dev"]
+    AE["Vertex AI Agent Engine"]
+    LLM["Gemini - routing SQL summary"]
+    BQ[("BigQuery - 13 tables")]
+  end
+
+  USER --> UI
+  UI -->|"HTTP + SSE"| API
+  API --> PG
+  API --> FILES
+  API -->|"stream_query"| AE
+  AE --> LLM
+  AE -->|"SQL"| BQ
+  BQ -->|"rows"| AE
+  AE --> API
+  API --> UI
+</div>
+
+<hr />
+<h2>3. Main components — who does what?</h2>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>File / folder</th>
+<th>Simple job</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Next.js UI</strong></td>
+<td><code>frontend/</code></td>
+<td>Chat screen, charts, “Browse questions”, sidebar sessions</td>
+</tr>
+<tr>
+<td><strong>FastAPI</strong></td>
+<td><code>backend/</code></td>
+<td>Saves chats to Postgres; forwards questions to Agent Engine; streams events back to UI</td>
+</tr>
+<tr>
+<td><strong>PostgreSQL</strong></td>
+<td><code>sql/migrations/</code>, Docker</td>
+<td>Remembers users, sessions, each Q&amp;A turn, thumbs up/down</td>
+</tr>
+<tr>
+<td><strong>Agent Engine</strong></td>
+<td><code>agent/sales_analytics_agent/</code></td>
+<td>Google’s hosted agent; every question is one “invocation” (visible in GCP console)</td>
+</tr>
+<tr>
+<td><strong>Pipeline</strong></td>
+<td><code>pipeline/</code></td>
+<td>The real work: route → SQL → validate → run BQ → answer → chart</td>
+</tr>
+<tr>
+<td><strong>Schema registry</strong></td>
+<td><code>schema_registry/tables/*.yaml</code></td>
+<td>Describes all 13 BigQuery tables, columns, example SQL</td>
+</tr>
+<tr>
+<td><strong>Config</strong></td>
+<td><code>config/</code></td>
+<td>GCP project, targets ($6M goal), account patterns, etc.</td>
+</tr>
+<tr>
+<td><strong>Question catalog</strong></td>
+<td><code>content/question_catalog.yaml</code></td>
+<td>97 starter questions + categories for the UI</td>
+</tr>
+</tbody>
+</table>
+<p>The UI <strong>never</strong> talks to BigQuery directly. It only talks to <strong>FastAPI</strong>. FastAPI talks to <strong>Agent Engine</strong>. Agent Engine runs the <strong>pipeline tool</strong>, which talks to <strong>BigQuery</strong>.</p>
+<hr />
+<h2>4. End-to-end journey — one question from click to chart</h2>
+<p>This is the <strong>full path</strong> for a single message.</p>
+<h3>Diagram — End-to-end request flow (one question)</h3>
+<div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor User
+  participant UI as Next.js UI
+  participant API as FastAPI
+  participant PG as PostgreSQL
+  participant AE as Agent Engine
+  participant Pipe as Pipeline L1-L5
+  participant BQ as BigQuery
+
+  User->>UI: Question or starter - Send
+  UI->>API: POST /api/chat/stream SSE
+  API->>PG: Load session and last 5 turns
+  API->>AE: stream_query with SALES_CONTEXT
+  AE->>Pipe: query_sales_analytics
+  Pipe->>BQ: Validated SQL
+  BQ-->>Pipe: Rows
+  Pipe-->>AE: Events
+  AE-->>API: Stream
+  API-->>UI: SSE updates
+  API->>PG: Save turn
+  API-->>UI: done + turn_id
+  UI->>User: Answer table chart
+</div>
+
+<h3>Step-by-step (no jargon version)</h3>
+<ol>
+<li><strong>You send a message</strong> in the chat at <code>http://localhost:3000/chat</code>.</li>
+<li><strong>The browser</strong> opens a streaming connection (<code>SSE</code>) to FastAPI: <code>POST /api/chat/stream</code>.</li>
+<li><strong>FastAPI</strong> loads your chat session from Postgres and the <strong>last 5 previous Q&amp;A turns</strong> so follow-ups like <em>“now only for Furniture”</em> have context.</li>
+<li><strong>FastAPI</strong> calls <strong>Vertex AI Agent Engine</strong> with your question plus that history (inside a <code>[SALES_CONTEXT]...[/SALES_CONTEXT]</code> block).</li>
+<li><strong>Agent Engine</strong> calls the tool <strong><code>query_sales_analytics</code></strong>, which runs the <strong>pipeline</strong> on Google’s side (same Python code you have in <code>pipeline/</code>).</li>
+<li>The <strong>pipeline</strong> produces events: “Analyzing…”, then SQL, then table rows, then answer words one-by-one, then chart type.</li>
+<li><strong>FastAPI</strong> forwards each event to the browser as it arrives (you see status updates and streaming text).</li>
+<li>When finished, <strong>FastAPI saves the turn</strong> in Postgres and sends a final <code>done</code> event with <code>turn_id</code>.</li>
+<li><strong>The UI</strong> renders markdown sections, the data table, KPI cards, and Recharts chart.</li>
+</ol>
+<hr />
+<h2>5. The pipeline (L1 → L5) — the core engine</h2>
+<p>Everything analytical happens inside <strong><code>pipeline/pipeline.py</code></strong>. Think of it as an <strong>assembly line</strong> with five stations.</p>
+<h3>Diagram — Pipeline L1 through L5</h3>
+<div class="mermaid">
+flowchart LR
+  Q["User question"]
+  L1["L1 Route"]
+  L2["L2 SQL"]
+  V["Validators"]
+  L4["L4 Execute BQ"]
+  L5["L5 Answer + Chart"]
+  OUT["UI events"]
+
+  Q --> L1 --> L2 --> V
+  V -->|pass| L4 --> L5 --> OUT
+  V -->|retry| L2
+  V -->|fail| ERR["error"]
+</div>
+
+<h3>L1 — Intent Router (<code>pipeline/intent_router.py</code>)</h3>
+<p><strong>Question answered:</strong> <em>“What kind of question is this, and which BigQuery table is the main one?”</em></p>
+<ul>
+<li>Uses <strong>keyword index</strong> (fast, no AI) and/or <strong>Vertex LLM</strong> for harder cases.</li>
+<li>Output includes: <code>table_id</code>, <code>intent</code> (trend, ranking, comparison, …), <code>join_pattern</code>, time range.</li>
+<li><strong>v1.2:</strong> <code>pipeline/analytics_context.py</code> adds hints for targets, run-rate, closed accounts, embroidery.</li>
+</ul>
+<h3>L2 — SQL Generator (<code>pipeline/sql_generator.py</code>)</h3>
+<p><strong>Question answered:</strong> <em>“What exact SQL should we run?”</em></p>
+<ul>
+<li>Reads the chosen table’s YAML from <strong>schema registry</strong> (columns, examples).</li>
+<li>Only allows <strong>joins</strong> listed in <code>schema_registry/join_allowlist.yaml</code>.</li>
+<li>Injects <strong>Australia/Sydney</strong> date logic when the user says “last month”, “FY 2025-2026”, etc.</li>
+<li>Can use <strong>config targets</strong> (e.g. compare sales to $6,067,292.04 from <code>config/sales_targets.yaml</code>).</li>
+</ul>
+<h3>Validators (<code>pipeline/validators/</code>)</h3>
+<p><strong>Question answered:</strong> <em>“Is this SQL safe and correct before we spend money running it?”</em></p>
+<table>
+<thead>
+<tr>
+<th>Validator</th>
+<th>What it checks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Column check</td>
+<td>Every column exists on allowed tables</td>
+</tr>
+<tr>
+<td>Safety check</td>
+<td>No <code>DELETE</code>, <code>DROP</code>, only allowed tables</td>
+</tr>
+<tr>
+<td>Dry run</td>
+<td>BigQuery estimates the query (bytes scanned)</td>
+</tr>
+</tbody>
+</table>
+<p>If validation fails once, L2 gets <strong>one retry</strong> with the error message. If it still fails, the user sees an error event.</p>
+<h3>L4 — Execute (<code>pipeline/bq_executor.py</code>)</h3>
+<p><strong>Question answered:</strong> <em>“Run the SQL and get rows.”</em></p>
+<ul>
+<li>Executes against <code>jaybel-dev.jaybel_sales_analytics</code>.</li>
+<li>Returns rows, column names, row count (capped for UI).</li>
+</ul>
+<h3>L5 — Answer + Chart (<code>pipeline/answer_generator.py</code>, <code>pipeline/chart_selector.py</code>)</h3>
+<p><strong>Question answered:</strong> <em>“How do we explain this to a human, and what chart fits?”</em></p>
+<ul>
+<li><strong>L5 (LLM):</strong> Writes markdown with sections: Summary, Key figures, Notes, Caveats.</li>
+<li><strong>chart_selector (rules, not LLM):</strong> Picks line, bar, pie, paired (Actual vs Target), or grouped bar from data shape + intent.</li>
+<li>Words stream to the UI as <code>token</code> events; chart arrives as <code>chart_spec</code>.</li>
+</ul>
+<hr />
+<h2>6. Where does data live?</h2>
+<h3>Diagram — Where data lives — BigQuery, Postgres, repo files</h3>
+<div class="mermaid">
+flowchart TB
+  subgraph BQ["BigQuery - numbers"]
+    F1[fact_sales_report]
+    F2[fact_new_business_frazer]
+    D[dim tables]
+    S[stg tables]
+  end
+
+  subgraph PG["PostgreSQL - app"]
+    U[users]
+    CS[chat_sessions]
+    CT[chat_turns]
+  end
+
+  subgraph REPO["Repo files"]
+    REG[schema_registry]
+    CAT[question_catalog]
+    TGT[sales_targets.yaml]
+  end
+
+  Pipe["Pipeline"] --> BQ
+  Pipe --> REG
+  Pipe --> TGT
+  API["FastAPI"] --> PG
+  API --> CAT
+</div>
+
+<h3>BigQuery — 13 tables (analytics)</h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Examples</th>
+<th>Used for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Facts</strong></td>
+<td><code>fact_sales_report</code>, <code>fact_new_business_frazer</code></td>
+<td>Sales, GP, quantities — most questions</td>
+</tr>
+<tr>
+<td><strong>Dimensions</strong></td>
+<td><code>dim_sales_customer</code>, <code>dim_product</code>, <code>dim_date</code>, …</td>
+<td>Names, categories, dates</td>
+</tr>
+<tr>
+<td><strong>Staging</strong></td>
+<td><code>stg_sales_report</code>, <code>stg_total_working_days</code>, …</td>
+<td>Raw/source views, working-day KPIs</td>
+</tr>
+</tbody>
+</table>
+<p>Grain and column meanings are documented in each <strong><code>schema_registry/tables/&lt;table&gt;.yaml</code></strong> file.</p>
+<h3>PostgreSQL — 4 migrations (app only)</h3>
+<table>
+<thead>
+<tr>
+<th>Table</th>
+<th>Stores</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>users</code></td>
+<td>Dev user email, optional <code>sales_rep_code</code> for “my performance” questions</td>
+</tr>
+<tr>
+<td><code>chat_sessions</code></td>
+<td>Sidebar chats, link to Agent Engine session id, last starter/category</td>
+</tr>
+<tr>
+<td><code>chat_turns</code></td>
+<td>Each question, SQL, answer text, sample rows, chart JSON, feedback</td>
+</tr>
+</tbody>
+</table>
+<h3>Repo config (not in BigQuery)</h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Why it exists</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>config/sales_targets.yaml</code></td>
+<td>FY goals ($6M overall, Furniture GP, BTS) — compared to actuals in SQL</td>
+</tr>
+<tr>
+<td><code>config/account_patterns.yaml</code></td>
+<td>Detect “closed” accounts by name pattern</td>
+</tr>
+<tr>
+<td><code>config/embroidery_patterns.yaml</code></td>
+<td>Find embroidery / custom print lines</td>
+</tr>
+<tr>
+<td><code>config/jaybel.yaml</code></td>
+<td>GCP project, dataset, fiscal rules, limits</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>7. Schema registry — how the agent “knows” your tables</h2>
+<p>Before any question runs, the pipeline loads <strong>YAML files</strong> that describe BigQuery.</p>
+<p>Each file includes:</p>
+<ul>
+<li>Table name and business description  </li>
+<li>Every column with type and meaning  </li>
+<li><strong>Few-shot examples</strong> (question → correct SQL)  </li>
+<li>Tags for keyword search (“sales”, “customer”, “working days”)</li>
+</ul>
+<p><strong>Loader:</strong> <code>pipeline/registry/loader.py</code><br />
+<strong>Keyword search:</strong> <code>pipeline/registry/keyword_index.py</code><br />
+<strong>Allowed joins:</strong> <code>pipeline/registry/join_allowlist.py</code></p>
+<p>This design <strong>reduces hallucination</strong>: the model is grounded in real column names and approved join paths.</p>
+<hr />
+<h2>8. Agent Engine — why it sits in the middle</h2>
+<p>Google <strong>Vertex AI Agent Engine</strong> is a hosted runtime for agents.</p>
+<p><strong>Why Jaybel uses it:</strong></p>
+<ul>
+<li>Every user question = one <strong>logged invocation</strong> in GCP (operations/telemetry).</li>
+<li>The <strong>same pipeline code</strong> is bundled inside the deployed agent.</li>
+<li>The local FastAPI app does <strong>not</strong> re-implement analytics; it <strong>proxies</strong> to Agent Engine.</li>
+</ul>
+<h3>Diagram — Agent Engine in the request path</h3>
+<div class="mermaid">
+flowchart LR
+  API["FastAPI localhost"]
+  AE["Agent Engine GCP"]
+  Tool["query_sales_analytics"]
+  Pipe["Pipeline.run"]
+
+  API -->|stream_query| AE
+  AE --> Tool --> Pipe
+</div>
+
+<p><strong>Deploy / update after code changes:</strong></p>
+<pre><code class="language-bash">./scripts/deploy-sales-agent-engine.sh --agent-engine-id 8991351443894042624
+</code></pre>
+<p>Resource details: <code>agent/AGENT_ENGINE_RESOURCE.env</code></p>
+<hr />
+<h2>9. Question discovery UI — how users find questions</h2>
+<p>Not everyone knows what to ask. The UI helps them browse.</p>
+<h3>Diagram — Question discovery UI flow</h3>
+<div class="mermaid">
+flowchart TB
+  Empty["Empty chat"]
+  Explore["Explore drawer"]
+  Cat["Pick category"]
+  Start["Pick starter"]
+  Chat["Send with starter_id"]
+  Ans["Answer + follow-ups"]
+
+  Empty --> Explore --> Cat --> Start --> Chat --> Ans
+  Ans -->|follow-up| Chat
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Piece</th>
+<th>Location</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Categories &amp; starters</td>
+<td><code>content/question_catalog.yaml</code></td>
+</tr>
+<tr>
+<td>Built from QA set</td>
+<td><code>scripts/build_question_catalog.py</code> ← <code>docs/qa_evaluation_set.yaml</code></td>
+</tr>
+<tr>
+<td>API</td>
+<td><code>GET /api/question-catalog/categories</code>, <code>.../starters</code>, <code>POST .../follow-ups</code></td>
+</tr>
+<tr>
+<td>UI components</td>
+<td><code>frontend/components/explore/</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Badges</strong> on starters show data availability: full, config target, run-rate estimate, rep code required, etc.</p>
+<hr />
+<h2>10. What the user sees — UI building blocks</h2>
+<h3>Diagram — Chat page UI layout</h3>
+<div class="mermaid">
+flowchart TB
+  subgraph Page["Chat page /chat"]
+    Side["SessionSidebar"]
+    Win["ChatWindow"]
+    Exp["ExploreDrawer"]
+  end
+
+  subgraph Msg["Agent message"]
+    Status["StatusIndicator"]
+    MD["AnswerMarkdown"]
+    KPI["MetricCards"]
+    Chart["ChartPanel"]
+    Table["DataTable"]
+    SQL["SQLAccordion"]
+    FU["FollowUpChips"]
+  end
+
+  Win --> Msg
+</div>
+
+<p><strong>Streaming behavior:</strong> While the answer is generating, you see plain streaming text. When <code>done</code> arrives, the same content re-renders as <strong>formatted markdown</strong> with charts and table.</p>
+<hr />
+<h2>11. Streaming events — the contract between pipeline and UI</h2>
+<p>Every step emits a small JSON object. FastAPI forwards them over SSE.</p>
+<table>
+<thead>
+<tr>
+<th>Event type</th>
+<th>Meaning</th>
+<th>UI shows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>status</code></td>
+<td>Pipeline step message</td>
+<td>“Analyzing your question…”</td>
+</tr>
+<tr>
+<td><code>table_name</code></td>
+<td>Routed table</td>
+<td>Source table label</td>
+</tr>
+<tr>
+<td><code>sql</code></td>
+<td>Final SQL</td>
+<td>Expandable SQL block</td>
+</tr>
+<tr>
+<td><code>results</code></td>
+<td>Rows from BigQuery</td>
+<td>Data table</td>
+</tr>
+<tr>
+<td><code>token</code></td>
+<td>Piece of answer text</td>
+<td>Streaming paragraph</td>
+</tr>
+<tr>
+<td><code>chart_spec</code></td>
+<td>Chart type + axes</td>
+<td>Bar / line / pie chart</td>
+</tr>
+<tr>
+<td><code>cost_warning</code></td>
+<td>Large query bytes</td>
+<td>Warning banner</td>
+</tr>
+<tr>
+<td><code>done</code></td>
+<td>Finished</td>
+<td>Stop spinner; save turn_id</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td>Something failed</td>
+<td>Error message</td>
+</tr>
+</tbody>
+</table>
+<p>Defined in: <code>pipeline/events.py</code><br />
+Consumed in: <code>frontend/hooks/useChatStream.ts</code>, <code>frontend/components/chat/AgentMessage.tsx</code></p>
+<hr />
+<h2>12. Special cases (v1.2 / v1.3)</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>How it works</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>FY targets ($6M, etc.)</strong></td>
+<td>Target numbers in <code>config/sales_targets.yaml</code>; SQL compares BQ <strong>actuals</strong> to those literals</td>
+</tr>
+<tr>
+<td><strong>Run-rate projection</strong></td>
+<td>Uses <code>stg_total_working_days</code> — estimate, <strong>not</strong> exact Power BI forecast</td>
+</tr>
+<tr>
+<td><strong>Closed / embroidery</strong></td>
+<td>Pattern lists in config; SQL uses <code>LIKE</code> on names/descriptions</td>
+</tr>
+<tr>
+<td><strong>Rep-scoped “my sales”</strong></td>
+<td>User sets <code>sales_rep_code</code> in sidebar → passed into pipeline</td>
+</tr>
+<tr>
+<td><strong>Charts</strong></td>
+<td><code>chart_selector.py</code> rules — not the LLM guessing chart JSON</td>
+</tr>
+<tr>
+<td><strong>Markdown sections</strong></td>
+<td>L5 prompt + fallback normalizer in <code>answer_generator.py</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>13. Repository map — where to look in code</h2>
+<pre><code>sales and analytics project/
+├── frontend/          → Next.js UI (what users see)
+├── backend/           → FastAPI (sessions, chat proxy, catalog API)
+├── pipeline/          → L1–L5 brain (also deployed inside Agent Engine)
+├── agent/             → Agent Engine wrapper + deploy config
+├── schema_registry/   → 13 table YAMLs + join rules
+├── config/            → jaybel.yaml, targets, patterns
+├── content/           → question_catalog.yaml (UI starters)
+├── docs/              → all documentation (including this file)
+├── sql/migrations/    → Postgres schema
+├── scripts/           → start stack, deploy agent, QA, smoke tests
+└── tests/             → automated tests
+</code></pre>
+<hr />
+<h2>14. Running the full stack locally</h2>
+<pre><code class="language-bash"># 1) Database
+./scripts/start-phase-c.sh
+
+# 2) GCP auth (needed for Agent Engine + BigQuery)
+gcloud auth application-default login
+
+# 3) API (use 8001 if 8000 is busy)
+cp backend/.env.example backend/.env
+PYTHONPATH=. .venv/bin/uvicorn backend.main:app --reload --port 8001
+
+# 4) UI — must match API port
+cp frontend/.env.local.example frontend/.env.local
+# Set NEXT_PUBLIC_API_BASE_URL=http://localhost:8001
+cd frontend &amp;&amp; npm install &amp;&amp; npm run dev
+</code></pre>
+<p>Open: <strong>http://localhost:3000/chat</strong></p>
+<p>Health check: <code>./scripts/test_improvements_ui.sh</code></p>
+<hr />
+<h2>15. Security and safety model (simple)</h2>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Implementation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Read-only analytics</td>
+<td>SQL validators block writes/destructive ops</td>
+</tr>
+<tr>
+<td>Table allowlist</td>
+<td>Only registry + join_allowlist tables</td>
+</tr>
+<tr>
+<td>Column allowlist</td>
+<td>sqlglot checks column names per table</td>
+</tr>
+<tr>
+<td>Cost awareness</td>
+<td>BigQuery dry-run; warn if scan &gt; 10GB (config)</td>
+</tr>
+<tr>
+<td>No secrets in UI</td>
+<td>Agent Engine and BQ credentials stay server-side</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>16. What is intentionally <em>not</em> in v1</h2>
+<table>
+<thead>
+<tr>
+<th>Not included</th>
+<th>Alternative today</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Firebase / Firestore</td>
+<td>Local Postgres</td>
+</tr>
+<tr>
+<td>Cloud-hosted UI</td>
+<td>localhost only</td>
+</tr>
+<tr>
+<td>Exact Power BI forecasts</td>
+<td>Run-rate estimate + honest caveats</td>
+</tr>
+<tr>
+<td>Redis cache</td>
+<td>Direct BQ each time</td>
+</tr>
+<tr>
+<td>LLM-generated follow-ups</td>
+<td>Rule-based follow-ups from catalog</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>17. Deeper reading (optional)</h2>
+<table>
+<thead>
+<tr>
+<th>Topic</th>
+<th>Document</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Full implementation plan</td>
+<td><a href="../nl_to_sql_agent_full_plan.md">nl_to_sql_agent_full_plan.md</a></td>
+</tr>
+<tr>
+<td>Local stack details</td>
+<td><a href="ARCHITECTURE_LOCAL.md">ARCHITECTURE_LOCAL.md</a></td>
+</tr>
+<tr>
+<td>Agent Engine only</td>
+<td><a href="AGENT_ENGINE_ARCHITECTURE.md">AGENT_ENGINE_ARCHITECTURE.md</a></td>
+</tr>
+<tr>
+<td>Run locally</td>
+<td><a href="PHASE_C_LOCAL.md">PHASE_C_LOCAL.md</a></td>
+</tr>
+<tr>
+<td>Charts &amp; answers</td>
+<td><a href="CHART_AND_ANSWER_UX_PLAN.md">CHART_AND_ANSWER_UX_PLAN.md</a>, <a href="ANSWER_FORMAT.md">ANSWER_FORMAT.md</a></td>
+</tr>
+<tr>
+<td>Business terms</td>
+<td><a href="business_glossary.md">business_glossary.md</a></td>
+</tr>
+<tr>
+<td>97 test questions</td>
+<td><a href="qa_evaluation_set.yaml">qa_evaluation_set.yaml</a></td>
+</tr>
+<tr>
+<td>Locked decisions</td>
+<td><a href="DECISIONS.md">DECISIONS.md</a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>18. One-page mental model</h2>
+<h3>Diagram — One-page mental model</h3>
+<div class="mermaid">
+flowchart TB
+  root["Jaybel Sales Agent"]
+  root --> Local["Local: Next.js FastAPI Postgres"]
+  root --> Cloud["GCP: Agent Engine BigQuery"]
+  root --> Pipe["Pipeline L1-L5"]
+  root --> Safe["Safety: registry joins dry-run"]
+</div>
+
+<p><strong>Remember:</strong> Postgres = <strong>memory of the conversation</strong>. BigQuery = <strong>memory of the business numbers</strong>. The pipeline = <strong>translator</strong> from English to safe SQL and back to human language.</p>
+<hr />
+<p><em>Last updated: 2026-05 — reflects v1 local app, v1.2 Office Supplies targets/patterns, v1.3 charts/markdown answers, Phase D QA.</em></p>
+  <p class="footer-note">Generated from docs/PROJECT_ARCHITECTURE_GUIDE.md — v1 local app, v1.2 targets/patterns, v1.3 charts/markdown, Phase D QA.</p>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: "neutral",
+      securityLevel: "loose",
+      flowchart: { useMaxWidth: true, htmlLabels: true },
+      sequence: { useMaxWidth: true },
+    });
+    await mermaid.run();
+    document.documentElement.setAttribute("data-mermaid-ready", "true");
+  </script>
+</body>
+</html>

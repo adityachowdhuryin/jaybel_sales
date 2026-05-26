@@ -1,0 +1,23 @@
+sequenceDiagram
+  autonumber
+  actor User
+  participant UI as Next.js UI
+  participant API as FastAPI
+  participant PG as PostgreSQL
+  participant AE as Agent Engine
+  participant Pipe as Pipeline L1-L5
+  participant BQ as BigQuery
+
+  User->>UI: Question or starter - Send
+  UI->>API: POST /api/chat/stream SSE
+  API->>PG: Load session and last 5 turns
+  API->>AE: stream_query with SALES_CONTEXT
+  AE->>Pipe: query_sales_analytics
+  Pipe->>BQ: Validated SQL
+  BQ-->>Pipe: Rows
+  Pipe-->>AE: Events
+  AE-->>API: Stream
+  API-->>UI: SSE updates
+  API->>PG: Save turn
+  API-->>UI: done + turn_id
+  UI->>User: Answer table chart

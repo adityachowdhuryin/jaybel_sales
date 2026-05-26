@@ -144,6 +144,13 @@ export function ChatShell() {
     setSendMeta({});
   };
 
+  const handleClarificationPick = async (text: string) => {
+    if (!activeId || streaming) return;
+    setSendMeta({});
+    await sendMessage(activeId, text, setMessages, {});
+    await refreshSessions(sessionSearch || undefined);
+  };
+
   const handleSend = async (question: string) => {
     if (!activeId) return;
     const meta = { ...sendMeta };
@@ -198,6 +205,7 @@ export function ChatShell() {
           activeCategory={activeCategory}
           onPickStarter={handlePickStarter}
           onFollowUpPick={handleFollowUpPick}
+          onClarificationPick={handleClarificationPick}
           hideFollowUps={streaming}
         />
         <ExploreDrawer

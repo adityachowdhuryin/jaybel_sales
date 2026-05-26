@@ -6,8 +6,28 @@ export type UIEventType =
   | "token"
   | "chart_spec"
   | "cost_warning"
+  | "clarification_needed"
+  | "user_guidance"
   | "done"
   | "error";
+
+export interface ClarificationOption {
+  id: string;
+  label: string;
+  send_text: string;
+}
+
+export interface ClarificationState {
+  code: string;
+  message: string;
+  options: ClarificationOption[];
+}
+
+export interface GuidanceState {
+  code: string;
+  message: string;
+  suggestions?: string[];
+}
 
 export interface UIEvent {
   type: UIEventType;
@@ -103,4 +123,6 @@ export interface ChatMessage {
   feedbackRating?: number | null;
   streaming?: boolean;
   error?: string;
+  clarification?: ClarificationState;
+  guidance?: GuidanceState;
 }

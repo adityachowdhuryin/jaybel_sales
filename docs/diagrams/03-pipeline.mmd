@@ -1,0 +1,13 @@
+flowchart LR
+  Q["User question"]
+  L1["L1 Route"]
+  L2["L2 SQL"]
+  V["Validators"]
+  L4["L4 Execute BQ"]
+  L5["L5 Answer + Chart"]
+  OUT["UI events"]
+
+  Q --> L1 --> L2 --> V
+  V -->|pass| L4 --> L5 --> OUT
+  V -->|retry| L2
+  V -->|fail| ERR["error"]

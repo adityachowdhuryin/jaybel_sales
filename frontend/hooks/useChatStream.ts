@@ -2,7 +2,13 @@
 
 import { useCallback, useRef, useState } from "react";
 import { streamChat } from "@/lib/sse";
-import type { ChartSpec, ChatMessage, ChatSendMeta, UIEvent } from "@/types";
+import type {
+  ChartSpec,
+  ChatMessage,
+  ChatSendMeta,
+  ClarificationOption,
+  UIEvent,
+} from "@/types";
 
 function newId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -88,6 +94,23 @@ export function useChatStream() {
                   }
                   case "cost_warning":
                     next.costWarningBytes = (ev.bytes_scanned as number) ?? 0;
+                    break;
+                  case "clarification_needed":
+                    next.clarification = {
+                      code: (ev.code as string) || "clarification",
+                      message: (ev.message as string) || "",
+                      options: (ev.options as ClarificationOption[]) || [],
+                    };
+                    if (!next.content && next.clarification.message) {
+                      next.content = next.clarification.message;
+                    }
+                    break;
+                  case "user_guidance":
+                    next.guidance = {
+                      code: (ev.code as string) || "guidance",
+                      message: (ev.message as string) || "",
+                      suggestions: ev.suggestions as string[] | undefined,
+                    };
                     break;
                   case "error":
                     next.error = (ev.message as string) || "Error";

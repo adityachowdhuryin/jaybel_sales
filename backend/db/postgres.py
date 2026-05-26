@@ -214,18 +214,27 @@ def update_session_ui_context(session_id: str, context: dict[str, Any]) -> None:
 
 
 def build_history(session_id: str, limit: int = 5) -> list[dict[str, Any]]:
+    from pipeline.followup_sql_context import extract_filter_summary, extract_metric_from_sql
+
     turns = list_turns(session_id)
     recent = turns[-limit:] if len(turns) > limit else turns
     history = []
     for t in recent:
         answer = t.get("answer") or ""
+        sql = t.get("sql") or ""
         history.append(
             {
                 "question": t["question"],
                 "table_id": t.get("table_id"),
                 "intent": t.get("intent"),
+                "join_pattern": t.get("join_pattern"),
+                "time_range_label": None,
+                "sql_excerpt": sql[:400] if sql else "",
                 "answer_summary": answer[:200] if answer else "",
+                "row_count": t.get("row_count"),
                 "category_id": t.get("category_id"),
+                "metric_hint": extract_metric_from_sql(sql) if sql else None,
+                "filter_summary": extract_filter_summary(sql) if sql else None,
             }
         )
     return history

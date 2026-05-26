@@ -117,6 +117,38 @@ few_shot_examples:
 - question: Fiscal Q1 2024-2025 start and end dates
   sql: SELECT MIN(date) AS start_date, MAX(date) AS end_date FROM `jaybel-dev.jaybel_sales_analytics.dim_date`
     WHERE fy = '2024-2025' AND fiscal_quarter = 'Q1' LIMIT 1000
+- question: Fiscal Q1 2025-2026 filter on dim_date joined to facts
+  sql: SELECT MIN(d.date) AS start_date, MAX(d.date) AS end_date
+    FROM `jaybel-dev.jaybel_sales_analytics.dim_date` AS d
+    WHERE d.fy = '2025-2026' AND d.fiscal_quarter = 'Q1' LIMIT 1000
+- question: Fiscal month breakdown for Q1 2025-2026
+  sql: SELECT d.fiscal_month_no, d.fiscal_month_name, COUNT(*) AS days
+    FROM `jaybel-dev.jaybel_sales_analytics.dim_date` AS d
+    WHERE d.fy = '2025-2026' AND d.fiscal_quarter = 'Q1'
+    GROUP BY d.fiscal_month_no, d.fiscal_month_name
+    ORDER BY d.fiscal_month_no LIMIT 1000
 - question: How many days in fiscal year 2025-2026?
   sql: SELECT COUNT(*) AS days FROM `jaybel-dev.jaybel_sales_analytics.dim_date` WHERE
     fy = '2025-2026' LIMIT 1000
+- question: What is the start month and end month of the current fiscal year?
+  sql: SELECT d.fy,
+    MIN(CASE WHEN d.fiscal_month_no = 1 THEN d.fiscal_month_name END) AS start_month,
+    MIN(CASE WHEN d.fiscal_month_no = 1 THEN d.date END) AS start_date,
+    MAX(CASE WHEN d.fiscal_month_no = 12 THEN d.fiscal_month_name END) AS end_month,
+    MAX(CASE WHEN d.fiscal_month_no = 12 THEN d.date END) AS end_date
+    FROM `jaybel-dev.jaybel_sales_analytics.dim_date` AS d
+    WHERE d.fy = (
+    SELECT fy FROM `jaybel-dev.jaybel_sales_analytics.dim_date`
+    WHERE date = CURRENT_DATE('Australia/Sydney') LIMIT 1)
+    GROUP BY d.fy LIMIT 1
+- question: What is the start month of FY 2024-2025?
+  sql: SELECT MIN(fiscal_month_name) AS start_month, MIN(date) AS start_date
+    FROM `jaybel-dev.jaybel_sales_analytics.dim_date`
+    WHERE fy = '2024-2025' AND fiscal_month_no = 1 LIMIT 1
+- question: What was the last fiscal year and its start and end months?
+  sql: SELECT d.fy,
+    MIN(CASE WHEN d.fiscal_month_no = 1 THEN d.fiscal_month_name END) AS start_month,
+    MAX(CASE WHEN d.fiscal_month_no = 12 THEN d.fiscal_month_name END) AS end_month
+    FROM `jaybel-dev.jaybel_sales_analytics.dim_date` AS d
+    WHERE d.fy = '2024-2025'
+    GROUP BY d.fy LIMIT 1

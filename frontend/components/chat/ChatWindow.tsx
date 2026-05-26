@@ -19,6 +19,7 @@ export function ChatWindow({
   activeCategory,
   onPickStarter,
   onFollowUpPick,
+  onClarificationPick,
   hideFollowUps,
 }: {
   messages: ChatMessage[];
@@ -33,6 +34,7 @@ export function ChatWindow({
   activeCategory: QuestionCategory | null;
   onPickStarter: (starter: StarterQuestion) => void;
   onFollowUpPick: (text: string) => void;
+  onClarificationPick?: (text: string) => void;
   hideFollowUps?: boolean;
 }) {
   const [localInput, setLocalInput] = useState(draftInput);
@@ -78,6 +80,7 @@ export function ChatWindow({
         sessionId={sessionId}
         user={user}
         onFollowUpPick={onFollowUpPick}
+        onClarificationPick={onClarificationPick}
         hideFollowUps={hideFollowUps}
       />
       <form

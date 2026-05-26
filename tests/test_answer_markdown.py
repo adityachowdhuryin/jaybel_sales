@@ -1,6 +1,13 @@
 """Markdown answer normalization."""
 
-from pipeline.answer_generator import _normalize_markdown_sections
+from pipeline.answer_generator import (
+    _normalize_markdown_answer,
+    _normalize_markdown_sections,
+)
+
+
+def test_normalize_markdown_answer_alias():
+    assert _normalize_markdown_answer is _normalize_markdown_sections
 
 
 def test_adds_missing_sections():

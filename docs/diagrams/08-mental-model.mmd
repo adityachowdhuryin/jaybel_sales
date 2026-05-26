@@ -1,0 +1,6 @@
+flowchart TB
+  root["Jaybel Sales Agent"]
+  root --> Local["Local: Next.js FastAPI Postgres"]
+  root --> Cloud["GCP: Agent Engine BigQuery"]
+  root --> Pipe["Pipeline L1-L5"]
+  root --> Safe["Safety: registry joins dry-run"]

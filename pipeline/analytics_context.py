@@ -234,6 +234,37 @@ def prompt_block(question: str) -> str:
     return "".join(p for p in parts if p)
 
 
+def detect_external_concepts(question: str) -> list[str]:
+    """Keywords suggesting data outside Jaybel BQ sales analytics."""
+    q = _tokenize(question)
+    from pipeline.query_understanding_config import external_concepts
+
+    matched: list[str] = []
+    for concept in external_concepts():
+        if concept.lower() in q:
+            matched.append(concept)
+    return matched
+
+
+def out_of_dataset_guidance(question: str, arch: Archetypes | None = None) -> str | None:
+    arch = arch or detect_archetypes(question)
+    externals = detect_external_concepts(question)
+    if arch.bi_forecast_only:
+        return (
+            "The Power BI projected variance (e.g. Furniture GP forecast gap) is not stored "
+            "in BigQuery. I can show actual Furniture GP$, config target variance, or a "
+            "run-rate estimate with a clear disclaimer."
+        )
+    if externals:
+        return (
+            f"This assistant only answers from Jaybel sales analytics in BigQuery "
+            f"(revenue, GP, customers, products, reps, fiscal periods, Frazer new business, "
+            f"working days, embroidery staging). Your question mentions concepts we do not "
+            f"have here ({', '.join(externals[:3])}). Try rephrasing using sales, GP, or customer metrics."
+        )
+    return None
+
+
 def l1_routing_hints(question: str) -> str:
     arch = detect_archetypes(question)
     hints: list[str] = []

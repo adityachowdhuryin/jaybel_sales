@@ -1,0 +1,8 @@
+flowchart LR
+  API["FastAPI localhost"]
+  AE["Agent Engine GCP"]
+  Tool["query_sales_analytics"]
+  Pipe["Pipeline.run"]
+
+  API -->|stream_query| AE
+  AE --> Tool --> Pipe
