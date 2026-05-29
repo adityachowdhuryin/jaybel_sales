@@ -6,10 +6,10 @@ import json
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
-from backend.config import settings
+from backend.auth.dependencies import CurrentUser, get_current_user
 from backend.db import postgres as db
 from backend.schemas import ChatStreamRequest
 from backend.services import agent_engine as ae
@@ -28,8 +28,11 @@ def _title_from_question(question: str, max_len: int = 60) -> str:
 
 
 @router.post("/stream")
-def chat_stream(body: ChatStreamRequest) -> StreamingResponse:
-    user_id = settings()["default_user_id"]
+def chat_stream(
+    body: ChatStreamRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+) -> StreamingResponse:
+    user_id = str(current_user.id)
     session_id = str(body.session_id)
 
     try:
@@ -37,6 +40,13 @@ def chat_stream(body: ChatStreamRequest) -> StreamingResponse:
         user = db.get_user(user_id)
     except LookupError:
         raise HTTPException(404, "Session not found") from None
+
+    if body.replace_turn_id:
+        try:
+            db.get_turn(session_id, str(body.replace_turn_id))
+            db.delete_turn(session_id, str(body.replace_turn_id), user_id)
+        except LookupError:
+            raise HTTPException(404, "Turn not found") from None
 
     ae_session_id = session.get("agent_engine_session_id")
     if not ae_session_id:

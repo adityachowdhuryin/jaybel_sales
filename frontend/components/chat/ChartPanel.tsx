@@ -18,8 +18,7 @@ import {
 } from "recharts";
 import type { ChartSpec } from "@/types";
 import { formatChartValue } from "@/lib/formatters";
-
-const COLORS = ["#38bdf8", "#34d399", "#fbbf24", "#f87171", "#a78bfa", "#22d3ee"];
+import { getChartPalette, getThemeMode } from "@/lib/themeTokens";
 
 function buildChartData(
   spec: ChartSpec,
@@ -80,6 +79,7 @@ export function ChartPanel({
   const title = spec.title || "Chart";
   const fmt = spec.format;
   const series = spec.series ?? [];
+  const colors = getChartPalette(getThemeMode());
 
   const tooltipFmt = (v: number, format?: string) =>
     formatChartValue(format || fmt, v);
@@ -94,7 +94,7 @@ export function ChartPanel({
         <ResponsiveContainer width="100%" height="100%">
           {type === "line" ? (
             <LineChart data={data} margin={{ top: 8, right: 12, left: 4, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.45} />
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--muted)" }} stroke="var(--border)" />
               <YAxis
                 tick={{ fontSize: 11, fill: "var(--muted)" }}
@@ -104,18 +104,19 @@ export function ChartPanel({
               <Tooltip
                 formatter={(v: number) => tooltipFmt(v)}
                 contentStyle={{
-                  background: "var(--panel)",
+                  background: "var(--surface-0)",
                   border: "1px solid var(--border)",
                   borderRadius: 8,
+                  boxShadow: "0 8px 24px rgba(var(--shadow-color), 0.15)",
                 }}
               />
               <Legend />
               <Line
                 type="monotone"
                 dataKey="value"
-                stroke="#38bdf8"
+                stroke={colors[0]}
                 strokeWidth={2}
-                dot={{ r: 3, fill: "#38bdf8" }}
+                dot={{ r: 3, fill: colors[0] }}
               />
             </LineChart>
           ) : type === "pie" ? (
@@ -132,7 +133,7 @@ export function ChartPanel({
                 }
               >
                 {data.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  <Cell key={i} fill={colors[i % colors.length]} />
                 ))}
               </Pie>
               <Tooltip formatter={(v: number) => tooltipFmt(Number(v))} />
@@ -140,7 +141,7 @@ export function ChartPanel({
             </PieChart>
           ) : type === "grouped_bar" && series.length ? (
             <BarChart data={data} margin={{ top: 8, right: 12, left: 4, bottom: 48 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.45} />
               <XAxis
                 dataKey="name"
                 tick={{ fontSize: 10, fill: "var(--muted)" }}
@@ -156,26 +157,26 @@ export function ChartPanel({
                   key={s.key}
                   dataKey={s.key}
                   name={s.label}
-                  fill={COLORS[i % COLORS.length]}
+                  fill={colors[i % colors.length]}
                   radius={[4, 4, 0, 0]}
                 />
               ))}
             </BarChart>
           ) : type === "paired_bar" ? (
             <BarChart data={data} margin={{ top: 8, right: 12, left: 4, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.45} />
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--muted)" }} />
               <YAxis tickFormatter={(v) => formatChartValue(fmt, Number(v))} tick={{ fontSize: 11, fill: "var(--muted)" }} />
               <Tooltip formatter={(v: number) => tooltipFmt(v)} />
               <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                 {data.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  <Cell key={i} fill={colors[i % colors.length]} />
                 ))}
               </Bar>
             </BarChart>
           ) : horizontal ? (
             <BarChart data={data} layout="vertical" margin={{ left: 8, right: 16 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.45} />
               <XAxis
                 type="number"
                 tickFormatter={(v) => formatChartValue(fmt, Number(v))}
@@ -183,11 +184,11 @@ export function ChartPanel({
               />
               <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 10, fill: "var(--muted)" }} />
               <Tooltip formatter={(v: number) => tooltipFmt(v)} />
-              <Bar dataKey="value" fill="#38bdf8" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="value" fill={colors[0]} radius={[0, 4, 4, 0]} />
             </BarChart>
           ) : (
             <BarChart data={data} margin={{ top: 8, right: 12, left: 4, bottom: 48 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.45} />
               <XAxis
                 dataKey="name"
                 tick={{ fontSize: 10, fill: "var(--muted)" }}
@@ -197,7 +198,7 @@ export function ChartPanel({
               />
               <YAxis tickFormatter={(v) => formatChartValue(fmt, Number(v))} tick={{ fontSize: 11, fill: "var(--muted)" }} />
               <Tooltip formatter={(v: number) => tooltipFmt(v)} />
-              <Bar dataKey="value" fill="#38bdf8" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="value" fill={colors[0]} radius={[4, 4, 0, 0]} />
             </BarChart>
           )}
         </ResponsiveContainer>

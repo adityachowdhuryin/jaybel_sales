@@ -12,12 +12,6 @@ scope:
 
 rep:
   patterns:
-    - "my sales"
-    - "my gp"
-    - "my gross profit"
-    - "my accounts"
-    - "my customers"
-    - "my performance"
     - "my commission"
     - "my payout"
     - "closed-won"

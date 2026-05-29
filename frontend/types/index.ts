@@ -93,6 +93,7 @@ export interface ChatTurn {
 export interface ChatSendMeta {
   starter_id?: string;
   category_id?: string;
+  replace_turn_id?: string;
 }
 
 export interface AppUser {

@@ -105,7 +105,7 @@ class ScopeGuard:
                 message=rep_gate_message(),
                 suggestions=[
                     "Open Settings in the sidebar and enter your sales rep code.",
-                    "Or rephrase without “my” (e.g. total sales by rep).",
+                    "Or ask for company-wide totals (e.g. total sales by rep).",
                 ],
             )
 

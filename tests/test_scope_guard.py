@@ -10,16 +10,25 @@ from pipeline.user_context import UserContext
 
 
 class TestScopeGuard(unittest.TestCase):
-    def test_rep_gate_without_code(self):
+    def test_my_sales_not_gated_without_code(self):
         guard = ScopeGuard()
         out = guard.evaluate("What are my sales this month?", UserContext(), None)
+        self.assertNotEqual(out.reason_code, "rep_context_required")
+
+    def test_commission_gated_without_code(self):
+        guard = ScopeGuard()
+        out = guard.evaluate(
+            "What is my commission payout this quarter?",
+            UserContext(),
+            None,
+        )
         self.assertTrue(out.blocked)
         self.assertEqual(out.reason_code, "rep_context_required")
 
     def test_rep_ok_with_code(self):
         guard = ScopeGuard()
         out = guard.evaluate(
-            "What are my sales this month?",
+            "What is my commission payout this quarter?",
             UserContext(sales_rep_code="REP01"),
             None,
         )

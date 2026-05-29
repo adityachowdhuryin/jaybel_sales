@@ -2,28 +2,42 @@
 
 import { useEffect, useRef } from "react";
 import { AgentMessage } from "./AgentMessage";
+import { DailyBusinessSummary } from "./dashboard/DailyBusinessSummary";
 import { FollowUpChips } from "./FollowUpChips";
 import { UserMessage } from "./UserMessage";
-import type { AppUser, ChatMessage } from "@/types";
+import type { ChatMessage } from "@/types";
 
 export function MessageList({
   messages,
   sessionId,
-  user,
   onFollowUpPick,
   onClarificationPick,
+  onRetry,
   hideFollowUps,
+  streaming,
 }: {
   messages: ChatMessage[];
   sessionId: string | null;
-  user: AppUser | null;
   onFollowUpPick: (text: string) => void;
   onClarificationPick?: (text: string) => void;
+  onRetry?: (
+    question: string,
+    replaceTurnId: string,
+    meta: { starterId?: string; categoryId?: string }
+  ) => void;
   hideFollowUps?: boolean;
+  streaming?: boolean;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const shouldAutoScroll = useRef(true);
+
+  const lastUserIndex = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "user") return i;
+    }
+    return -1;
+  })();
 
   useEffect(() => {
     const el = containerRef.current;
@@ -44,32 +58,38 @@ export function MessageList({
 
   return (
     <div ref={containerRef} className="flex-1 overflow-y-auto px-4 py-6">
-      {messages.length === 0 && (
-        <div className="text-center max-w-lg mx-auto mt-20 px-4">
-          <h2 className="text-2xl font-semibold tracking-tight text-[var(--text)]">
-            What would you like to explore?
-          </h2>
-          <p className="text-sm text-[var(--muted)] mt-3 leading-relaxed">
-            Open{" "}
-            <strong className="font-medium text-brand-400">Browse questions</strong> for curated
-            starters, or ask in plain English below.
-          </p>
-          {!user?.sales_rep_code && (
-            <p className="text-xs text-amber-400/90 mt-3">
-              My Performance and commission questions need your{" "}
-              <strong className="font-medium">sales rep code</strong> in the sidebar (Settings).
-              Other categories work without it.
-            </p>
-          )}
-        </div>
-      )}
+      {messages.length === 0 && <DailyBusinessSummary />}
       {messages.map((m, i) => {
         const isLastAgent =
           m.role === "agent" && i === messages.length - 1 && !m.streaming;
+        const isLastUser = i === lastUserIndex;
+        const nextMsg = messages[i + 1];
+        const canRetry =
+          isLastUser &&
+          nextMsg?.role === "agent" &&
+          !nextMsg.streaming &&
+          Boolean(nextMsg.turnId) &&
+          Boolean(onRetry);
+
         return m.role === "user" ? (
-          <UserMessage key={m.id} content={m.content} createdAt={m.createdAt} />
+          <UserMessage
+            key={m.id}
+            content={m.content}
+            createdAt={m.createdAt}
+            showRetry={canRetry}
+            retryDisabled={streaming}
+            onRetry={
+              canRetry && nextMsg?.turnId
+                ? () =>
+                    onRetry!(m.content, nextMsg.turnId!, {
+                      starterId: nextMsg.starterId,
+                      categoryId: nextMsg.categoryId,
+                    })
+                : undefined
+            }
+          />
         ) : (
-          <div key={m.id}>
+          <div key={m.id} className="max-w-4xl mx-auto w-full">
             <AgentMessage
               message={m}
               sessionId={sessionId}

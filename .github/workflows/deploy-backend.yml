@@ -1,0 +1,59 @@
+name: Deploy Backend (Cloud Run)
+
+on:
+  push:
+    branches: [main, Jaybel_prod]
+    paths:
+      - "backend/**"
+      - "pipeline/**"
+      - "config/**"
+      - "schema_registry/**"
+      - "content/**"
+      - "requirements.txt"
+      - "cloudbuild-backend.yaml"
+      - ".github/workflows/deploy-backend.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PROJECT_ID: jaybel-dev
+  REGION: us-central1
+  SERVICE: jaybel-sales-api
+  IMAGE: us-central1-docker.pkg.dev/jaybel-dev/jaybel/jaybel-sales-api
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build and push
+        run: |
+          gcloud builds submit . \
+            --project="${{ env.PROJECT_ID }}" \
+            --config=cloudbuild-backend.yaml \
+            --substitutions="_IMAGE=${{ env.IMAGE }}:${{ github.sha }}"
+
+      - name: Deploy Cloud Run
+        run: |
+          gcloud run deploy "${{ env.SERVICE }}" \
+            --project="${{ env.PROJECT_ID }}" \
+            --region="${{ env.REGION }}" \
+            --image="${{ env.IMAGE }}:${{ github.sha }}" \
+            --platform=managed \
+            --service-account=115724636423-compute@developer.gserviceaccount.com \
+            --add-cloudsql-instances=jaybel-dev:us-central1:jaybel-sales-db \
+            --min-instances=1 \
+            --allow-unauthenticated \
+            --set-secrets=DATABASE_URL=jaybel-db-url:latest \
+            --set-env-vars=GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }},GOOGLE_CLOUD_LOCATION=${{ env.REGION }},AGENT_ENGINE_RESOURCE=projects/115724636423/locations/us-central1/reasoningEngines/8991351443894042624,FIREBASE_PROJECT_ID=${{ env.PROJECT_ID }}

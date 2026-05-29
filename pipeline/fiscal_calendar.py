@@ -35,6 +35,13 @@ def last_fiscal_year_label() -> str:
     return f"{start - 1}-{start}"
 
 
+def fiscal_year_start_date(d: date | None = None) -> date:
+    """First day of the fiscal year containing ``d`` (July 1)."""
+    d = d or _tz_now().date()
+    start_year = _fiscal_start_year(d)
+    return date(start_year, 7, 1)
+
+
 def fiscal_calendar_prompt_block() -> str:
     cfg = load_config()["bigquery"].get("fiscal_year") or {}
     start_m = cfg.get("start_month", "July")

@@ -20,12 +20,14 @@ def settings() -> dict[str, str]:
         "gcp_project": os.getenv("GOOGLE_CLOUD_PROJECT", "jaybel-dev"),
         "gcp_location": os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1"),
         "agent_engine_resource": os.environ["AGENT_ENGINE_RESOURCE"],
-        "default_user_id": os.getenv(
-            "DEFAULT_USER_ID", "00000000-0000-4000-8000-000000000001"
+        "firebase_project_id": os.getenv(
+            "FIREBASE_PROJECT_ID", os.getenv("GOOGLE_CLOUD_PROJECT", "jaybel-dev")
         ),
-        "api_host": os.getenv("API_HOST", "127.0.0.1"),
-        "api_port": os.getenv("API_PORT", "8000"),
-        "cors_origins": os.getenv("CORS_ORIGINS", "http://localhost:3000"),
+        "api_host": os.getenv("API_HOST", "0.0.0.0"),
+        "api_port": os.getenv("API_PORT", "8080"),
+        "cors_origins": os.getenv(
+            "CORS_ORIGINS", "http://localhost:3000,https://jaybel-frontend-uc.a.run.app"
+        ),
     }
 
 

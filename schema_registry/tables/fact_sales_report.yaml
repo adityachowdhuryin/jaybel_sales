@@ -57,7 +57,12 @@ columns:
   nullable: true
 - name: item_code
   type: STRING
-  description: Product item code
+  description: Product item code (SKU)
+  nullable: true
+- name: description
+  type: STRING
+  description: Product name on the invoice line (within a product group). Use for
+    "product", "product name", "best/top product" — not main_group_name.
   nullable: true
 - name: whse
   type: STRING
@@ -128,6 +133,7 @@ common_filters:
 - rep_key
 - customer_key
 - product_key
+- description
 - territory_code
 - whse
 common_aggregations:
@@ -302,3 +308,23 @@ few_shot_examples:
     SELECT territory_code, account_name, total_gp FROM ranked WHERE rn <= 5
     ORDER BY territory_code, total_gp DESC
     LIMIT 1000'
+- question: Which product is performing best by gross profit this fiscal year?
+  sql: 'SELECT f.description AS product_name, p.main_group_name AS product_group,
+    SUM(f.line_gp_dollar) AS total_gp
+    FROM `jaybel-dev.jaybel_sales_analytics.fact_sales_report` AS f
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_date` AS d ON f.date_key = d.date_key
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_product` AS p ON f.product_key = p.product_key
+    WHERE d.fy = ''2025-2026'' AND f.description IS NOT NULL AND TRIM(f.description) != ''''
+    GROUP BY f.description, p.main_group_name
+    ORDER BY total_gp DESC
+    LIMIT 10'
+- question: Show me the top 10 best-selling products for the current year
+  sql: 'SELECT f.description AS product_name, p.main_group_name AS product_group,
+    SUM(f.line_sales_ex_gst) AS total_sales
+    FROM `jaybel-dev.jaybel_sales_analytics.fact_sales_report` AS f
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_date` AS d ON f.date_key = d.date_key
+    JOIN `jaybel-dev.jaybel_sales_analytics.dim_product` AS p ON f.product_key = p.product_key
+    WHERE d.fy = ''2025-2026'' AND f.description IS NOT NULL AND TRIM(f.description) != ''''
+    GROUP BY f.description, p.main_group_name
+    ORDER BY total_sales DESC
+    LIMIT 10'

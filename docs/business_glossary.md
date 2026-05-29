@@ -74,7 +74,8 @@ Derived from `Jaybel_Sales_Analytics_Detailed_Schema.pdf` and star-schema design
 
 | Term | Meaning | Preferred table |
 |------|---------|-----------------|
-| **Product group / category** | Main product group | `dim_product.main_group_name` |
+| **Product name** | Human-readable product on invoice line | `fact_sales_report.description` (join `dim_product` for group) |
+| **Product group / category** | Main product group (Office Supplies, Furniture, …) | `dim_product.main_group_name` |
 | **Item / SKU** | Product item on line | `fact_sales_report.item_code` |
 | **Brand / manufacturer** | In raw staging only | `stg_sales_report.brand_manuf` |
 
@@ -97,9 +98,12 @@ From `Office_Supplies_BI_Analytics_Questions.pdf`. Full list: `docs/office_suppl
 | **GP$ / Gross Profit** | Line GP dollars | `line_gp_dollar` |
 | **GP% / margin** | Gross profit % | `gp_percent` (line-level; use AVG or weighted logic as appropriate) |
 | **Office Supplies, Furniture, Ink & Toner, Kitchen & Janitorial, Apparel** | Product **categories** in the BI report | `dim_product.main_group_name` — verify exact spelling in data |
-| **Best-selling products** | Top items by sales or qty | Group by `item_code` and/or `dim_product`; rank by `SUM(line_sales_ex_gst)` or `SUM(qty)` |
+| **Best-selling / top products** | By product name | `GROUP BY fact_sales_report.description`, include `main_group_name` in results |
+| **Best product group / category** | By category only | `GROUP BY dim_product.main_group_name` |
+| **SKU / item code** | Product code | `fact_sales_report.item_code` |
 | **Financial year 2025-2026 / FY 24-25** | Fiscal year labels | `dim_date.fy` = `'2025-2026'`, `'2024-2025'` |
-| **Yesterday / this month / last year** | Relative dates | Resolve in **`Australia/Sydney`**; default **calendar** unless user says fiscal |
+| **Yesterday / this month** | Relative dates | Resolve in **`Australia/Sydney`** (calendar month/day) |
+| **This year / last year / YTD** | Relative dates | **Fiscal year** (Jul–Jun, `dim_date.fy`) unless user says **calendar year** |
 | **Daily average sales** | MTD sales ÷ elapsed days (or working days) | Aggregate facts + date filter; working days from `stg_total_working_days` if needed |
 | **Top customers** | By total sales | `fact_sales_report` + `dim_sales_customer`; `ORDER BY SUM(line_sales_ex_gst) DESC` |
 | **No order since 2022** | Inactive accounts | Customers with no `fact_sales_report` rows after 2022-12-31 (anti-join or `MAX(d.date)` filter) |
@@ -109,7 +113,8 @@ From `Office_Supplies_BI_Analytics_Questions.pdf`. Full list: `docs/office_suppl
 | **Previous Month vs Current Month Sales** | MoM retention | Two-period aggregation per `customer_key` on `fact_sales_report` + `dim_date` |
 | **Item code HCL-S901S** | SKU / product line | `fact_sales_report.item_code` |
 | **Embroidery / custom printing** | Job type | Filter `item_code`, `description` (staging), or product group — confirm with business which field encodes job type |
-| **My sales / my GP / my accounts** | Rep-scoped | Filter by logged-in rep (`dim_sales_rep.sales_rep_code` from auth context) |
+| **My / our sales / GP / accounts** | Company-wide | No rep filter; "my" is treated as "our" |
+| **My commission / payout / closed deals** | Rep-scoped | Filter by `dim_sales_rep.sales_rep_code` (sidebar Settings) |
 | **Overall Business Target ($6M / $6,067,292.04)** | FY sales goal from BI | **v1.2:** `config/sales_targets.yaml` — compare `SUM(line_sales_ex_gst)` actuals to literal target in SQL |
 | **Furniture GP Target ($387K / $387,173.20)** | Category GP goal | **v1.2:** config target `387173.20` vs `SUM(line_gp_dollar)` where `main_group_name = 'Furniture'` |
 | **BTS Target ($613,099.84)** | Category/segment goal | **v1.2:** config target amount; `category_main_group` TBD — filter pending business confirmation |

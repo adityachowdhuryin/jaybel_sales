@@ -46,7 +46,7 @@ export function FollowUpChips({
             key={f.id}
             type="button"
             onClick={() => onPick(f.text)}
-            className="inline-flex items-center gap-2 max-w-full rounded-full border border-[var(--border)] bg-[var(--bg)] px-3 py-1.5 text-xs hover:border-brand-500/50 text-left"
+            className="inline-flex items-center gap-2 max-w-full rounded-full border border-[var(--border)] bg-[var(--surface-0)] px-3 py-1.5 text-xs hover:border-sky-300 hover:bg-[var(--surface-accent)] text-left"
           >
             <span className="truncate">{f.text}</span>
             {f.data_availability && f.data_availability !== "full" && (
@@ -59,7 +59,7 @@ export function FollowUpChips({
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="mt-2 text-xs text-brand-400 hover:text-brand-300"
+          className="mt-2 text-xs text-[var(--intent-insight)] hover:brightness-90"
         >
           Show {items.length - VISIBLE} more
         </button>

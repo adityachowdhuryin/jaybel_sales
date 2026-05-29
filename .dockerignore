@@ -1,0 +1,16 @@
+frontend/
+node_modules/
+.git/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+.env.*
+backend/.env
+frontend/.env.local
+agent/_deploy_staging/
+tests/
+.cursor/
+*.md
+!content/

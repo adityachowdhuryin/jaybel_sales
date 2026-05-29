@@ -22,6 +22,12 @@ bigquery:
   relative_dates:
     timezone: Australia/Sydney
     default_calendar: calendar  # calendar month/week/day unless user says "fiscal"
+    year_means_fiscal: true  # bare "year", "this year", YTD → Jul–Jun FY on dim_date.fy
+    calendar_year_exceptions:
+      - calendar year
+      - gregorian
+      - january to december
+      - jan to dec
     fiscal_keywords: ["fiscal", "fy", "fiscal year", "fiscal month", "fiscal quarter"]
 
 auth:

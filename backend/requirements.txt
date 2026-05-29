@@ -1,0 +1,7 @@
+# Backend dependencies: install root package set (do not `-r requirements.txt`
+# — that resolves to this same file).
+#
+# Repo root:
+#   pip install -r requirements.txt
+# From backend/ dir:
+-r ../requirements.txt

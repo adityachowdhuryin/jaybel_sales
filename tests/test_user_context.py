@@ -6,7 +6,8 @@ from pipeline.user_context import UserContext
 def test_prompt_block_with_rep():
     block = UserContext(sales_rep_code="REP01").prompt_block()
     assert "sales_rep_code=REP01" in block
-    assert "my" in block.lower()
+    assert "company-wide" in block.lower()
+    assert "commission" in block.lower()
 
 
 def test_prompt_block_empty():

@@ -1,12 +1,12 @@
-"""Session CRUD — local Postgres."""
+"""Session CRUD — Cloud SQL PostgreSQL."""
 
 from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
-from backend.config import settings
+from backend.auth.dependencies import CurrentUser, get_current_user
 from backend.db import postgres as db
 from backend.schemas import (
     SessionCreate,
@@ -20,40 +20,48 @@ from backend.schemas import (
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
 
 
-def _user_id() -> str:
-    return settings()["default_user_id"]
-
-
 @router.get("/me", response_model=UserOut)
-def get_me() -> UserOut:
-    user = db.get_user(_user_id())
+def get_me(current_user: CurrentUser = Depends(get_current_user)) -> UserOut:
+    user = db.get_user(str(current_user.id))
     return UserOut(**user)
 
 
 @router.patch("/me", response_model=UserOut)
-def update_me(body: UserProfileUpdate) -> UserOut:
+def update_me(
+    body: UserProfileUpdate,
+    current_user: CurrentUser = Depends(get_current_user),
+) -> UserOut:
     data = body.model_dump(exclude_unset=True)
-    user = db.update_user_profile(_user_id(), **data)
+    user = db.update_user_profile(str(current_user.id), **data)
     return UserOut(**user)
 
 
 @router.get("", response_model=list[SessionOut])
-def list_sessions(q: str | None = Query(None, min_length=0)) -> list[SessionOut]:
-    rows = db.list_sessions(_user_id(), search=q)
+def list_sessions(
+    q: str | None = Query(None, min_length=0),
+    current_user: CurrentUser = Depends(get_current_user),
+) -> list[SessionOut]:
+    rows = db.list_sessions(str(current_user.id), search=q)
     return [SessionOut(**r) for r in rows]
 
 
 @router.post("", response_model=SessionOut, status_code=201)
-def create_session(body: SessionCreate | None = None) -> SessionOut:
+def create_session(
+    body: SessionCreate | None = None,
+    current_user: CurrentUser = Depends(get_current_user),
+) -> SessionOut:
     title = (body.title if body else None) or "New chat"
-    row = db.create_session(_user_id(), title=title)
+    row = db.create_session(str(current_user.id), title=title)
     return SessionOut(**row)
 
 
 @router.get("/{session_id}", response_model=SessionOut)
-def get_session(session_id: UUID) -> SessionOut:
+def get_session(
+    session_id: UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+) -> SessionOut:
     try:
-        row = db.get_session(str(session_id), _user_id())
+        row = db.get_session(str(session_id), str(current_user.id))
     except LookupError:
         raise HTTPException(404, "Session not found") from None
     return SessionOut(
@@ -65,9 +73,12 @@ def get_session(session_id: UUID) -> SessionOut:
 
 
 @router.get("/{session_id}/turns", response_model=list[TurnOut])
-def list_turns(session_id: UUID) -> list[TurnOut]:
+def list_turns(
+    session_id: UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+) -> list[TurnOut]:
     try:
-        db.get_session(str(session_id), _user_id())
+        db.get_session(str(session_id), str(current_user.id))
     except LookupError:
         raise HTTPException(404, "Session not found") from None
     rows = db.list_turns(str(session_id))
@@ -96,20 +107,38 @@ def list_turns(session_id: UUID) -> list[TurnOut]:
     return out
 
 
-@router.post("/{session_id}/turns/{turn_id}/feedback", status_code=204)
+@router.post(
+    "/{session_id}/turns/{turn_id}/feedback",
+    status_code=204,
+    response_model=None,
+    response_class=Response,
+)
 def turn_feedback(
-    session_id: UUID, turn_id: UUID, body: TurnFeedbackRequest
+    session_id: UUID,
+    turn_id: UUID,
+    body: TurnFeedbackRequest,
+    current_user: CurrentUser = Depends(get_current_user),
 ) -> None:
     try:
-        db.get_session(str(session_id), _user_id())
+        db.get_session(str(session_id), str(current_user.id))
         db.update_turn_feedback(str(session_id), str(turn_id), body.rating, body.comment)
     except LookupError:
         raise HTTPException(404, "Session or turn not found") from None
+    return Response(status_code=204)
 
 
-@router.delete("/{session_id}", status_code=204)
-def delete_session(session_id: UUID) -> None:
+@router.delete(
+    "/{session_id}",
+    status_code=204,
+    response_model=None,
+    response_class=Response,
+)
+def delete_session(
+    session_id: UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+) -> None:
     try:
-        db.delete_session(str(session_id), _user_id())
+        db.delete_session(str(session_id), str(current_user.id))
     except LookupError:
         raise HTTPException(404, "Session not found") from None
+    return Response(status_code=204)

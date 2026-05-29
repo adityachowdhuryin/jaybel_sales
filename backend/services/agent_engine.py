@@ -110,17 +110,19 @@ def raw_event_to_ui_events(raw: dict[str, Any]) -> list[dict[str, Any]]:
     """Map one Agent Engine stream chunk to zero or more UI events."""
     out: list[dict[str, Any]] = []
     for part in _extract_parts(raw):
+        part_has_payload = False
         if "function_response" in part:
             fr = part["function_response"]
             resp = fr.get("response") or {}
             result = resp.get("result") if isinstance(resp, dict) else resp
             payload = _parse_sales_json(result) if isinstance(result, str) else None
             if payload:
+                part_has_payload = True
                 for ev in payload.get("events") or []:
                     if isinstance(ev, dict) and ev.get("type"):
                         out.append(ev)
         text = part.get("text")
-        if text and isinstance(text, str) and text.strip():
+        if not part_has_payload and text and isinstance(text, str) and text.strip():
             out.append({"type": "token", "text": text})
     return out
 

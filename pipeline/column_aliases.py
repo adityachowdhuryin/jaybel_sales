@@ -75,6 +75,22 @@ def value_hints_snippet() -> str:
     return "\n".join(lines) if len(lines) > 1 else ""
 
 
+def product_semantics_snippet() -> str:
+    cfg = load_aliases_config()
+    ps = cfg.get("product_semantics") or {}
+    rules = ps.get("rules") or []
+    if not rules:
+        return ""
+    lines = [
+        "Product vs product group (mandatory):",
+        f"- Product name on invoice line: {ps.get('product_name_column', 'fact_sales_report.description')}",
+        f"- Product group / category: {ps.get('product_group_column', 'dim_product.main_group_name')}",
+    ]
+    for rule in rules:
+        lines.append(f"- {rule}")
+    return "\n".join(lines)
+
+
 def glossary_snippet_for_l2() -> str:
     cfg = load_aliases_config()
     lines = ["Column aliases (always use registry names):"]
@@ -85,6 +101,9 @@ def glossary_snippet_for_l2() -> str:
         lines.append("Metrics:")
         for term, col in metrics.items():
             lines.append(f"- {term} → {col}")
+    ps = product_semantics_snippet()
+    if ps:
+        lines.append(ps)
     vh = value_hints_snippet()
     if vh:
         lines.append(vh)

@@ -1,0 +1,50 @@
+name: Deploy Frontend (Cloud Run)
+
+on:
+  push:
+    branches: [main, Jaybel_prod]
+    paths:
+      - "frontend/**"
+      - "cloudbuild-frontend.yaml"
+      - ".github/workflows/deploy-frontend.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PROJECT_ID: jaybel-dev
+  REGION: us-central1
+  SERVICE: jaybel-frontend
+  IMAGE: us-central1-docker.pkg.dev/jaybel-dev/jaybel/jaybel-frontend
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build and push
+        run: |
+          gcloud builds submit . \
+            --project="${{ env.PROJECT_ID }}" \
+            --config=cloudbuild-frontend.yaml \
+            --substitutions="_IMAGE=${{ env.IMAGE }}:${{ github.sha }},_API_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL }},_FB_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }},_FB_DOMAIN=${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }},_FB_PROJECT=${{ env.PROJECT_ID }},_GCP_PROJECT=${{ env.PROJECT_ID }},_GCP_LOCATION=${{ env.REGION }}"
+
+      - name: Deploy Cloud Run
+        run: |
+          gcloud run deploy "${{ env.SERVICE }}" \
+            --project="${{ env.PROJECT_ID }}" \
+            --region="${{ env.REGION }}" \
+            --image="${{ env.IMAGE }}:${{ github.sha }}" \
+            --platform=managed \
+            --allow-unauthenticated \
+            --min-instances=0

@@ -44,6 +44,7 @@ class ChatStreamRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=8000)
     starter_id: str | None = None
     category_id: str | None = None
+    replace_turn_id: UUID | None = None
 
 
 class CategoryOut(BaseModel):
@@ -65,6 +66,11 @@ class StarterOut(BaseModel):
     expected_table_id: str | None = None
     join_pattern: str | None = None
     source: str | None = None
+
+
+class FaqCatalogOut(BaseModel):
+    categories: list[CategoryOut]
+    starters: list[StarterOut]
 
 
 class FollowUpOut(BaseModel):
@@ -102,3 +108,50 @@ class UserProfileUpdate(BaseModel):
     display_name: str | None = None
     email: str | None = None
     sales_rep_code: str | None = None
+
+
+class SalesPerformanceOut(BaseModel):
+    current_fy: str
+    prior_fy: str
+    current_sales: float
+    prior_sales: float
+    yoy_pct: float
+
+
+class GrossProfitSummaryOut(BaseModel):
+    current_gp: float
+    prior_gp: float
+    current_gp_pct: float
+    prior_gp_pct: float
+    gp_variance_dollars: float
+
+
+class MonthlyOnTrackOut(BaseModel):
+    daily_avg_mtd: float
+    days_completed: int
+    daily_avg_needed: float
+    days_remaining: int
+    monthly_target: float
+    closed_mtd: float
+    closed_mtd_pct: float
+    projected_close: float
+    projected_pct: float
+
+
+class YesterdaySalesOut(BaseModel):
+    sales: float
+    gp_dollar: float
+    gp_pct: float
+    fy_avg_gp_pct: float
+    sales_status: str
+    gp_status: str
+
+
+class DailyBusinessSummaryOut(BaseModel):
+    as_of_date: str
+    yesterday_date: str
+    disclaimer: str
+    sales_performance: SalesPerformanceOut
+    gross_profit: GrossProfitSummaryOut
+    monthly_on_track: MonthlyOnTrackOut
+    yesterday: YesterdaySalesOut

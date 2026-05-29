@@ -160,5 +160,37 @@ def search_starters(
     return hits[:limit]
 
 
+OFFICE_SUPPLIES_SOURCE = "office_supplies_bi_pdf"
+
+
+def office_supplies_starters() -> list[dict[str, Any]]:
+    return [
+        s
+        for s in load_catalog()["starters"]
+        if s.get("source") == OFFICE_SUPPLIES_SOURCE
+    ]
+
+
+def faq_categories() -> list[dict[str, Any]]:
+    cat_ids = {s["category_id"] for s in office_supplies_starters()}
+    cats = [c for c in list_categories() if c["id"] in cat_ids]
+    counts: dict[str, int] = {}
+    for s in office_supplies_starters():
+        counts[s["category_id"]] = counts.get(s["category_id"], 0) + 1
+    out: list[dict[str, Any]] = []
+    for c in cats:
+        row = dict(c)
+        row["starter_count"] = counts.get(c["id"], 0)
+        out.append(row)
+    return out
+
+
+def faq_catalog() -> dict[str, Any]:
+    return {
+        "categories": faq_categories(),
+        "starters": office_supplies_starters(),
+    }
+
+
 def starter_count() -> int:
     return len(load_catalog().get("starters") or [])

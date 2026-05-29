@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from backend.auth.dependencies import CurrentUser, get_current_user
 from backend.db import postgres as db
-from backend.config import settings
 from backend.schemas import (
     CategoryOut,
+    FaqCatalogOut,
     FollowUpOut,
     FollowUpsRequest,
     FollowUpsResponse,
@@ -26,12 +27,13 @@ def _resolve_follow_ups_payload(
     question: str | None,
     session_id: UUID | None,
     turn_id: UUID | None,
+    user_id: str,
 ) -> FollowUpsResponse:
     last_turn = None
     ui_context: dict | None = None
     if session_id:
         try:
-            session = db.get_session(str(session_id), settings()["default_user_id"])
+            session = db.get_session(str(session_id), user_id)
             raw_ctx = session.get("ui_context")
             if isinstance(raw_ctx, dict):
                 ui_context = raw_ctx
@@ -65,6 +67,15 @@ def get_categories() -> list[CategoryOut]:
     return [CategoryOut(**c) for c in qc.list_categories()]
 
 
+@router.get("/faq", response_model=FaqCatalogOut)
+def get_faq_catalog() -> FaqCatalogOut:
+    data = qc.faq_catalog()
+    return FaqCatalogOut(
+        categories=[CategoryOut(**c) for c in data["categories"]],
+        starters=[StarterOut(**s) for s in data["starters"]],
+    )
+
+
 @router.get("/categories/{category_id}/starters", response_model=list[StarterOut])
 def get_starters(category_id: str) -> list[StarterOut]:
     items = qc.starters_for_category(category_id)
@@ -94,20 +105,26 @@ def get_follow_ups(
     question: str | None = None,
     session_id: UUID | None = None,
     turn_id: UUID | None = None,
+    current_user: CurrentUser = Depends(get_current_user),
 ) -> FollowUpsResponse:
     return _resolve_follow_ups_payload(
         starter_id=starter_id,
         question=question,
         session_id=session_id,
         turn_id=turn_id,
+        user_id=str(current_user.id),
     )
 
 
 @router.post("/follow-ups", response_model=FollowUpsResponse)
-def post_follow_ups(body: FollowUpsRequest) -> FollowUpsResponse:
+def post_follow_ups(
+    body: FollowUpsRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+) -> FollowUpsResponse:
     return _resolve_follow_ups_payload(
         starter_id=body.starter_id,
         question=body.question,
         session_id=body.session_id,
         turn_id=body.turn_id,
+        user_id=str(current_user.id),
     )

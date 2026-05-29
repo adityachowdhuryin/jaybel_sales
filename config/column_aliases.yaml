@@ -23,6 +23,22 @@ by_table:
   jaybel-dev.jaybel_sales_analytics.fact_sales_report:
     territory: territory_code
     region: territory_code
+    product_name: description
+    product: description
+  jaybel-dev.jaybel_sales_analytics.dim_product:
+    product: main_group_name
+    product_name: main_group_name
+
+# Product vs product group (critical for ranking "best product" questions)
+product_semantics:
+  product_name_column: fact_sales_report.description
+  product_group_column: dim_product.main_group_name
+  rules:
+    - '"Product", "product name", "best/top product", "best-selling product", "which product" → GROUP BY fact_sales_report.description (filter NULL/blank). JOIN dim_product for main_group_name.'
+    - '"Product group", "category", "main group", "Office Supplies", "Furniture" as category → GROUP BY dim_product.main_group_name only.'
+    - 'When ranking or listing products by description, always SELECT f.description AS product_name AND p.main_group_name AS product_group.'
+    - 'Never answer "top product" with only main_group_name (e.g. Office Supplies is a group, not a product name).'
+    - 'item_code is SKU; description is the human-readable product name on the line.'
 
 value_hints:
   territory_code:

@@ -42,15 +42,72 @@ def update_user_profile(user_id: str, **fields: Any) -> dict[str, Any]:
     return dict(row)
 
 
-def get_user(user_id: str | None = None) -> dict[str, Any]:
-    uid = user_id or settings()["default_user_id"]
+def get_user(user_id: str) -> dict[str, Any]:
     with get_conn() as conn:
         row = conn.execute(
-            "SELECT id, email, display_name, sales_rep_code FROM users WHERE id = %s",
-            (uid,),
+            """
+            SELECT id, email, display_name, sales_rep_code, firebase_uid
+            FROM users WHERE id = %s
+            """,
+            (user_id,),
         ).fetchone()
     if not row:
-        raise LookupError(f"User not found: {uid}")
+        raise LookupError(f"User not found: {user_id}")
+    return dict(row)
+
+
+def get_or_create_user_by_firebase_uid(
+    firebase_uid: str,
+    email: str | None = None,
+    display_name: str | None = None,
+) -> dict[str, Any]:
+    email_val = (email or "").strip() or None
+    name = display_name or (email_val.split("@")[0] if email_val else "User")
+
+    with get_conn() as conn:
+        row = conn.execute(
+            """
+            SELECT id, email, display_name, sales_rep_code, firebase_uid
+            FROM users WHERE firebase_uid = %s
+            """,
+            (firebase_uid,),
+        ).fetchone()
+        if row:
+            return dict(row)
+
+        if email_val:
+            row = conn.execute(
+                """
+                SELECT id, email, display_name, sales_rep_code, firebase_uid
+                FROM users WHERE email = %s
+                """,
+                (email_val,),
+            ).fetchone()
+            if row:
+                row = conn.execute(
+                    """
+                    UPDATE users
+                    SET firebase_uid = %s,
+                        display_name = COALESCE(%s, display_name)
+                    WHERE id = %s
+                    RETURNING id, email, display_name, sales_rep_code, firebase_uid
+                    """,
+                    (firebase_uid, name, row["id"]),
+                ).fetchone()
+                conn.commit()
+                return dict(row)
+
+        uid = str(uuid.uuid4())
+        insert_email = email_val or f"{firebase_uid}@users.noreply.jaybel"
+        row = conn.execute(
+            """
+            INSERT INTO users (id, email, display_name, firebase_uid)
+            VALUES (%s, %s, %s, %s)
+            RETURNING id, email, display_name, sales_rep_code, firebase_uid
+            """,
+            (uid, insert_email, name, firebase_uid),
+        ).fetchone()
+        conn.commit()
     return dict(row)
 
 
@@ -182,6 +239,24 @@ def get_turn(session_id: str, turn_id: str) -> dict[str, Any]:
     if not row:
         raise LookupError("Turn not found")
     return dict(row)
+
+
+def delete_turn(session_id: str, turn_id: str, user_id: str) -> None:
+    with get_conn() as conn:
+        cur = conn.execute(
+            """
+            DELETE FROM chat_turns t
+            USING chat_sessions s
+            WHERE t.session_id = s.id
+              AND s.user_id = %s
+              AND t.session_id = %s
+              AND t.id = %s
+            """,
+            (user_id, session_id, turn_id),
+        )
+        conn.commit()
+    if cur.rowcount == 0:
+        raise LookupError("Turn not found")
 
 
 def update_turn_feedback(

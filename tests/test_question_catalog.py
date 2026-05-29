@@ -15,16 +15,9 @@ pytestmark = pytest.mark.skipif(
 
 @pytest.fixture
 def client(monkeypatch):
-    monkeypatch.setenv(
-        "DATABASE_URL",
-        os.getenv(
-            "DATABASE_URL",
-            "postgresql://jaybel:jaybel_local_dev@127.0.0.1:15433/jaybel_sales_app",
-        ),
-    )
-    from backend.config import settings
+    from tests.conftest_backend import apply_backend_test_env
 
-    settings.cache_clear()
+    apply_backend_test_env(monkeypatch)
     from backend.main import app
 
     return TestClient(app)
@@ -50,6 +43,16 @@ def test_search_starters(client: TestClient):
     r = client.get("/api/question-catalog/search", params={"q": "fiscal year"})
     assert r.status_code == 200
     assert isinstance(r.json(), list)
+
+
+def test_faq_catalog(client: TestClient):
+    r = client.get("/api/question-catalog/faq")
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body["starters"]) == 37
+    assert all(s.get("source") == "office_supplies_bi_pdf" for s in body["starters"])
+    assert any(c["id"] == "executive_kpi" for c in body["categories"])
+    assert not any(c["id"] == "sales_revenue" for c in body["categories"])
 
 
 def test_follow_ups_curated(client: TestClient):

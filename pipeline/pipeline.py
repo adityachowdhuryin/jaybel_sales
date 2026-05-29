@@ -40,7 +40,7 @@ from pipeline.scope_guard import ScopeGuard
 from pipeline.sql_generation_config import repair_config
 from pipeline.sql_generator import SQLGenerator
 from pipeline.sql_repair_hints import friendly_validation_message, structured_repair_hint
-from pipeline.user_context import UserContext
+from pipeline.user_context import UserContext, normalize_company_possessive
 from pipeline.validators.orchestrator import ValidationOrchestrator
 
 
@@ -143,6 +143,7 @@ class Pipeline:
         )
         out = PipelineResult(query_id=query_id)
         events: list[PipelineEvent] = []
+        question = normalize_company_possessive(question)
         followup_ctx = FollowUpContext.from_history(history, question)
 
         def emit(e: PipelineEvent) -> None:

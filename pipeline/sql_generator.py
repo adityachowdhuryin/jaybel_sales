@@ -35,6 +35,9 @@ Hard rules:
 - Top-N per group: use RANK() or ROW_NUMBER() OVER (PARTITION BY ... ORDER BY ...) when user asks "top N ... for each".
 - Follow-ups: keep the same metric (GP vs sales) unless the user explicitly changes it.
 - Jaybel fiscal year runs July–June (fiscal_month_no 1–12 on dim_date). For current/last/latest FY use fy label from Time range block only — never ORDER BY fy DESC or MAX(fy) for relative phrases.
+- Bare "year" / YTD / "this year" are fiscal (Jul–Jun), not calendar year, unless the user says "calendar year".
+- "My" / "our" mean company-wide totals; filter by sales_rep_code only for commission, payout, or explicit rep filters.
+- Product name = fact_sales_report.description (GROUP BY this for "product"/"best product"). Product group/category = dim_product.main_group_name. When ranking products by description, SELECT description AND main_group_name AS product_group; never use only main_group_name for "top product".
 """
 
 

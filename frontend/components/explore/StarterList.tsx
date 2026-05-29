@@ -21,7 +21,7 @@ export function StarterList({
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-1 text-xs font-medium text-brand-400 hover:text-brand-300 transition"
+          className="inline-flex items-center gap-1 text-xs font-medium text-[var(--intent-insight)] hover:brightness-90 transition"
         >
           <ChevronLeft className="w-4 h-4" />
           Categories
@@ -36,7 +36,7 @@ export function StarterList({
             <button
               type="button"
               onClick={() => onPick(s)}
-              className="w-full text-left rounded-xl border border-[var(--border)] bg-[var(--panel)] px-4 py-3.5 hover:border-brand-500/40 hover:bg-brand-500/5 hover:shadow-panel transition-all"
+              className="w-full text-left rounded-xl border border-[var(--border)] bg-[var(--surface-0)] px-4 py-3.5 hover:border-sky-300 hover:bg-[var(--surface-accent)] hover:shadow-panel transition-all"
             >
               <div className="flex flex-wrap items-start gap-2 justify-between">
                 <p className="text-sm text-[var(--text)] flex-1 min-w-0">{s.text}</p>

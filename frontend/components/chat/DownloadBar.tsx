@@ -1,12 +1,16 @@
 "use client";
 
-import { useRef } from "react";
-import { downloadChartPng, downloadCsv, downloadTextReport, printReportWindow } from "@/lib/export";
+import type { RefObject } from "react";
+import { downloadChartPng, downloadCsv, printReportWindow } from "@/lib/export";
 import type { ChatMessage } from "@/types";
-import { ChartPanel } from "./ChartPanel";
 
-export function DownloadBar({ message }: { message: ChatMessage }) {
-  const chartRef = useRef<HTMLDivElement>(null);
+export function DownloadBar({
+  message,
+  chartRef,
+}: {
+  message: ChatMessage;
+  chartRef?: RefObject<HTMLDivElement>;
+}) {
   const cols =
     message.columns?.length
       ? message.columns
@@ -28,7 +32,7 @@ export function DownloadBar({ message }: { message: ChatMessage }) {
         {canCsv && (
           <button
             type="button"
-            className="text-xs px-3 py-1.5 rounded-lg border border-[var(--border)] hover:bg-black/20"
+            className="ui-btn-secondary text-xs px-3 py-1.5"
             onClick={() =>
               downloadCsv(
                 message.rows!,
@@ -44,22 +48,7 @@ export function DownloadBar({ message }: { message: ChatMessage }) {
           <>
             <button
               type="button"
-              className="text-xs px-3 py-1.5 rounded-lg border border-[var(--border)] hover:bg-black/20"
-              onClick={() =>
-                downloadTextReport({
-                  question: message.question || "",
-                  answer: message.content,
-                  sql: message.sql,
-                  tableDisplay: message.tableDisplay,
-                  rowCount: message.rowCount,
-                })
-              }
-            >
-              Download report (.txt)
-            </button>
-            <button
-              type="button"
-              className="text-xs px-3 py-1.5 rounded-lg border border-[var(--border)] hover:bg-black/20"
+              className="ui-btn-secondary text-xs px-3 py-1.5"
               onClick={() =>
                 printReportWindow({
                   question: message.question || "",
@@ -77,9 +66,9 @@ export function DownloadBar({ message }: { message: ChatMessage }) {
         {canChart && (
           <button
             type="button"
-            className="text-xs px-3 py-1.5 rounded-lg border border-[var(--border)] hover:bg-black/20"
+            className="ui-btn-secondary text-xs px-3 py-1.5"
             onClick={() => {
-              const el = chartRef.current;
+              const el = chartRef?.current;
               if (el) downloadChartPng(el, `chart-${message.queryId || Date.now()}.png`);
             }}
           >
@@ -87,9 +76,6 @@ export function DownloadBar({ message }: { message: ChatMessage }) {
           </button>
         )}
       </div>
-      {canChart && (
-        <ChartPanel spec={message.chartSpec!} rows={message.rows} chartRef={chartRef} />
-      )}
     </div>
   );
 }

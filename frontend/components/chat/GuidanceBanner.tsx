@@ -1,12 +1,12 @@
 "use client";
 
 const STYLES: Record<string, string> = {
-  rep_context_required: "border-amber-500/40 bg-amber-500/10 text-amber-100",
-  empty_result: "border-sky-500/30 bg-sky-500/10 text-sky-100",
-  off_topic: "border-rose-500/30 bg-rose-500/10 text-rose-100",
-  out_of_dataset: "border-violet-500/30 bg-violet-500/10 text-violet-100",
-  vague: "border-brand-500/30 bg-brand-500/10 text-brand-100",
-  sql_validation_failed: "border-orange-500/30 bg-orange-500/10 text-orange-100",
+  rep_context_required: "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning-text)]",
+  empty_result: "border-[var(--status-info-border)] bg-[var(--status-info-bg)] text-[var(--status-info-text)]",
+  off_topic: "border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] text-[var(--status-danger-text)]",
+  out_of_dataset: "border-[var(--status-info-border)] bg-[var(--status-info-bg)] text-[var(--status-info-text)]",
+  vague: "border-[var(--status-info-border)] bg-[var(--status-info-bg)] text-[var(--status-info-text)]",
+  sql_validation_failed: "border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning-text)]",
 };
 
 export function GuidanceBanner({
@@ -19,10 +19,11 @@ export function GuidanceBanner({
   suggestions?: string[];
 }) {
   if (!message) return null;
-  const style = STYLES[code] || "border-[var(--border)] bg-[var(--bg)] text-[var(--text)]";
+  const style =
+    STYLES[code] || "border-[var(--border)] bg-[var(--surface-0)] text-[var(--text-primary)]";
 
   return (
-    <div className={`mb-4 rounded-xl border px-4 py-3 ${style}`}>
+    <div className={`mb-4 rounded-xl border px-4 py-3 shadow-sm ${style}`}>
       <p className="text-sm font-medium leading-relaxed">{message}</p>
       {suggestions && suggestions.length > 0 && (
         <ul className="mt-2 text-xs opacity-90 list-disc pl-4 space-y-1">

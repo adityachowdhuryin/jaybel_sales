@@ -4,14 +4,25 @@ import type {
   StarterQuestion,
 } from "@/types/questionCatalog";
 import { API_BASE } from "./api";
+import { buildAuthHeaders } from "./authHeaders";
 
 async function catalogRequest<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`);
+  const headers = await buildAuthHeaders();
+  const res = await fetch(`${API_BASE}${path}`, { headers });
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || `HTTP ${res.status}`);
   }
   return res.json() as Promise<T>;
+}
+
+export interface FaqCatalog {
+  categories: QuestionCategory[];
+  starters: StarterQuestion[];
+}
+
+export async function fetchFaqCatalog(): Promise<FaqCatalog> {
+  return catalogRequest<FaqCatalog>("/api/question-catalog/faq");
 }
 
 export async function fetchCategories(): Promise<QuestionCategory[]> {
@@ -41,9 +52,10 @@ export async function fetchFollowUps(params: {
   session_id?: string;
   turn_id?: string;
 }): Promise<FollowUpsResponse> {
+  const headers = await buildAuthHeaders({ "Content-Type": "application/json" });
   const res = await fetch(`${API_BASE}/api/question-catalog/follow-ups`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({
       starter_id: params.starter_id,
       question: params.question,

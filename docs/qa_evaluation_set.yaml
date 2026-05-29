@@ -649,7 +649,7 @@ cases:
   expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
   expected_join_pattern: fact_sales_with_dims
   intent: comparison
-  data_availability: requires_rep_context
+  data_availability: full
   notes: Filter by authenticated rep
 - id: Q087
   source: office_supplies_bi_pdf
@@ -659,7 +659,7 @@ cases:
   expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
   expected_join_pattern: fact_sales_with_dims
   intent: aggregation
-  data_availability: requires_rep_context
+  data_availability: full
 - id: Q088
   source: office_supplies_bi_pdf
   category: sales_rep
@@ -668,7 +668,7 @@ cases:
   expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
   expected_join_pattern: fact_sales_with_dims
   intent: ranking
-  data_availability: requires_rep_context
+  data_availability: full
 - id: Q089
   source: office_supplies_bi_pdf
   category: targets
@@ -740,7 +740,7 @@ cases:
   expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
   expected_join_pattern: fact_sales_with_dims
   intent: aggregation
-  data_availability: requires_rep_context
+  data_availability: full
   notes: Define 'closed deals' with business
 - id: Q097
   source: office_supplies_bi_pdf
@@ -750,7 +750,7 @@ cases:
   expected_primary_table: jaybel-dev.jaybel_sales_analytics.fact_sales_report
   expected_join_pattern: fact_sales_with_dims
   intent: aggregation
-  data_availability: requires_rep_context
+  data_availability: full
 - id: G001
   source: query_understanding_guards
   question: What is the capital of France?
@@ -764,8 +764,8 @@ cases:
 - id: G003
   source: query_understanding_guards
   question: What are my sales this month?
-  expected_stop_reason: rep_context_required
-  category: guard_rep
+  expected_stop_reason: ok
+  category: guard_in_scope
 - id: G004
   source: query_understanding_guards
   question: hi

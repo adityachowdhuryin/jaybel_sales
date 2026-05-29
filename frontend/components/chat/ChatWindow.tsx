@@ -1,43 +1,47 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { Compass, Send } from "lucide-react";
+import { ArrowUp, PanelLeftOpen, Sparkles } from "lucide-react";
 import { MessageList } from "./MessageList";
-import type { AppUser, ChatMessage } from "@/types";
-import type { QuestionCategory, StarterQuestion } from "@/types/questionCatalog";
+import type { ChatMessage } from "@/types";
+
+const PLACEHOLDER = "Ask about sales, revenue, customers…";
 
 export function ChatWindow({
   messages,
   sessionId,
-  user,
   onSend,
   disabled,
   draftInput,
   onDraftChange,
-  exploreOpen,
-  onOpenExplore,
-  activeCategory,
-  onPickStarter,
   onFollowUpPick,
   onClarificationPick,
+  onRetry,
   hideFollowUps,
+  streaming,
+  sidebarCollapsed,
+  onExpandSidebar,
 }: {
   messages: ChatMessage[];
   sessionId: string | null;
-  user: AppUser | null;
   onSend: (text: string) => void;
+  onRetry?: (
+    question: string,
+    replaceTurnId: string,
+    meta: { starterId?: string; categoryId?: string }
+  ) => void;
   disabled?: boolean;
   draftInput: string;
   onDraftChange: (value: string) => void;
-  exploreOpen: boolean;
-  onOpenExplore: () => void;
-  activeCategory: QuestionCategory | null;
-  onPickStarter: (starter: StarterQuestion) => void;
   onFollowUpPick: (text: string) => void;
   onClarificationPick?: (text: string) => void;
   hideFollowUps?: boolean;
+  streaming?: boolean;
+  sidebarCollapsed?: boolean;
+  onExpandSidebar?: () => void;
 }) {
   const [localInput, setLocalInput] = useState(draftInput);
+  const hasText = localInput.trim().length > 0;
 
   useEffect(() => {
     setLocalInput(draftInput);
@@ -54,40 +58,39 @@ export function ChatWindow({
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--panel)]/80 backdrop-blur-sm shrink-0">
-        <div className="text-xs text-[var(--muted)] truncate flex items-center gap-1">
+      {sidebarCollapsed && onExpandSidebar && (
+        <div className="flex items-center px-4 py-2 border-b border-[var(--border)] bg-[var(--surface-0)] shrink-0">
           <button
             type="button"
-            onClick={onOpenExplore}
-            className="inline-flex items-center gap-1.5 text-brand-400 hover:text-brand-300 font-medium transition"
+            onClick={onExpandSidebar}
+            className="inline-flex items-center justify-center rounded-md p-1.5 text-[var(--text-secondary)] hover:bg-[var(--surface-2)] transition"
+            aria-label="Expand sidebar"
           >
-            <Compass className="w-3.5 h-3.5" />
-            Browse questions
+            <PanelLeftOpen className="w-5 h-5" />
           </button>
-          {activeCategory && (
-            <>
-              <span className="mx-1">/</span>
-              <span className="text-[var(--text)]">{activeCategory.label}</span>
-            </>
-          )}
         </div>
-        {exploreOpen && (
-          <span className="text-[10px] text-[var(--muted)]">Explore open</span>
-        )}
-      </div>
+      )}
       <MessageList
         messages={messages}
         sessionId={sessionId}
-        user={user}
         onFollowUpPick={onFollowUpPick}
         onClarificationPick={onClarificationPick}
+        onRetry={onRetry}
         hideFollowUps={hideFollowUps}
+        streaming={streaming}
       />
       <form
         onSubmit={handleSubmit}
-        className="border-t border-[var(--border)] p-4 bg-[var(--panel)]/90 backdrop-blur-sm shrink-0"
+        className="border-t border-[var(--border)] px-4 py-4 bg-[var(--panel)] shrink-0"
       >
-        <div className="flex gap-2 max-w-3xl mx-auto">
+        <div className="flex items-center gap-3 max-w-3xl mx-auto w-full min-h-[52px] rounded-2xl bg-[var(--surface-0)] px-4 py-2.5 shadow-sm border border-[var(--border)]">
+          {!hasText && (
+            <Sparkles
+              className="w-5 h-5 shrink-0 text-[var(--text-tertiary)]"
+              strokeWidth={1.5}
+              aria-hidden
+            />
+          )}
           <textarea
             value={localInput}
             onChange={(e) => {
@@ -100,23 +103,29 @@ export function ChatWindow({
                 handleSubmit(e);
               }
             }}
-            placeholder="Ask about sales, revenue, customers…"
-            rows={2}
+            placeholder={PLACEHOLDER}
+            rows={1}
             disabled={disabled}
-            className="flex-1 resize-none rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/60 focus:border-brand-500/40 disabled:opacity-50 placeholder:text-[var(--muted)]"
+            className={`flex-1 min-w-0 resize-none bg-transparent border-0 outline-none text-sm leading-6 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] disabled:opacity-50 ${
+              hasText ? "py-1" : "py-1"
+            }`}
           />
           {localInput.length > 200 && (
-            <span className="self-end text-[10px] text-[var(--muted)] tabular-nums">
+            <span className="shrink-0 text-[10px] text-[var(--muted)] tabular-nums self-end pb-1">
               {localInput.length}
             </span>
           )}
           <button
             type="submit"
-            disabled={disabled || !localInput.trim()}
-            className="self-end inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 text-white text-sm font-medium hover:from-brand-500 hover:to-brand-400 disabled:opacity-40 shadow-md transition"
+            disabled={disabled || !hasText}
+            aria-label="Send message"
+            className={`shrink-0 w-9 h-9 rounded-full inline-flex items-center justify-center transition disabled:cursor-not-allowed ${
+              hasText
+                ? "bg-[var(--chat-send-bg)] text-white hover:bg-[var(--chat-send-bg-hover)] disabled:opacity-40"
+                : "bg-[var(--surface-2)] text-[var(--text-tertiary)]"
+            }`}
           >
-            <Send className="w-4 h-4" />
-            Send
+            <ArrowUp className="w-4 h-4 text-white" strokeWidth={2.25} />
           </button>
         </div>
       </form>

@@ -18,16 +18,9 @@ pytestmark = pytest.mark.skipif(
 
 @pytest.fixture
 def client(monkeypatch):
-    monkeypatch.setenv(
-        "DATABASE_URL",
-        os.getenv(
-            "DATABASE_URL",
-            "postgresql://jaybel:jaybel_local_dev@127.0.0.1:15433/jaybel_sales_app",
-        ),
-    )
-    from backend.config import settings
+    from tests.conftest_backend import apply_backend_test_env
 
-    settings.cache_clear()
+    apply_backend_test_env(monkeypatch)
     from backend.main import app
 
     return TestClient(app)

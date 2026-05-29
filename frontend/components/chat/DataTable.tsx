@@ -81,11 +81,11 @@ export function DataTable({
   }
 
   return (
-    <div className="mt-3 rounded-xl border border-[var(--border)] overflow-hidden bg-[var(--bg-elevated)] shadow-sm">
-      <div className="px-4 py-2.5 text-xs text-[var(--muted)] bg-[var(--panel)] flex justify-between items-center border-b border-[var(--border)]">
+    <div className="mt-3 rounded-xl border border-[var(--border)] overflow-hidden bg-[var(--surface-1)] shadow-sm">
+      <div className="px-4 py-2.5 text-xs text-[var(--muted)] bg-[var(--surface-0)] flex justify-between items-center border-b border-[var(--border)]">
         <span>
           {tableDisplay && (
-            <span className="font-medium text-brand-300">{tableDisplay}</span>
+            <span className="font-medium text-sky-700">{tableDisplay}</span>
           )}
           {tableDisplay && " · "}
           <span className="tabular-nums">
@@ -101,11 +101,11 @@ export function DataTable({
       <div className="overflow-x-auto max-h-80">
         <table className="w-full text-sm">
           <thead className="sticky top-0 z-[1]">
-            <tr className="border-b border-[var(--border)] bg-[var(--panel)]">
+            <tr className="border-b border-[var(--border)] bg-[var(--surface-2)]">
               {cols.map((c) => (
                 <th
                   key={c}
-                  className={`px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-[var(--muted)] cursor-pointer hover:text-brand-300 transition ${
+                  className={`px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-[var(--muted)] cursor-pointer hover:text-sky-700 transition ${
                     isNumericColumn(rows, c) ? "text-right" : "text-left"
                   }`}
                   onClick={() => toggleSort(c)}
@@ -121,8 +121,8 @@ export function DataTable({
               <tr
                 key={i}
                 className={`border-b border-[var(--border)]/40 ${
-                  i % 2 === 0 ? "bg-transparent" : "bg-black/15"
-                } hover:bg-brand-500/5 transition`}
+                  i % 2 === 0 ? "bg-transparent" : "bg-[var(--surface-0)]"
+                } hover:bg-[var(--surface-accent)] transition`}
               >
                 {cols.map((c) => (
                   <td
@@ -142,7 +142,7 @@ export function DataTable({
         </table>
       </div>
       {pageCount > 1 && (
-        <div className="flex justify-end gap-2 px-4 py-2.5 border-t border-[var(--border)] text-xs bg-[var(--panel)]">
+        <div className="flex justify-end gap-2 px-4 py-2.5 border-t border-[var(--border)] text-xs bg-[var(--surface-0)]">
           <button
             type="button"
             disabled={page === 0}

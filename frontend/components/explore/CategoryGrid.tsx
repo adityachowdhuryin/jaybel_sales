@@ -52,18 +52,18 @@ export function CategoryGrid({
             onClick={() => onSelect(c)}
             className={`group text-left rounded-xl border border-[var(--border)] bg-[var(--panel)] p-4 transition-all ${
               needsRep
-                ? "opacity-60 cursor-not-allowed"
-                : "hover:border-brand-500/40 hover:bg-brand-500/5 hover:shadow-panel"
+                ? "cursor-not-allowed bg-[var(--surface-1)] text-[var(--text-tertiary)]"
+                : "hover:border-sky-300 hover:bg-[var(--surface-accent)] hover:shadow-panel"
             }`}
           >
             <div
               className={`inline-flex p-2 rounded-lg ${
-                needsRep ? "bg-[var(--bg)]" : "bg-brand-500/15 text-brand-400"
+                needsRep ? "bg-[var(--surface-2)] text-[var(--text-tertiary)]" : "bg-sky-100 text-sky-700"
               }`}
             >
               <Icon className="w-5 h-5" aria-hidden />
             </div>
-            <h3 className="mt-3 text-sm font-semibold text-[var(--text)] group-hover:text-brand-200 transition">
+            <h3 className="mt-3 text-sm font-semibold text-[var(--text)] group-hover:text-brand-700 transition">
               {c.label}
             </h3>
             <p className="mt-1 text-xs text-[var(--muted)] line-clamp-2 leading-relaxed">
@@ -73,7 +73,9 @@ export function CategoryGrid({
               {c.starter_count ?? 0} starters
             </p>
             {needsRep && (
-              <p className="mt-1 text-[10px] text-amber-400">Set rep code in sidebar first</p>
+              <p className="mt-1 text-[10px] text-[var(--status-warning-text)]">
+                Set rep code in sidebar first
+              </p>
             )}
           </button>
         );

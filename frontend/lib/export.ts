@@ -1,5 +1,3 @@
-import type { ChartSpec } from "@/types";
-
 export function downloadCsv(
   rows: Record<string, unknown>[],
   columns: string[],
@@ -16,34 +14,14 @@ export function downloadCsv(
   triggerDownload(blob, filename);
 }
 
-export function downloadTextReport(opts: {
-  question: string;
-  answer: string;
-  sql?: string;
-  tableDisplay?: string;
-  rowCount?: number;
-}) {
-  const lines = [
-    "Jaybel Sales Analytics — Query Report",
-    `Generated: ${new Date().toLocaleString()}`,
-    "",
-    "Question",
-    opts.question,
-    "",
-    "Answer",
-    opts.answer,
-  ];
-  if (opts.tableDisplay) lines.push("", "Table", opts.tableDisplay);
-  if (opts.rowCount != null) lines.push("", "Rows", String(opts.rowCount));
-  if (opts.sql) lines.push("", "SQL", opts.sql);
-  const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
-  triggerDownload(blob, `report-${Date.now()}.txt`);
-}
-
 export async function downloadChartPng(element: HTMLElement, filename: string) {
   const { default: html2canvas } = await import("html2canvas");
+  const theme =
+    typeof document !== "undefined"
+      ? document.documentElement.getAttribute("data-theme")
+      : "light";
   const canvas = await html2canvas(element, {
-    backgroundColor: "#1a2332",
+    backgroundColor: theme === "dark" ? "#111827" : "#ffffff",
     scale: 2,
   });
   canvas.toBlob((blob) => {
@@ -77,7 +55,7 @@ export function printReportWindow(opts: {
     .join("");
   const html = `<!DOCTYPE html><html><head><title>Report</title>
 <style>body{font-family:system-ui;padding:24px}pre{background:#f4f4f4;padding:12px;overflow:auto}
-table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:6px;text-align:left}</style>
+table{border-collapse:collapse;width:100%}td,th{border:1px solid #cbd5e1;padding:6px;text-align:left}th{background:#f8fafc}</style>
 </head><body>
 <h1>Jaybel Sales Analytics</h1>
 <p><strong>Question:</strong> ${escapeHtml(opts.question)}</p>

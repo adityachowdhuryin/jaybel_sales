@@ -19,8 +19,8 @@ One or two sentences with the main finding and headline number(s).
 
 ## Key figures
 Use bullet lines with bold labels, e.g.:
-- **Total sales (FY 2025-2026):** $1,234,567.89
-- **Variance vs target:** -$10,000 (1.2%)
+- **Total sales (FY 2025-2026):** A$1,234,567.89
+- **Variance vs target:** -A$10,000 (1.2%)
 
 ## Notes
 Optional bullets for context (period, filters, rep scope).
@@ -30,11 +30,12 @@ Only when disclaimers apply (run-rate estimate, config target, pattern match, BI
 
 Rules:
 - Only use numbers and facts present in the JSON data — never invent metrics.
-- Format currency with $ and commas; percentages with one decimal and % sign.
+- Format currency with A$ prefix and commas; percentages with one decimal and % sign.
 - Do not include CHART_JSON or chart configuration — charts are handled separately.
 - Under 200 words unless the user asked for a detailed breakdown.
 - Do not expose SQL unless the user asked how the query was built.
 - Jaybel fiscal years are always July through June (dim_date fiscal_month_no 1–12). Never state April–September as a full fiscal year; Q4 is only Apr–Jun within a FY.
+- fact_sales_report.description is the product name; dim_product.main_group_name is the product group (e.g. Office Supplies, Furniture). When reporting a top product, name the description value and state which product_group it belongs to — do not call a product group a "product".
 """
 
 
@@ -122,7 +123,7 @@ def _format_metric_value(value: Any, col: str) -> str:
         x in cn
         for x in ("sales", "revenue", "gp", "cost", "variance", "target", "actual", "amount")
     ):
-        return f"${n:,.2f}"
+        return f"A${n:,.2f}"
     return f"{n:,.2f}"
 
 
@@ -155,19 +156,37 @@ def _normalize_markdown_sections(
     """Ensure standard sections; fill Key figures / Caveats when the model omits them."""
     body = text.strip()
     body = re.sub(r"([^\n])##\s+", r"\1\n\n## ", body)
-    if body.count("## Summary") > 1:
-        second = body.find("## Summary", body.find("## Summary") + 1)
-        if second > 0:
-            body = body[:second].strip()
-    if body.count("## Key figures") > 1:
-        second = body.find("## Key figures", body.find("## Key figures") + 1)
-        if second > 0:
-            body = body[:second].strip()
-    if "## Summary" not in body:
+
+    lines = body.splitlines()
+    deduped: list[str] = []
+    seen_sections: set[str] = set()
+    skipping = False
+    for line in lines:
+        m = re.match(r"^##\s+(.+?)\s*$", line.strip(), flags=re.IGNORECASE)
+        if m:
+            key = re.sub(r"\s+", " ", m.group(1).strip().lower())
+            if key in seen_sections:
+                skipping = True
+                continue
+            seen_sections.add(key)
+            skipping = False
+            deduped.append(f"## {m.group(1).strip()}")
+            continue
+        if not skipping:
+            deduped.append(line)
+    body = "\n".join(deduped).strip()
+
+    has_summary = bool(re.search(r"^##\s*summary\s*$", body, flags=re.IGNORECASE | re.MULTILINE))
+    has_key_figures = bool(
+        re.search(r"^##\s*key\s+figures\s*$", body, flags=re.IGNORECASE | re.MULTILINE)
+    )
+    has_caveats = bool(re.search(r"^##\s*caveats\s*$", body, flags=re.IGNORECASE | re.MULTILINE))
+
+    if not has_summary:
         body = f"## Summary\n\n{body}\n" if body else "## Summary\n\n_No summary generated._\n"
-    if "## Key figures" not in body:
+    if not has_key_figures:
         body = f"{body.rstrip()}\n\n## Key figures\n\n{_fallback_key_figures(sample_rows, columns)}\n"
-    if disclaimers and "## Caveats" not in body:
+    if disclaimers and not has_caveats:
         bullets = "\n".join(f"- {d}" for d in disclaimers)
         body = f"{body.rstrip()}\n\n## Caveats\n\n{bullets}\n"
     if "## Notes" not in body and disclaimers:

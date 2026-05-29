@@ -7,10 +7,10 @@ import {
   getMe,
   listSessions,
   listTurns,
-  updateProfile,
 } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 import { useChatStream } from "@/hooks/useChatStream";
-import { ExploreDrawer } from "@/components/explore/ExploreDrawer";
+import { FAQFullScreen } from "@/components/explore/FAQFullScreen";
 import { ChatWindow } from "./ChatWindow";
 import { SessionSidebar } from "./SessionSidebar";
 import type { AppUser, ChatMessage, ChatSendMeta, ChatSession, ChatTurn } from "@/types";
@@ -64,9 +64,41 @@ export function ChatShell() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [draftInput, setDraftInput] = useState("");
   const [sendMeta, setSendMeta] = useState<ChatSendMeta>({});
-  const [exploreOpen, setExploreOpen] = useState(false);
+  const [centerMode, setCenterMode] = useState<"chat" | "faq">("chat");
   const [activeCategory, setActiveCategory] = useState<QuestionCategory | null>(null);
-  const { sendMessage, streaming } = useChatStream();
+  const [sidebarWidth, setSidebarWidth] = useState(320);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { getToken, firebaseEnabled } = useAuth();
+  const { sendMessage, retryQuestion, streaming } = useChatStream();
+
+  useEffect(() => {
+    const saved =
+      typeof window !== "undefined" ? window.localStorage.getItem("jaybel.sidebar.width") : null;
+    const width = saved ? Number(saved) : NaN;
+    if (!Number.isNaN(width)) {
+      setSidebarWidth(Math.min(460, Math.max(260, width)));
+    }
+  }, []);
+
+  const startSidebarResize = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startW = sidebarWidth;
+
+    let latest = startW;
+    const onMove = (ev: MouseEvent) => {
+      latest = Math.min(460, Math.max(260, startW + (ev.clientX - startX)));
+      setSidebarWidth(latest);
+    };
+    const onUp = () => {
+      window.localStorage.setItem("jaybel.sidebar.width", String(latest));
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
 
   const refreshSessions = useCallback(async (search?: string) => {
     const list = await listSessions(search);
@@ -78,14 +110,20 @@ export function ChatShell() {
     setActiveId(id);
     const turns = await listTurns(id);
     setMessages(turnsToMessages(turns));
-    setExploreOpen(false);
+    setCenterMode("chat");
     setActiveCategory(null);
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
+        if (firebaseEnabled) {
+          const token = await getToken();
+          if (!token) return;
+        }
         const me = await getMe();
+        if (cancelled) return;
         setUser(me);
         let list = await refreshSessions();
         if (list.length === 0) {
@@ -95,10 +133,15 @@ export function ChatShell() {
         }
         await loadSession(list[0].id);
       } catch (e) {
-        setLoadError(e instanceof Error ? e.message : "Failed to connect to API");
+        if (!cancelled) {
+          setLoadError(e instanceof Error ? e.message : "Failed to connect to API");
+        }
       }
     })();
-  }, [refreshSessions, loadSession]);
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshSessions, loadSession, firebaseEnabled, getToken]);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -108,11 +151,26 @@ export function ChatShell() {
   }, [sessionSearch, refreshSessions]);
 
   const handleNew = async () => {
+    const currentId = activeId;
+    const discardEmpty =
+      Boolean(currentId) &&
+      messages.length === 0 &&
+      !draftInput.trim() &&
+      !streaming;
+
+    if (discardEmpty && currentId) {
+      await deleteSession(currentId);
+    }
+
     const s = await createSession();
-    setSessions((prev) => [s, ...prev]);
+    setSessions((prev) =>
+      discardEmpty && currentId
+        ? [s, ...prev.filter((x) => x.id !== currentId)]
+        : [s, ...prev]
+    );
     setActiveId(s.id);
     setMessages([]);
-    setExploreOpen(true);
+    setCenterMode("chat");
     setActiveCategory(null);
     setDraftInput("");
     setSendMeta({});
@@ -126,7 +184,7 @@ export function ChatShell() {
       setSessions([s]);
       setActiveId(s.id);
       setMessages([]);
-      setExploreOpen(true);
+      setCenterMode("chat");
     } else if (activeId === id) {
       await loadSession(list[0].id);
     } else {
@@ -137,11 +195,13 @@ export function ChatShell() {
   const handlePickStarter = (starter: StarterQuestion) => {
     setDraftInput(starter.text);
     setSendMeta({ starter_id: starter.id, category_id: starter.category_id });
+    setCenterMode("chat");
   };
 
   const handleFollowUpPick = (text: string) => {
     setDraftInput(text);
     setSendMeta({});
+    setCenterMode("chat");
   };
 
   const handleClarificationPick = async (text: string) => {
@@ -159,12 +219,17 @@ export function ChatShell() {
     await refreshSessions(sessionSearch || undefined);
   };
 
-  const handleSaveProfile = async (data: {
-    sales_rep_code: string | null;
-    display_name?: string;
-  }) => {
-    const updated = await updateProfile(data);
-    setUser(updated);
+  const handleRetry = async (
+    question: string,
+    replaceTurnId: string,
+    meta: { starterId?: string; categoryId?: string }
+  ) => {
+    if (!activeId || streaming) return;
+    await retryQuestion(activeId, question, replaceTurnId, setMessages, {
+      starter_id: meta.starterId,
+      category_id: meta.categoryId,
+    });
+    await refreshSessions(sessionSearch || undefined);
   };
 
   if (loadError) {
@@ -180,43 +245,58 @@ export function ChatShell() {
 
   return (
     <div className="h-screen flex">
-      <SessionSidebar
-        sessions={sessions}
-        activeId={activeId}
-        user={user}
-        searchQuery={sessionSearch}
-        onSearchChange={setSessionSearch}
-        onSelect={loadSession}
-        onNew={handleNew}
-        onDelete={handleDelete}
-        onSaveProfile={handleSaveProfile}
-      />
+      {!sidebarCollapsed && (
+        <>
+          <SessionSidebar
+            width={sidebarWidth}
+            sessions={sessions}
+            activeId={activeId}
+            newChatActive={centerMode === "chat" && messages.length === 0}
+            faqActive={centerMode === "faq"}
+            searchQuery={sessionSearch}
+            onSearchChange={setSessionSearch}
+            onSelect={loadSession}
+            onNew={handleNew}
+            onOpenFaq={() => setCenterMode("faq")}
+            onDelete={handleDelete}
+            onCollapse={() => setSidebarCollapsed(true)}
+          />
+          <div
+            className="w-1 cursor-col-resize bg-transparent hover:bg-sky-200 transition"
+            onMouseDown={startSidebarResize}
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize sidebar"
+          />
+        </>
+      )}
       <main className="flex-1 flex flex-col min-w-0 relative">
-        <ChatWindow
-          messages={messages}
-          sessionId={activeId}
-          user={user}
-          onSend={handleSend}
-          disabled={streaming || !activeId}
-          draftInput={draftInput}
-          onDraftChange={setDraftInput}
-          exploreOpen={exploreOpen}
-          onOpenExplore={() => setExploreOpen(true)}
-          activeCategory={activeCategory}
-          onPickStarter={handlePickStarter}
-          onFollowUpPick={handleFollowUpPick}
-          onClarificationPick={handleClarificationPick}
-          hideFollowUps={streaming}
-        />
-        <ExploreDrawer
-          open={exploreOpen}
-          onClose={() => setExploreOpen(false)}
-          hasRepCode={Boolean(user?.sales_rep_code)}
-          activeCategory={activeCategory}
-          onCategoryChange={setActiveCategory}
-          onPickStarter={handlePickStarter}
-          onSearchPick={handleFollowUpPick}
-        />
+        {centerMode === "faq" ? (
+          <FAQFullScreen
+            hasRepCode={Boolean(user?.sales_rep_code)}
+            activeCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+            onClose={() => setCenterMode("chat")}
+            onPickStarter={handlePickStarter}
+            onSearchPick={handleFollowUpPick}
+          />
+        ) : (
+          <ChatWindow
+            messages={messages}
+            sessionId={activeId}
+            onSend={handleSend}
+            onRetry={handleRetry}
+            disabled={streaming || !activeId}
+            draftInput={draftInput}
+            onDraftChange={setDraftInput}
+            onFollowUpPick={handleFollowUpPick}
+            onClarificationPick={handleClarificationPick}
+            hideFollowUps={streaming}
+            streaming={streaming}
+            sidebarCollapsed={sidebarCollapsed}
+            onExpandSidebar={() => setSidebarCollapsed(false)}
+          />
+        )}
       </main>
     </div>
   );

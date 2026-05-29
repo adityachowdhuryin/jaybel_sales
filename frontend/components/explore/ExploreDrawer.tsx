@@ -31,14 +31,14 @@ export function ExploreDrawer({
     >
       <button
         type="button"
-        className="flex-1 bg-black/60 backdrop-blur-sm"
+        className="flex-1 bg-slate-900/25 backdrop-blur-sm"
         onClick={onClose}
         aria-label="Close explore"
       />
-      <div className="w-full max-w-lg h-full bg-[var(--bg)]/98 backdrop-blur-md border-l border-[var(--border)] shadow-2xl flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-4 border-b border-[var(--border)] shrink-0 bg-[var(--panel)]/80">
+      <div className="w-full max-w-lg h-full bg-[var(--surface-0)] backdrop-blur-md border-l border-[var(--border)] shadow-2xl flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-4 border-b border-[var(--border)] shrink-0 bg-[var(--surface-0)] shadow-sm">
           <div className="text-sm font-medium text-[var(--muted)]">
-            <span className="text-brand-400">Explore questions</span>
+            <span className="text-sky-700">Explore questions</span>
             {activeCategory && (
               <>
                 {" "}
@@ -58,13 +58,8 @@ export function ExploreDrawer({
         <div className="flex-1 overflow-y-auto">
           <ExplorePanel
             hasRepCode={hasRepCode}
-            onCategoryChange={onCategoryChange}
             onPickStarter={(s) => {
               onPickStarter(s);
-              onClose();
-            }}
-            onSearchPick={(t) => {
-              onSearchPick(t);
               onClose();
             }}
           />

@@ -1,13 +1,17 @@
 import type { AppUser, ChatSession, ChatTurn } from "@/types";
+import type { DailyBusinessSummary } from "@/types/dashboard";
+import { buildAuthHeaders } from "./authHeaders";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const authHeaders = await buildAuthHeaders();
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
+      ...authHeaders,
       ...(init?.headers ?? {}),
     },
   });
@@ -65,6 +69,10 @@ export async function deleteSession(sessionId: string): Promise<void> {
 
 export async function listTurns(sessionId: string): Promise<ChatTurn[]> {
   return request<ChatTurn[]>(`/api/sessions/${sessionId}/turns`);
+}
+
+export async function fetchDailySummary(): Promise<DailyBusinessSummary> {
+  return request<DailyBusinessSummary>("/api/dashboard/daily-summary");
 }
 
 export { API_BASE };

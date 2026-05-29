@@ -3,6 +3,59 @@
 @tailwind utilities;
 
 :root {
+  --bg: #ffffff;
+  --bg-elevated: #f8fafc;
+  --panel: #ffffff;
+  --border: #dbe5f0;
+  --text: #0f172a;
+  --muted: #64748b;
+  --accent: #0284c7;
+  --accent-dim: #0369a1;
+  --gradient-start: #e0f2fe;
+  --gradient-end: #f8fafc;
+  --shadow-color: 15, 23, 42;
+  --code-bg: #f1f5f9;
+  --code-text: #0f172a;
+  --status-info-bg: #e0f2fe;
+  --status-info-border: #bae6fd;
+  --status-info-text: #075985;
+  --status-success-bg: #dcfce7;
+  --status-success-border: #bbf7d0;
+  --status-success-text: #166534;
+  --status-warning-bg: #fef3c7;
+  --status-warning-border: #fde68a;
+  --status-warning-text: #92400e;
+  --status-danger-bg: #fee2e2;
+  --status-danger-border: #fecaca;
+  --status-danger-text: #b91c1c;
+  --intent-primary: #0369a1;
+  --intent-success: #15803d;
+  --intent-warning: #b45309;
+  --intent-danger: #b91c1c;
+  --intent-insight: #6d28d9;
+  --surface-0: #ffffff;
+  --surface-1: #f8fafc;
+  --surface-2: #f1f5f9;
+  --surface-accent: #eff6ff;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-tertiary: #64748b;
+  --ring-focus: rgba(14, 116, 144, 0.28);
+  --chart-1: #0284c7;
+  --chart-2: #0891b2;
+  --chart-3: #16a34a;
+  --chart-4: #d97706;
+  --chart-5: #dc2626;
+  --chart-6: #7c3aed;
+  --chart-7: #4f46e5;
+  --chart-8: #0f766e;
+  --chat-send-bg: #2563eb;
+  --chat-send-bg-hover: #1d4ed8;
+  --user-bubble-bg: #eef2f6;
+  --user-bubble-text: #1a2b4b;
+}
+
+[data-theme="dark"] {
   --bg: #0a0e14;
   --bg-elevated: #111827;
   --panel: #151d2e;
@@ -13,24 +66,111 @@
   --accent-dim: #0ea5e9;
   --gradient-start: #1e3a5f;
   --gradient-end: #0f172a;
+  --shadow-color: 0, 0, 0;
+  --code-bg: #0f172a;
+  --code-text: #bbf7d0;
+  --status-info-bg: rgba(56, 189, 248, 0.12);
+  --status-info-border: rgba(56, 189, 248, 0.35);
+  --status-info-text: #dbeafe;
+  --status-success-bg: rgba(16, 185, 129, 0.14);
+  --status-success-border: rgba(16, 185, 129, 0.35);
+  --status-success-text: #a7f3d0;
+  --status-warning-bg: rgba(245, 158, 11, 0.14);
+  --status-warning-border: rgba(245, 158, 11, 0.35);
+  --status-warning-text: #fef3c7;
+  --status-danger-bg: rgba(244, 63, 94, 0.14);
+  --status-danger-border: rgba(244, 63, 94, 0.35);
+  --status-danger-text: #ffe4e6;
+  --intent-primary: #7dd3fc;
+  --intent-success: #86efac;
+  --intent-warning: #fcd34d;
+  --intent-danger: #fda4af;
+  --intent-insight: #c4b5fd;
+  --surface-0: #0a0e14;
+  --surface-1: #111827;
+  --surface-2: #1f2937;
+  --surface-accent: #10243a;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --ring-focus: rgba(56, 189, 248, 0.35);
+  --chart-1: #38bdf8;
+  --chart-2: #22d3ee;
+  --chart-3: #4ade80;
+  --chart-4: #fbbf24;
+  --chart-5: #fb7185;
+  --chart-6: #a78bfa;
+  --chart-7: #818cf8;
+  --chart-8: #2dd4bf;
+  --chat-send-bg: #2563eb;
+  --chat-send-bg-hover: #1d4ed8;
+  --user-bubble-bg: #1e293b;
+  --user-bubble-text: #e2e8f0;
 }
 
 body {
   @apply bg-[var(--bg)] text-[var(--text)] antialiased min-h-screen;
   background-image: radial-gradient(
       ellipse 80% 50% at 50% -20%,
-      rgba(56, 189, 248, 0.12),
+      color-mix(in srgb, var(--accent) 15%, transparent),
       transparent
     ),
-    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(30, 58, 95, 0.4), transparent);
+    radial-gradient(ellipse 60% 40% at 100% 0%, color-mix(in srgb, var(--gradient-start) 75%, transparent), transparent);
 }
 
 @layer utilities {
   .shadow-panel {
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(56, 189, 248, 0.05);
+    box-shadow:
+      0 10px 30px rgba(var(--shadow-color), 0.08),
+      0 2px 10px rgba(var(--shadow-color), 0.05),
+      0 0 0 1px color-mix(in srgb, var(--border) 80%, transparent);
   }
   .animate-fade-in {
     animation: fadeIn 0.35s ease-out;
+  }
+  .ui-card {
+    @apply rounded-xl border shadow-panel;
+    background-color: var(--surface-0);
+    border-color: var(--border);
+  }
+  .ui-card-muted {
+    @apply rounded-xl border;
+    background-color: var(--surface-1);
+    border-color: var(--border);
+  }
+  .ui-input {
+    @apply rounded-lg border px-3 py-2 text-sm outline-none transition;
+    background-color: var(--surface-0);
+    border-color: var(--border);
+    color: var(--text-primary);
+  }
+  .ui-input::placeholder {
+    color: var(--text-tertiary);
+  }
+  .ui-input:focus-visible {
+    box-shadow: 0 0 0 3px var(--ring-focus);
+    border-color: color-mix(in srgb, var(--intent-primary) 45%, var(--border));
+  }
+  .ui-btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition;
+    background-color: var(--intent-primary);
+  }
+  .ui-btn-primary:hover {
+    filter: brightness(1.06);
+  }
+  .ui-btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition;
+    background-color: var(--surface-0);
+    border-color: var(--border);
+    color: var(--text-secondary);
+  }
+  .ui-btn-secondary:hover {
+    background-color: var(--surface-2);
+    color: var(--text-primary);
+  }
+  .ui-kicker {
+    @apply text-[11px] uppercase tracking-wide font-semibold;
+    color: var(--text-tertiary);
   }
 }
 
@@ -48,27 +188,32 @@ body {
 /* Markdown answer prose — @layer so Tailwind sees extended brand colors */
 @layer components {
   .answer-prose h2 {
-    @apply text-base font-semibold text-[var(--text)] mt-4 mb-2 first:mt-0;
+    @apply text-xl font-semibold mt-5 mb-2 first:mt-0 tracking-tight;
+    color: var(--text-primary);
+    padding-left: 0.55rem;
+    border-left: 3px solid color-mix(in srgb, var(--intent-primary) 45%, var(--border));
   }
   .answer-prose h3 {
-    @apply text-sm font-semibold text-[var(--text)] mt-3 mb-1;
+    @apply text-base font-semibold mt-3 mb-1;
+    color: color-mix(in srgb, var(--intent-insight) 55%, var(--text-primary));
   }
   .answer-prose p {
-    @apply text-sm mb-2 leading-relaxed;
-    color: color-mix(in srgb, var(--text) 90%, transparent);
+    @apply text-[15px] mb-2 leading-7;
+    color: var(--text-secondary);
   }
   .answer-prose ul {
-    @apply list-disc pl-5 mb-3 space-y-1.5 text-sm;
-    color: color-mix(in srgb, var(--text) 90%, transparent);
+    @apply list-disc pl-5 mb-3 space-y-1.5 text-[15px];
+    color: var(--text-secondary);
   }
   .answer-prose ol {
-    @apply list-decimal pl-5 mb-3 space-y-1.5 text-sm;
+    @apply list-decimal pl-5 mb-3 space-y-1.5 text-[15px];
   }
   .answer-prose li {
-    @apply leading-relaxed;
+    @apply leading-7;
   }
   .answer-prose strong {
-    @apply font-semibold text-brand-200;
+    @apply font-semibold;
+    color: color-mix(in srgb, var(--intent-primary) 65%, var(--intent-insight) 35%);
   }
   .answer-prose table {
     @apply w-full text-xs border-collapse my-3 rounded-lg overflow-hidden border border-[var(--border)];
@@ -81,11 +226,22 @@ body {
   }
   .answer-prose blockquote {
     @apply border-l-2 pl-3 my-2 text-sm italic;
-    border-color: color-mix(in srgb, #f59e0b 60%, transparent);
-    color: color-mix(in srgb, #fde68a 90%, transparent);
+    border-color: color-mix(in srgb, #f59e0b 50%, transparent);
+    color: color-mix(in srgb, var(--text) 75%, #b45309 25%);
   }
   .answer-prose code {
-    @apply text-xs bg-[var(--bg)] px-1 py-0.5 rounded text-brand-300;
+    @apply text-xs px-1 py-0.5 rounded;
+    background-color: var(--code-bg);
+    color: var(--code-text);
+  }
+  .answer-prose h2:nth-of-type(3n + 1) {
+    border-left-color: color-mix(in srgb, var(--intent-primary) 55%, var(--border));
+  }
+  .answer-prose h2:nth-of-type(3n + 2) {
+    border-left-color: color-mix(in srgb, var(--intent-success) 60%, var(--border));
+  }
+  .answer-prose h2:nth-of-type(3n) {
+    border-left-color: color-mix(in srgb, var(--intent-insight) 60%, var(--border));
   }
 }
 

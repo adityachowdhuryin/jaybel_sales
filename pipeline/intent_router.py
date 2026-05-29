@@ -32,6 +32,9 @@ Rules:
 - join_pattern required when querying a fact table with dimensions.
 - FY targets come from config prompts, not a BigQuery target table.
 - Jaybel fiscal year: July (fiscal_month_no=1) through June (fiscal_month_no=12); label YYYY-YYYY (e.g. 2025-2026). Never April–September as full FY.
+- Bare "year", "this year", "last year", and YTD mean fiscal year (not calendar Jan–Dec) unless the user says "calendar year".
+- "My" / "our" (company-wide) questions are not rep-scoped unless the user asks about commission, payout, or personal closed deals.
+- Product-level questions use fact_sales_report.description; product group/category questions use dim_product.main_group_name.
 """
 
 

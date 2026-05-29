@@ -1,5 +1,6 @@
 import type { ChatSendMeta, UIEvent } from "@/types";
 import { API_BASE } from "./api";
+import { buildAuthHeaders } from "./authHeaders";
 
 export async function streamChat(
   sessionId: string,
@@ -8,14 +9,18 @@ export async function streamChat(
   signal?: AbortSignal,
   meta?: ChatSendMeta
 ): Promise<void> {
+  const authHeaders = await buildAuthHeaders({
+    "Content-Type": "application/json",
+  });
   const res = await fetch(`${API_BASE}/api/chat/stream`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders,
     body: JSON.stringify({
       session_id: sessionId,
       question,
       starter_id: meta?.starter_id,
       category_id: meta?.category_id,
+      replace_turn_id: meta?.replace_turn_id,
     }),
     signal,
   });

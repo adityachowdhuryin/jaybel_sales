@@ -764,7 +764,7 @@ starters:
   category_id: sales_rep
   text: How do my total sales this month compare to my sales during the same month
     last year?
-  data_availability: requires_rep_context
+  data_availability: full
   intent: comparison
   expected_table_id: fact_sales_report
   join_pattern: fact_sales_with_dims
@@ -773,7 +773,7 @@ starters:
   category_id: sales_rep
   text: What is my individual Gross Profit (GP$) contribution for the 2025-2026 financial
     year?
-  data_availability: requires_rep_context
+  data_availability: full
   intent: aggregation
   expected_table_id: fact_sales_report
   join_pattern: fact_sales_with_dims
@@ -781,7 +781,7 @@ starters:
 - id: Q088
   category_id: sales_rep
   text: Which of my specific accounts are showing a decline in month-over-month sales?
-  data_availability: requires_rep_context
+  data_availability: full
   intent: ranking
   expected_table_id: fact_sales_report
   join_pattern: fact_sales_with_dims
@@ -849,7 +849,7 @@ starters:
   category_id: sales_rep
   text: What is the total Gross Profit (GP$) I have generated for my closed deals
     this quarter?
-  data_availability: requires_rep_context
+  data_availability: full
   intent: aggregation
   expected_table_id: fact_sales_report
   join_pattern: fact_sales_with_dims
@@ -858,7 +858,7 @@ starters:
   category_id: sales_rep
   text: What is the total value of closed-won sales I have achieved this month to
     calculate my payout?
-  data_availability: requires_rep_context
+  data_availability: full
   intent: aggregation
   expected_table_id: fact_sales_report
   join_pattern: fact_sales_with_dims

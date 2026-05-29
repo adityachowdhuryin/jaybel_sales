@@ -48,7 +48,9 @@ For thorough validation with follow-up chains (outside Q001–Q097), see **[SECT
 | Question | Expected |
 |----------|----------|
 | "What is the capital of France?" | `out_of_dataset` guidance, no SQL |
-| "my sales this month" (no rep code) | `rep_context_required` |
+| "my sales this month" (no rep code) | **SQL** company-wide ("my" → "our") |
+| "my commission this quarter" (no rep code) | `rep_context_required` |
+| "total sales this year" | FY filter (`dim_date.fy`), not calendar Jan–Dec |
 | "help" | Vague clarification chips |
 | "show performance last month" | Table clarification chips (if L1/keyword disagree) |
 | Follow-up after a prior answer | Same table as prior turn |

@@ -3,7 +3,8 @@ display_name: Product Group (Dimension)
 layer: dimension
 agent_default: true
 routing_priority: secondary
-description: Main product group dimension keyed by main_group_name.
+description: Product group / category dimension (main_group_name). Not individual product
+  names — those are fact_sales_report.description on the fact table.
 business_tags:
 - product
 - product group

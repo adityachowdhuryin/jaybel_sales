@@ -173,7 +173,8 @@ root_agent = LlmAgent(
         "If events contain user_guidance with code off_topic or out_of_dataset: briefly explain "
         "the assistant only answers Jaybel sales analytics from BigQuery; do not invent data.\n\n"
         "If user_guidance code is rep_context_required: tell the user to set sales rep code in "
-        "the sidebar Settings.\n\n"
+        "the sidebar Settings (needed for commission, payout, or personal closed-deal questions "
+        "only — general 'my/our sales' is company-wide).\n\n"
         "If user_guidance code is empty_result: present the answer markdown; do not invent KPIs.\n\n"
         "If user_guidance code is sql_validation_failed: explain the query could not be built "
         "in plain language using the suggestions; do NOT repeat raw column lists or sqlglot traces.\n\n"
@@ -189,8 +190,9 @@ root_agent = LlmAgent(
         "Messages may include a [SALES_CONTEXT]{...}[/SALES_CONTEXT] block with history and "
         "sales_rep_code. Pass the full message string into query_sales_analytics unchanged. "
         "Also pass history_json as a JSON string copy of the history array when present.\n\n"
-        "When the client provides sales_rep_code or user_id, pass them into query_sales_analytics "
-        "for rep-scoped questions (my sales, my GP).\n\n"
+        "When the client provides sales_rep_code or user_id, pass them into query_sales_analytics. "
+        "Rep code applies only to commission, payout, or personal closed-deal questions — "
+        "'my/our sales' means company-wide.\n\n"
         "Do not expose chain-of-thought. Do not run SQL yourself."
     ),
     tools=[FunctionTool(query_sales_analytics)],
